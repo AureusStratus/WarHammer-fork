@@ -1,99 +1,85 @@
+//
+// Source code recreated from a .class file by IntelliJ IDEA
+// (powered by FernFlower decompiler)
+//
+
 package wh.graphics;
 
-import arc.files.*;
-import arc.graphics.g3d.*;
-import arc.graphics.gl.*;
-import arc.math.geom.*;
-import arc.util.*;
-import mindustry.*;
-import wh.type.*;
+import arc.Core;
+import arc.files.Fi;
+import arc.graphics.Texture;
+import arc.graphics.g3d.Camera3D;
+import arc.graphics.gl.Shader;
+import arc.math.geom.Mat3D;
+import arc.util.Tmp;
+import mindustry.Vars;
+import wh.WHVars;
+import wh.type.BetterPlanet;
 
-import static arc.Core.*;
-import static mindustry.Vars.*;
-import static wh.WHVars.*;
-
-public final class WHShaders {
+public class WHShaders {
     public static DepthShader depth;
     public static DepthAtmosphereShader depthAtmosphere;
 
-    private WHShaders() {}
+    private WHShaders() {
+    }
 
     public static void init() {
         depth = new DepthShader();
         depthAtmosphere = new DepthAtmosphereShader();
     }
 
-    /**
-     * Resolves shader files from this mod via {@link Vars#tree}.
-     *
-     * @param name The shader file name, e.g. {@code my-shader.frag}.
-     * @return The shader file, located inside {@code shaders/}.
-     */
     public static Fi df(String name) {
-        return tree.get("shaders/" + name + ".frag");
+        return Vars.tree.get("shaders/" + name + ".frag");
     }
 
     public static Fi dv(String name) {
-        return tree.get("shaders/" + name + ".vert");
+        return Vars.tree.get("shaders/" + name + ".vert");
     }
 
     public static Fi mf(String name) {
-        return internalTree.child("shaders/" + name + ".frag");
+        return WHVars.internalTree.child("shaders/" + name + ".frag");
     }
 
     public static Fi mv(String name) {
-        return internalTree.child("shaders/" + name + ".vert");
+        return WHVars.internalTree.child("shaders/" + name + ".vert");
     }
 
-    /**
-     * An atmosphere shader that incorporates the planet shape in a form of depth texture. Better quality, but at the little
-     * cost of performance.
-     */
-    public static final class DepthAtmosphereShader extends Shader {
-        private static final Mat3D mat = new Mat3D();
-
-        public Camera3D camera;
-        public BetterPlanet planet;
-
-        /** This class only requires one instance. Please use {@link WHShaders#depthAtmosphere}. */
-        private DepthAtmosphereShader() {
-            super(mv("depth-atmosphere"), mf("depth-atmosphere"));
-        }
-
-        @Override
-        public void apply() {
-            setUniformMatrix4("u_proj", camera.combined.val);
-            setUniformMatrix4("u_trans", planet.getTransform(mat).val);
-
-            setUniformf("u_camPos", camera.position);
-            setUniformf("u_relCamPos", Tmp.v31.set(camera.position).sub(planet.position));
-            setUniformf("u_camRange", camera.near, camera.far - camera.near);
-            setUniformf("u_center", planet.position);
-            setUniformf("u_light", planet.getLightNormal());
-            setUniformf("u_color", planet.atmosphereColor.r, planet.atmosphereColor.g, planet.atmosphereColor.b);
-
-            setUniformf("u_innerRadius", planet.radius + planet.atmosphereRadIn);
-            setUniformf("u_outerRadius", planet.radius + planet.atmosphereRadOut);
-
-            planet.depthBuffer.getTexture().bind(0);
-            setUniformi("u_topology", 0);
-            setUniformf("u_viewport", graphics.getWidth(), graphics.getHeight());
-        }
-    }
-
-    /** Specialized mesh shader to capture fragment depths. */
     public static final class DepthShader extends Shader {
         public Camera3D camera;
 
-        /** This class only requires one instance. Please use {@link WHShaders#depth}. */
         private DepthShader() {
-            super(mv("depth"), mf("depth"));
+            super(WHShaders.mv("depth"), WHShaders.mf("depth"));
         }
 
-        @Override
         public void apply() {
-            setUniformf("u_camPos", camera.position);
-            setUniformf("u_camRange", camera.near, camera.far - camera.near);
+            this.setUniformf("u_camPos", this.camera.position);
+            this.setUniformf("u_camRange", this.camera.near, this.camera.far - this.camera.near);
+        }
+    }
+
+    public static final class DepthAtmosphereShader extends Shader {
+        private static final Mat3D mat = new Mat3D();
+        public Camera3D camera;
+        public BetterPlanet planet;
+
+        private DepthAtmosphereShader() {
+            super(WHShaders.mv("depth-atmosphere"), WHShaders.mf("depth-atmosphere"));
+        }
+
+        public void apply() {
+            this.setUniformMatrix4("u_proj", this.camera.combined.val);
+            this.setUniformMatrix4("u_trans", this.planet.getTransform(mat).val);
+            this.setUniformf("u_camPos", this.camera.position);
+            this.setUniformf("u_relCamPos", Tmp.v31.set(this.camera.position).sub(this.planet.position));
+            this.setUniformf("u_camRange", this.camera.near, this.camera.far - this.camera.near);
+            this.setUniformf("u_center", this.planet.position);
+            this.setUniformf("u_light", this.planet.getLightNormal());
+            this.setUniformf("u_color", this.planet.atmosphereColor.r, this.planet.atmosphereColor.g, this.planet.atmosphereColor.b);
+            this.setUniformf("u_innerRadius", this.planet.radius + this.planet.atmosphereRadIn);
+            this.setUniformf("u_outerRadius", this.planet.radius + this.planet.atmosphereRadOut);
+            ((Texture)this.planet.depthBuffer.getTexture()).bind(0);
+            this.setUniformi("u_topology", 0);
+            this.setUniformf("u_viewport", (float)Core.graphics.getWidth(), (float)Core.graphics.getHeight());
         }
     }
 }

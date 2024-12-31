@@ -1,181 +1,185 @@
+//
+// Source code recreated from a .class file by IntelliJ IDEA
+// (powered by FernFlower decompiler)
+//
+
 package wh.gen;
 
-import arc.graphics.*;
-import arc.graphics.g2d.*;
-import arc.math.*;
-import arc.util.*;
-import arc.util.io.*;
-import mindustry.content.*;
-import mindustry.gen.*;
-import mindustry.graphics.*;
-import mindustry.type.*;
-import wh.graphics.*;
-import wh.type.unit.*;
-
-import static arc.Core.*;
+import arc.Core;
+import arc.graphics.Color;
+import arc.graphics.g2d.Draw;
+import arc.graphics.g2d.Lines;
+import arc.graphics.g2d.TextureRegion;
+import arc.math.Interp;
+import arc.math.Mathf;
+import arc.util.Time;
+import arc.util.Tmp;
+import arc.util.io.Reads;
+import arc.util.io.Writes;
+import mindustry.content.Fx;
+import mindustry.gen.UnitEntity;
+import mindustry.type.UnitType;
+import wh.graphics.Drawn;
+import wh.type.unit.NucleoidUnitType;
 
 public class NucleoidUnit extends UnitEntity implements Nucleoidc {
-    public float recentDamage = 0f;
-    public float reinforcementsReload = 0f;
+    public float recentDamage = 0.0F;
+    public float reinforcementsReload = 0.0F;
 
-    protected NucleoidUnit() {}
+    protected NucleoidUnit() {
+    }
 
-    @Override
     public int classId() {
         return EntityRegister.getId(NucleoidUnit.class);
     }
 
-    @Override
     public void setType(UnitType type) {
         super.setType(type);
-
-        if (type instanceof NucleoidUnitType nType) {
-            recentDamage = nType.maxDamagedPerSec;
-            reinforcementsReload = nType.reinforcementsSpacing;
+        if (type instanceof NucleoidUnitType) {
+            NucleoidUnitType nType = (NucleoidUnitType)type;
+            this.recentDamage = nType.maxDamagedPerSec;
+            this.reinforcementsReload = nType.reinforcementsSpacing;
         }
+
     }
 
-    @Override
     public float mass() {
-        if (type instanceof NucleoidUnitType nType) {
+        UnitType var2 = this.type;
+        if (var2 instanceof NucleoidUnitType) {
+            NucleoidUnitType nType = (NucleoidUnitType)var2;
             return nType.mass;
+        } else {
+            return 8000000.0F;
         }
-        return 8000000f;
     }
 
-    @Override
     public void update() {
         super.update();
-
-        if (type instanceof NucleoidUnitType nType) {
-            recentDamage += nType.recentDamageResume * Time.delta;
-            if (recentDamage >= nType.maxDamagedPerSec) {
-                recentDamage = nType.maxDamagedPerSec;
+        UnitType var2 = this.type;
+        if (var2 instanceof NucleoidUnitType) {
+            NucleoidUnitType nType = (NucleoidUnitType)var2;
+            this.recentDamage += nType.recentDamageResume * Time.delta;
+            if (this.recentDamage >= nType.maxDamagedPerSec) {
+                this.recentDamage = nType.maxDamagedPerSec;
             }
 
-            reinforcementsReload += Time.delta;
-            if (healthf() < 0.3f && reinforcementsReload >= nType.reinforcementsSpacing) {
-                reinforcementsReload = 0;
-                for (int i : Mathf.signs) {
-                    Tmp.v1.trns(rotation + 60 * i, -hitSize * 1.85f).add(x, y);
+            this.reinforcementsReload += Time.delta;
+            if (this.healthf() < 0.3F && this.reinforcementsReload >= nType.reinforcementsSpacing) {
+                this.reinforcementsReload = 0.0F;
+                int[] var6 = Mathf.signs;
+                int var3 = var6.length;
+
+                for(int var4 = 0; var4 < var3; ++var4) {
+                    int i = var6[var4];
+                    Tmp.v1.trns(this.rotation + (float)(60 * i), -this.hitSize * 1.85F).add(this.x, this.y);
                 }
             }
         }
+
     }
 
-    @Override
     public void draw() {
         super.draw();
-
-        if (type instanceof NucleoidUnitType nType) {
+        UnitType var2 = this.type;
+        if (var2 instanceof NucleoidUnitType) {
+            NucleoidUnitType nType = (NucleoidUnitType)var2;
             float z = Draw.z();
-            Draw.z(Layer.bullet);
-
-            Tmp.c1.set(team.color).lerp(Color.white, Mathf.absin(4f, 0.15f));
+            Draw.z(100.0F);
+            Tmp.c1.set(this.team.color).lerp(Color.white, Mathf.absin(4.0F, 0.15F));
             Draw.color(Tmp.c1);
-            Lines.stroke(3f);
-            Drawn.circlePercent(x, y, hitSize * 1.15f, reinforcementsReload / nType.reinforcementsSpacing, 0);
+            Lines.stroke(3.0F);
+            Drawn.circlePercent(this.x, this.y, this.hitSize * 1.15F, this.reinforcementsReload / nType.reinforcementsSpacing, 0.0F);
+            float scl = Interp.pow3Out.apply(Mathf.curve(this.reinforcementsReload / nType.reinforcementsSpacing, 0.96F, 1.0F));
+            TextureRegion arrowRegion = Core.atlas.find("wh-jump-gate-arrow");
+            int[] var5 = Mathf.signs;
+            int var6 = var5.length;
 
-            float scl = Interp.pow3Out.apply(Mathf.curve(reinforcementsReload / nType.reinforcementsSpacing, 0.96f, 1f));
-            TextureRegion arrowRegion = atlas.find("wh-jump-gate-arrow");
+            for(int var7 = 0; var7 < var6; ++var7) {
+                int l = var5[var7];
+                float angle = (float)(90 + 90 * l);
 
-            for (int l : Mathf.signs) {
-                float angle = 90 + 90 * l;
-                for (int i = 0; i < 4; i++) {
-                    Tmp.v1.trns(angle, i * 50 + hitSize * 1.32f);
-                    float f = (100 - (Time.time + 25 * i) % 100) / 100;
-
-                    Draw.rect(arrowRegion, x + Tmp.v1.x, y + Tmp.v1.y, arrowRegion.width * f * scl, arrowRegion.height * f * scl, angle + 90);
+                for(int i = 0; i < 4; ++i) {
+                    Tmp.v1.trns(angle, (float)(i * 50) + this.hitSize * 1.32F);
+                    float f = (100.0F - (Time.time + (float)(25 * i)) % 100.0F) / 100.0F;
+                    Draw.rect(arrowRegion, this.x + Tmp.v1.x, this.y + Tmp.v1.y, (float)arrowRegion.width * f * scl, (float)arrowRegion.height * f * scl, angle + 90.0F);
                 }
             }
 
             Draw.z(z);
         }
+
     }
 
-    @Override
     public void rawDamage(float amount) {
-        if (type instanceof NucleoidUnitType nType) {
+        UnitType var3 = this.type;
+        if (var3 instanceof NucleoidUnitType) {
+            NucleoidUnitType nType = (NucleoidUnitType)var3;
             float a = amount * nType.damageMultiplier;
-
-            boolean hadShields = shield > 1e-4f;
+            boolean hadShields = this.shield > 1.0E-4F;
             if (hadShields) {
-                shieldAlpha = 1f;
+                this.shieldAlpha = 1.0F;
             }
 
             a = Math.min(a, nType.maxOnceDamage);
-
-            float shieldDamage = Math.min(Math.max(shield, 0f), a);
-            shield -= shieldDamage;
-            hitTime = 1f;
-
+            float shieldDamage = Math.min(Math.max(this.shield, 0.0F), a);
+            this.shield -= shieldDamage;
+            this.hitTime = 1.0F;
             a -= shieldDamage;
-            a = Math.min(recentDamage / healthMultiplier, a);
-            recentDamage -= a * 1.5f * healthMultiplier;
-
-            if (a > 0f && type.killable) {
-                health -= a;
-                if (health <= 0f && !dead) {
-                    kill();
+            a = Math.min(this.recentDamage / this.healthMultiplier, a);
+            this.recentDamage -= a * 1.5F * this.healthMultiplier;
+            if (a > 0.0F && this.type.killable) {
+                this.health -= a;
+                if (this.health <= 0.0F && !this.dead) {
+                    this.kill();
                 }
 
-                if (hadShields && shield <= 1e-4f) {
-                    Fx.unitShieldBreak.at(x, y, 0f, team.color, this);
+                if (hadShields && this.shield <= 1.0E-4F) {
+                    Fx.unitShieldBreak.at(this.x, this.y, 0.0F, this.team.color, this);
                 }
             }
         }
+
     }
 
-    @Override
     public void read(Reads read) {
-        reinforcementsReload = read.f();
-
+        this.reinforcementsReload = read.f();
         super.read(read);
     }
 
-    @Override
     public void write(Writes write) {
-        write.f(reinforcementsReload);
-
+        write.f(this.reinforcementsReload);
         super.write(write);
     }
 
-    @Override
     public void readSync(Reads read) {
         super.readSync(read);
-
-        if (!isLocal()) {
-            reinforcementsReload = read.f();
+        if (!this.isLocal()) {
+            this.reinforcementsReload = read.f();
         } else {
             read.f();
         }
+
     }
 
-    @Override
     public void writeSync(Writes write) {
         super.writeSync(write);
-
-        write.f(reinforcementsReload);
+        write.f(this.reinforcementsReload);
     }
 
-    @Override
     public float recentDamage() {
-        return recentDamage;
+        return this.recentDamage;
     }
 
-    @Override
     public float reinforcementsReload() {
-        return reinforcementsReload;
+        return this.reinforcementsReload;
     }
 
-    @Override
     public void recentDamage(float value) {
-        recentDamage = value;
+        this.recentDamage = value;
     }
 
-    @Override
     public void reinforcementsReload(float value) {
-        reinforcementsReload = value;
+        this.reinforcementsReload = value;
     }
 
     public static NucleoidUnit create() {

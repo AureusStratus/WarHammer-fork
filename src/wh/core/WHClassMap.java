@@ -1,70 +1,91 @@
+//
+// Source code recreated from a .class file by IntelliJ IDEA
+// (powered by FernFlower decompiler)
+//
+
 package wh.core;
 
-import wh.entities.abilities.*;
-import wh.entities.bullet.*;
-import wh.entities.effect.*;
-import wh.type.*;
-import wh.type.unit.*;
-import wh.world.blocks.defense.*;
-import wh.world.blocks.defense.turrets.*;
-import wh.world.blocks.distribution.*;
-import wh.world.blocks.production.*;
-import wh.world.blocks.storage.*;
+import mindustry.mod.ClassMap;
+import wh.entities.abilities.AdaptedHealAbility;
+import wh.entities.abilities.MendFieldAbility;
+import wh.entities.abilities.PointDefenseAbility;
+import wh.entities.abilities.ShockWaveAbility;
+import wh.entities.bullet.AccelBulletType;
+import wh.entities.bullet.BlackHoleBulletType;
+import wh.entities.bullet.BoidBulletType;
+import wh.entities.bullet.ChainLightingBulletType;
+import wh.entities.bullet.EffectBulletType;
+import wh.entities.bullet.LightningLinkerBulletType;
+import wh.entities.bullet.MagmaBulletType;
+import wh.entities.bullet.PositionLightningBulletType;
+import wh.entities.bullet.ShieldBreakerType;
+import wh.entities.bullet.StrafeLaserBulletType;
+import wh.entities.bullet.TrailFadeBulletType;
+import wh.entities.effect.WrapperEffect;
+import wh.type.ExtraSectorPreset;
+import wh.type.unit.AncientUnitType;
+import wh.type.unit.NucleoidUnitType;
+import wh.type.unit.PesterUnitType;
+import wh.world.blocks.defense.AirRaider;
+import wh.world.blocks.defense.BombLauncher;
+import wh.world.blocks.defense.turrets.SpeedupTurret;
+import wh.world.blocks.distribution.BeltConveyor;
+import wh.world.blocks.distribution.CoveredConveyor;
+import wh.world.blocks.distribution.DirectionalUnloaderF;
+import wh.world.blocks.distribution.TubeConveyor;
+import wh.world.blocks.production.MultiCrafterD;
+import wh.world.blocks.production.MultiCrafterE;
+import wh.world.blocks.storage.FrontlineCoreBlock;
+import wh.world.blocks.storage.UnloaderF;
 
-import static mindustry.mod.ClassMap.*;
-
-/** Generated class. Maps simple class names to concrete classes. For use in JSON attached mods. */
 final class WHClassMap {
-    /** WHClassMap should not be instantiated. */
-    private WHClassMap() {}
+    private WHClassMap() {
+    }
 
     static void load() {
-        //abilities
-        classes.put("AdaptedHealAbility", AdaptedHealAbility.class);
-        classes.put("MendFieldAbility", MendFieldAbility.class);
-        classes.put("PointDefenseAbility", PointDefenseAbility.class);
-        classes.put("ShockWaveAbility", ShockWaveAbility.class);
-        //effect
-        classes.put("WrapperEffect", WrapperEffect.class);
-        //bullet
-        classes.put("AccelBulletType", AccelBulletType.class);
-        classes.put("BoidBulletType", BoidBulletType.class);
-        classes.put("EffectBulletType", EffectBulletType.class);
-        classes.put("LightningLinkerBulletType", LightningLinkerBulletType.class);
-        classes.put("PositionLightningBulletType", PositionLightningBulletType.class);
-        classes.put("ShieldBreakerType", ShieldBreakerType.class);
-        classes.put("StrafeLaserBulletType", StrafeLaserBulletType.class);
-        classes.put("TrailFadeBulletType", TrailFadeBulletType.class);
-        //type
-        classes.put("ExtraSectorPreset", ExtraSectorPreset.class);
-        //type-unit
-        classes.put("AncientUnitType", AncientUnitType.class);
-        classes.put("AncientEngine", AncientUnitType.AncientEngine.class);
-        classes.put("NucleoidUnitType", NucleoidUnitType.class);
-        classes.put("PesterUnitType", PesterUnitType.class);
-        //block
-        classes.put("AirRaider", AirRaider.class);
-        classes.put("AirRaiderBuild", AirRaider.AirRaiderBuild.class);
-        classes.put("BombLauncher", BombLauncher.class);
-        classes.put("BombLauncherBuild", BombLauncher.BombLauncherBuild.class);
-        classes.put("SpeedupTurret", SpeedupTurret.class);
-        classes.put("SpeedupTurretBuild", SpeedupTurret.SpeedupTurretBuild.class);
-        classes.put("BeltConveyor", BeltConveyor.class);
-        classes.put("BeltConveyorBuild", BeltConveyor.BeltConveyorBuild.class);
-        classes.put("CoveredConveyor", CoveredConveyor.class);
-        classes.put("CoveredConveyorBuild", CoveredConveyor.CoveredConveyorBuild.class);
-        classes.put("TubeConveyor", TubeConveyor.class);
-        classes.put("TubeConveyorBuild", TubeConveyor.TubeConveyorBuild.class);
-        classes.put("UnloaderF", UnloaderF.class);
-        classes.put("UnloaderBuildF", UnloaderF.UnloaderBuildF.class);
-        classes.put("MultiCrafterE", MultiCrafterE.class);
-        classes.put("MultiCrafterBuildE", MultiCrafterE.MultiCrafterBuildE.class);
-        classes.put("Formula", MultiCrafterE.Formula.class);
-        classes.put("MultiCrafterD", MultiCrafterD.class);
-        classes.put("MultiCrafterBuildD", MultiCrafterD.MultiCrafterBuildD.class);
-        classes.put("DirectionalUnloaderF", DirectionalUnloaderF.class);
-        classes.put("DirectionalUnloaderBuildF", DirectionalUnloaderF.DirectionalUnloaderBuildF.class);
-        classes.put("FrontlineCoreBlock", FrontlineCoreBlock.class);
-        classes.put("FrontlineCoreBuild", FrontlineCoreBlock.FrontlineCoreBuild.class);
+        ClassMap.classes.put("AdaptedHealAbility", AdaptedHealAbility.class);
+        ClassMap.classes.put("MendFieldAbility", MendFieldAbility.class);
+        ClassMap.classes.put("PointDefenseAbility", PointDefenseAbility.class);
+        ClassMap.classes.put("ShockWaveAbility", ShockWaveAbility.class);
+        ClassMap.classes.put("WrapperEffect", WrapperEffect.class);
+        ClassMap.classes.put("AccelBulletType", AccelBulletType.class);
+        ClassMap.classes.put("BoidBulletType", BoidBulletType.class);
+        ClassMap.classes.put("EffectBulletType", EffectBulletType.class);
+        ClassMap.classes.put("MagmaBulletType", MagmaBulletType.class);
+        ClassMap.classes.put("BlackHoleBulletType", BlackHoleBulletType.class);
+        ClassMap.classes.put("LightningLinkerBulletType", LightningLinkerBulletType.class);
+        ClassMap.classes.put("ChainLightingBulletType", ChainLightingBulletType.class);
+        ClassMap.classes.put("PositionLightningBulletType", PositionLightningBulletType.class);
+        ClassMap.classes.put("ShieldBreakerType", ShieldBreakerType.class);
+        ClassMap.classes.put("StrafeLaserBulletType", StrafeLaserBulletType.class);
+        ClassMap.classes.put("TrailFadeBulletType", TrailFadeBulletType.class);
+        ClassMap.classes.put("ExtraSectorPreset", ExtraSectorPreset.class);
+        ClassMap.classes.put("AncientUnitType", AncientUnitType.class);
+        ClassMap.classes.put("AncientEngine", AncientUnitType.AncientEngine.class);
+        ClassMap.classes.put("NucleoidUnitType", NucleoidUnitType.class);
+        ClassMap.classes.put("PesterUnitType", PesterUnitType.class);
+        ClassMap.classes.put("AirRaider", AirRaider.class);
+        ClassMap.classes.put("AirRaiderBuild", AirRaider.AirRaiderBuild.class);
+        ClassMap.classes.put("BombLauncher", BombLauncher.class);
+        ClassMap.classes.put("BombLauncherBuild", BombLauncher.BombLauncherBuild.class);
+        ClassMap.classes.put("SpeedupTurret", SpeedupTurret.class);
+        ClassMap.classes.put("SpeedupTurretBuild", SpeedupTurret.SpeedupTurretBuild.class);
+        ClassMap.classes.put("BeltConveyor", BeltConveyor.class);
+        ClassMap.classes.put("BeltConveyorBuild", BeltConveyor.BeltConveyorBuild.class);
+        ClassMap.classes.put("CoveredConveyor", CoveredConveyor.class);
+        ClassMap.classes.put("CoveredConveyorBuild", CoveredConveyor.CoveredConveyorBuild.class);
+        ClassMap.classes.put("TubeConveyor", TubeConveyor.class);
+        ClassMap.classes.put("TubeConveyorBuild", TubeConveyor.TubeConveyorBuild.class);
+        ClassMap.classes.put("UnloaderF", UnloaderF.class);
+        ClassMap.classes.put("UnloaderBuildF", UnloaderF.UnloaderBuildF.class);
+        ClassMap.classes.put("MultiCrafterE", MultiCrafterE.class);
+        ClassMap.classes.put("MultiCrafterBuildE", MultiCrafterE.MultiCrafterBuildE.class);
+        ClassMap.classes.put("Formula", MultiCrafterE.Formula.class);
+        ClassMap.classes.put("MultiCrafterD", MultiCrafterD.class);
+        ClassMap.classes.put("MultiCrafterBuildD", MultiCrafterD.MultiCrafterBuildD.class);
+        ClassMap.classes.put("DirectionalUnloaderF", DirectionalUnloaderF.class);
+        ClassMap.classes.put("DirectionalUnloaderBuildF", DirectionalUnloaderF.DirectionalUnloaderBuildF.class);
+        ClassMap.classes.put("FrontlineCoreBlock", FrontlineCoreBlock.class);
+        ClassMap.classes.put("FrontlineCoreBuild", FrontlineCoreBlock.FrontlineCoreBuild.class);
     }
 }

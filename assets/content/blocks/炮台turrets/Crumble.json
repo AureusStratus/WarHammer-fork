@@ -11,7 +11,7 @@
 	"shoot": {
 		"type": "ShootMulti",
 		"source": {
-			"shots": 5,
+			"shots": 4,
 			"shotDelay": 10
 		},
 		"dest": [
@@ -183,7 +183,34 @@
 			"fragBullets": 1,
 			"fragRandomSpread": 0,
 			"fragBullet": {
-				"type": "MissileBulletType",
+				"type": "LightningLinkerBulletType",
+				"size": 1,
+				"frontColor": "FFFEACFF",
+				"backColor": "FFFEACFF",
+				"randomGenerateRange":80,
+				"randomLightningNum": 2,
+				"effectLightningChance": 0.35,
+				"lightning": 2,
+				"lightningLength": 4,
+				"lightningLengthRand": 3,
+				"lightningCone": 360,
+				"lightningDamage": 90,
+				"linkRange": 200,
+				"maxHit": 5,
+				"lightningColor": "FFFEACFF",
+				"rangeOverride": 90,
+				"slopeEffect": "none",
+				"spreadEffect": "none",
+				"liHitEffect": "none",
+				"shrinkX": 0,
+				"shrinkY": 0,
+				"trailColor": "FFFEACFF",
+				"speed": 0,
+				"lifetime": 20,
+				"damage": 80,
+				"splashDamageRadius": 64,
+				"splashDamage": 100,
+				"despawnEffect": "none",
 				"despawnHit": true,
 				"collides": false,
 				"instantDisappear": true,
@@ -219,20 +246,10 @@
 						}
 					]
 				},
-				"sprite": "circle-bullet",
-				"despawnEffect": "none",
 				"absorbable": false,
 				"status": "disarmed",
 				"statusDuration": 8,
-				"shrinkY": 0,
-				"pierce": true,
-				"frontColor": "FFFEACFF",
-				"backColor": "FFFEACFF",
-				"damage": 80,
-				"splashDamageRadius": 64,
-				"splashDamage": 100,
-				"speed": 0,
-				"lifetime": 20
+				"pierce": true
 			},
 			"shootEffect": {
 				"type": "MultiEffect",

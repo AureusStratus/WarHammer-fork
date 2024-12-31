@@ -1,41 +1,52 @@
+//
+// Source code recreated from a .class file by IntelliJ IDEA
+// (powered by FernFlower decompiler)
+//
+
 package wh.core;
 
-import arc.*;
-import arc.util.*;
-import mindustry.game.EventType.*;
-import mindustry.mod.*;
-import mindustry.ui.dialogs.*;
-import wh.content.*;
-import wh.gen.*;
-import wh.graphics.*;
-import wh.ui.dialogs.*;
-
-import java.util.*;
-
-import static arc.Core.*;
-import static mindustry.Vars.*;
+import arc.Core;
+import arc.Events;
+import arc.util.Time;
+import java.util.Objects;
+import mindustry.Vars;
+import mindustry.game.EventType;
+import mindustry.mod.Mod;
+import mindustry.ui.dialogs.ResearchDialog;
+import wh.content.WHContent;
+import wh.gen.WHSounds;
+import wh.graphics.MainRenderer;
+import wh.graphics.WHShaders;
+import wh.ui.dialogs.WHResearchDialog;
 
 public class WarHammerMod extends Mod {
+    public static String ModName = "WarHammerMod";
+
     public WarHammerMod() {
         WHClassMap.load();
-
-        Events.on(FileTreeInitEvent.class, e -> {
-            if (!headless) {
+        Events.on(EventType.FileTreeInitEvent.class, (e) -> {
+            if (!Vars.headless) {
                 WHSounds.load();
-                app.post(WHShaders::init);
+                Core.app.post(WHShaders::init);
             }
+
         });
     }
 
-    @Override
+    public static String name(String add) {
+        return ModName + "-" + add;
+    }
+
     public void init() {
-        //Replace the original technology tree
+        WHContent.loadPriority();
+        MainRenderer.init();
         WHResearchDialog dialog = new WHResearchDialog();
-        ResearchDialog research = ui.research;
+        ResearchDialog research = Vars.ui.research;
         research.shown(() -> {
             dialog.show();
             Objects.requireNonNull(research);
-            Time.runTask(1f, research::hide);
+            Objects.requireNonNull(research);
+            Time.runTask(1.0F, research::hide);
         });
     }
 }

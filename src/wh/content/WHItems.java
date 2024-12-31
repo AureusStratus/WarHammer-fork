@@ -1,18 +1,24 @@
+//
+// Source code recreated from a .class file by IntelliJ IDEA
+// (powered by FernFlower decompiler)
+//
+
 package wh.content;
 
-import mindustry.type.*;
+import mindustry.type.Item;
 
-@SuppressWarnings("unused")
 public final class WHItems {
-    public static Item titaniumSteel, imperium, vibranium, ceramite, refineCeramite, adamantium;
+    public static Item titaniumSteel;
+    public static Item imperium;
+    public static Item vibranium;
+    public static Item ceramite;
+    public static Item refineCeramite;
+    public static Item adamantium;
+    public static Item sealedPromethium;
 
-    /** WHItems should not be instantiated. */
-    private WHItems() {}
+    private WHItems() {
+    }
 
-    /**
-     * Instantiates all contents. Called in the main thread in {@link wh.core.WarHammerMod#loadContent()}.
-     * <p>Remember not to execute it a second time, I did not take any precautionary measures.
-     */
     public static void load() {
         titaniumSteel = new Item("titanium-steel");
         imperium = new Item("imperium");
@@ -20,5 +26,6 @@ public final class WHItems {
         ceramite = new Item("ceramite");
         refineCeramite = new Item("refine-ceramite");
         adamantium = new Item("adamantium");
+        sealedPromethium = new Item("sealed-promethium");
     }
 }

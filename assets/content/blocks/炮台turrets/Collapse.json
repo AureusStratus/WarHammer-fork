@@ -1,5 +1,4 @@
 {
-	"type": "ItemTurret",
 	"name": "崩溃",
 	"health": 10000,
 	"size": 5,
@@ -8,7 +7,7 @@
 	"shootSound": "laserblast",
 	"unitSort": "farthest",
 	"heatColor": "D5E1F9FF",
-	"cooldownTime": 160,
+	"cooldownTime": 180,
 	"shoot": {
 		"type": "ShootPattern",
 		"firstShotDelay": 30
@@ -33,7 +32,7 @@
 	"recoilTime": 180,
 	"ammoPerShot": 8,
 	"inaccuracy": 0,
-	"ammoTypes": {
+	/*"ammoTypes": {
 		"phase-fabric": {
 			"type": "PointBulletType",
 			"lifetime": 45,
@@ -672,6 +671,7 @@
 			]
 		}
 	},
+	*/
 	"smokeEffect": "none",
 	"consumes": {
 		"power": 12,

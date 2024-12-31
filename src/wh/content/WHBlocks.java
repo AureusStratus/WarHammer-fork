@@ -1,44 +1,54 @@
+//
+// Source code recreated from a .class file by IntelliJ IDEA
+// (powered by FernFlower decompiler)
+//
+
 package wh.content;
 
-import mindustry.world.*;
-import mindustry.world.blocks.defense.turrets.*;
-import mindustry.world.blocks.environment.*;
-import wh.entities.bullet.*;
-import wh.graphics.*;
-import wh.world.blocks.distribution.*;
+import mindustry.content.Items;
+import mindustry.world.Block;
+import mindustry.world.blocks.defense.turrets.ItemTurret;
+import mindustry.world.blocks.defense.turrets.PowerTurret;
+import mindustry.world.blocks.environment.Floor;
+import mindustry.world.blocks.environment.OreBlock;
+import wh.entities.bullet.PositionLightningBulletType;
+import wh.graphics.WHPal;
+import wh.world.blocks.distribution.CoveredConveyor;
 
-@SuppressWarnings("unused")
 public final class WHBlocks {
-    public static Block
-            promethium, vibraniumOre,
+    public static Block promethium;
+    public static Block vibraniumOre;
+    public static Block steelDust;
+    public static Block flash;
+    public static Block collapse;
 
-            steelDust,
+    private WHBlocks() {
+    }
 
-            flash;
-
-    /** WHBlocks should not be instantiated. */
-    private WHBlocks() {}
-
-    /**
-     * Instantiates all contents. Called in the main thread in {@link wh.core.WarHammerMod#loadContent()}.
-     * <p>Remember not to execute it a second time, I did not take any precautionary measures.
-     */
     public static void load() {
         promethium = new Floor("promethium");
         vibraniumOre = new OreBlock("vibranium-ore");
-
         steelDust = new CoveredConveyor("steel-dust");
-
-        flash = new PowerTurret("Flash") {{
-            shootType = new PositionLightningBulletType(50f) {{
-                maxRange = 300;
-                rangeOverride = 300;
-                lightningColor = WHPal.rim3;
-                lightningDamage = 50;
-                lightning = 3;
-                lightningLength = 6;
-                lightningLengthRand = 6;
-            }};
-        }};
+        flash = new PowerTurret("Flash") {
+            {
+                this.shootType = new PositionLightningBulletType(50.0F) {
+                    {
+                        this.maxRange = 300.0F;
+                        this.rangeOverride = 300.0F;
+                        this.lightningColor = WHPal.rim3;
+                        this.lightningDamage = 50.0F;
+                        this.lightning = 3;
+                        this.lightningLength = 6;
+                        this.lightningLengthRand = 6;
+                        this.hitEffect = WHFx.lightningSpark;
+                    }
+                };
+            }
+        };
+        collapse = new ItemTurret("Collapse") {
+            {
+                this.ammo(new Object[]{WHItems.sealedPromethium, WHBullets.collapseSp, Items.phaseFabric, WHBullets.collaspsePf});
+            }
+        };
     }
 }
