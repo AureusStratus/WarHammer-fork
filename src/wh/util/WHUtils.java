@@ -35,300 +35,271 @@ import mindustry.type.Liquid;
 import mindustry.world.Tile;
 import org.jetbrains.annotations.Contract;
 
-public final class WHUtils {
-    public static final Rand rand = new Rand(0L);
-    private static Tile tileParma;
-    private static Posc result;
-    private static float cdist;
-    private static int idx;
-    private static final Vec2 tV = new Vec2();
-    private static final Vec2 tV2 = new Vec2();
-    private static final Vec2 tV3 = new Vec2();
-    private static final IntSet collidedBlocks = new IntSet();
-    private static final Rect rect = new Rect();
-    private static final Rect hitRect = new Rect();
-    private static final Seq<Tile> tiles = new Seq();
-    private static final Seq<Unit> units = new Seq();
-    private static Building tmpBuilding;
-    private static Unit tmpUnit;
-    private static boolean hit;
-    private static boolean hitB;
+import static arc.Core.atlas;
+import static mindustry.Vars.*;
 
-    private WHUtils() {
-    }
+    public final class WHUtils {
+        public static final Rand rand = new Rand(0);
 
-    @Contract(
-            pure = true
-    )
-    public static int reverse(int rotation) {
-        byte var10000;
-        switch (rotation) {
-            case 0:
-                var10000 = 2;
-                break;
-            case 1:
-                var10000 = 3;
-                break;
-            case 2:
-                var10000 = 0;
-                break;
-            case 3:
-                var10000 = 1;
-                break;
-            default:
-                throw new IllegalStateException("Unexpected value: " + rotation);
+        private static Tile tileParma;
+        private static Posc result;
+        private static float cdist;
+        private static int idx;
+        private static final Vec2 tV = new Vec2(), tV2 = new Vec2(), tV3 = new Vec2();
+        private static final IntSet collidedBlocks = new IntSet();
+        private static final Rect rect = new Rect(), hitRect = new Rect();
+        private static final Seq<Tile> tiles = new Seq<>();
+        private static final Seq<Unit> units = new Seq<>();
+        private static Building tmpBuilding;
+        private static Unit tmpUnit;
+        private static boolean hit, hitB;
+
+        private WHUtils() {}
+
+        @Contract(pure = true)
+        public static int reverse(int rotation) {
+            return switch (rotation) {
+                case 0 -> 2; case 2 -> 0; case 1 -> 3; case 3 -> 1;
+                default -> throw new IllegalStateException("Unexpected value: " + rotation);
+            };
         }
 
-        return var10000;
-    }
+        public static TextureRegion[][] splitLayers(String name, int size, int layerCount) {
+            TextureRegion[][] layers = new TextureRegion[layerCount][];
 
-    public static TextureRegion[][] splitLayers(String name, int size, int layerCount) {
-        TextureRegion[][] layers = new TextureRegion[layerCount][];
-
-        for(int i = 0; i < layerCount; ++i) {
-            layers[i] = split(name, size, i);
-        }
-
-        return layers;
-    }
-
-    public static TextureRegion[] split(String name, int size, int layer) {
-        TextureRegion textures = Core.atlas.find(name);
-        int margin = 0;
-        int countX = textures.width / size;
-        TextureRegion[] tiles = new TextureRegion[countX];
-
-        for(int i = 0; i < countX; ++i) {
-            tiles[i] = new TextureRegion(textures, i * (margin + size), layer * (margin + size), size, size);
-        }
-
-        return tiles;
-    }
-
-    public static TextureRegion[] split(String name, int size, int width, int height) {
-        TextureRegion textures = Core.atlas.find(name);
-        int textureSize = width * height;
-        TextureRegion[] regions = new TextureRegion[textureSize];
-        float tileWidth = (textures.u2 - textures.u) / (float)width;
-        float tileHeight = (textures.v2 - textures.v) / (float)height;
-
-        for(int i = 0; i < textureSize; ++i) {
-            float tileX = (float)(i % width) / (float)width;
-            float tileY = (float)(i / width) / (float)height;
-            TextureRegion region = new TextureRegion(textures);
-            region.u = Mathf.map(tileX, 0.0F, 1.0F, region.u, region.u2) + tileWidth * 0.02F;
-            region.v = Mathf.map(tileY, 0.0F, 1.0F, region.v, region.v2) + tileHeight * 0.02F;
-            region.u2 = region.u + tileWidth * 0.96F;
-            region.v2 = region.v + tileHeight * 0.96F;
-            region.width = region.height = size;
-            regions[i] = region;
-        }
-
-        return regions;
-    }
-
-    public static int relativeDirection(Building from, Building to) {
-        if (from != null && to != null) {
-            if (from.x == to.x && from.y > to.y) {
-                return (7 - from.rotation) % 4;
-            } else if (from.x == to.x && from.y < to.y) {
-                return (5 - from.rotation) % 4;
-            } else if (from.x > to.x && from.y == to.y) {
-                return (6 - from.rotation) % 4;
-            } else {
-                return from.x < to.x && from.y == to.y ? (4 - from.rotation) % 4 : -1;
+            for (int i = 0; i < layerCount; i++) {
+                layers[i] = split(name, size, i);
             }
-        } else {
+            return layers;
+        }
+
+        public static TextureRegion[] split(String name, int size, int layer) {
+            TextureRegion textures = atlas.find(name);
+            int margin = 0;
+            int countX = textures.width / size;
+            TextureRegion[] tiles = new TextureRegion[countX];
+
+            for (int i = 0; i < countX; i++) {
+                tiles[i] = new TextureRegion(textures, i * (margin + size), layer * (margin + size), size, size);
+            }
+            return tiles;
+        }
+
+        /**
+         * Gets multiple regions inside a {@link TextureRegion}.
+         *
+         * @param width  The amount of regions horizontally.
+         * @param height The amount of regions vertically.
+         */
+        public static TextureRegion[] split(String name, int size, int width, int height) {
+            TextureRegion textures = atlas.find(name);
+            int textureSize = width * height;
+            TextureRegion[] regions = new TextureRegion[textureSize];
+
+            float tileWidth = (textures.u2 - textures.u) / width;
+            float tileHeight = (textures.v2 - textures.v) / height;
+
+            for (int i = 0; i < textureSize; i++) {
+                float tileX = ((float) (i % width)) / width;
+                float tileY = ((float) (i / width)) / height;
+                TextureRegion region = new TextureRegion(textures);
+
+                //start coordinate
+                region.u = Mathf.map(tileX, 0f, 1f, region.u, region.u2) + tileWidth * 0.02f;
+                region.v = Mathf.map(tileY, 0f, 1f, region.v, region.v2) + tileHeight * 0.02f;
+                //end coordinate
+                region.u2 = region.u + tileWidth * 0.96f;
+                region.v2 = region.v + tileHeight * 0.96f;
+
+                region.width = region.height = size;
+
+                regions[i] = region;
+            }
+            return regions;
+        }
+
+        /** {@link Tile#relativeTo(int, int)} does not account for building rotation. */
+        public static int relativeDirection(Building from, Building to) {
+            if (from == null || to == null) return -1;
+            if (from.x == to.x && from.y > to.y) return (7 - from.rotation) % 4;
+            if (from.x == to.x && from.y < to.y) return (5 - from.rotation) % 4;
+            if (from.x > to.x && from.y == to.y) return (6 - from.rotation) % 4;
+            if (from.x < to.x && from.y == to.y) return (4 - from.rotation) % 4;
             return -1;
         }
-    }
 
-    public static void drawTiledFramesBar(float w, float h, float x, float y, Liquid liquid, float alpha) {
-        TextureRegion region = Vars.renderer.fluidFrames[liquid.gas ? 1 : 0][liquid.getAnimationFrame()];
-        Draw.color(liquid.color, liquid.color.a * alpha);
-        Draw.rect(region, x + w / 2.0F, y + h / 2.0F, w, h);
-        Draw.color();
-    }
+        public static void drawTiledFramesBar(float w, float h, float x, float y, Liquid liquid, float alpha) {
+            TextureRegion region = renderer.fluidFrames[liquid.gas ? 1 : 0][liquid.getAnimationFrame()];
 
-    public static float findLaserLength(Bullet b, float angle, float length) {
-        Tmp.v1.trnsExact(angle, length);
-        tileParma = null;
-        boolean found = World.raycast(b.tileX(), b.tileY(), World.toTile(b.x + Tmp.v1.x), World.toTile(b.y + Tmp.v1.y), (x, y) -> {
-            return (tileParma = Vars.world.tile(x, y)) != null && tileParma.team() != b.team && tileParma.block().absorbLasers;
-        });
-        return found && tileParma != null ? Math.max(6.0F, b.dst(tileParma.worldx(), tileParma.worldy())) : length;
-    }
-
-    public static void collideLine(Bullet hitter, Team team, Effect effect, float x, float y, float angle, float length, boolean large, boolean laser) {
-        if (laser) {
-            length = findLaserLength(hitter, angle, length);
+            Draw.color(liquid.color, liquid.color.a * alpha);
+            Draw.rect(region, x + w / 2f, y + h / 2f, w, h);
+            Draw.color();
         }
 
-        collidedBlocks.clear();
-        tV.trnsExact(angle, length);
-        Intc2 collider = (cx, cy) -> {
-            Building tile = Vars.world.build(cx, cy);
-            boolean collide = tile != null && collidedBlocks.add(tile.pos());
-            if (hitter.damage > 0.0F) {
-                float health = !collide ? 0.0F : tile.health;
-                if (collide && tile.team != team && tile.collide(hitter)) {
-                    tile.collision(hitter);
-                    hitter.type.hit(hitter, tile.x, tile.y);
-                }
+        public static float findLaserLength(Bullet b, float angle, float length) {
+            Tmp.v1.trnsExact(angle, length);
 
-                if (collide && hitter.type.testCollision(hitter, tile)) {
-                    hitter.type.hitTile(hitter, tile, (float)(cx * 8), (float)(cy * 8), health, false);
-                }
-            }
+            tileParma = null;
 
-        };
-        if (hitter.type.collidesGround) {
-            tV2.set(x, y);
-            tV3.set(tV2).add(tV);
-            World.raycastEachWorld(x, y, tV3.x, tV3.y, (cx, cy) -> {
-                collider.get(cx, cy);
-                Point2[] var4 = Geometry.d4;
-                int var5 = var4.length;
+            boolean found = World.raycast(b.tileX(), b.tileY(), World.toTile(b.x + Tmp.v1.x), World.toTile(b.y + Tmp.v1.y),
+                    (x, y) -> (tileParma = world.tile(x, y)) != null && tileParma.team() != b.team && tileParma.block().absorbLasers);
 
-                for(int var6 = 0; var6 < var5; ++var6) {
-                    Point2 p = var4[var6];
-                    Tile other = Vars.world.tile(p.x + cx, p.y + cy);
-                    if (other != null && (large || Intersector.intersectSegmentRectangle(tV2, tV3, other.getBounds(Tmp.r1)))) {
-                        collider.get(cx + p.x, cy + p.y);
+            return found && tileParma != null ? Math.max(6f, b.dst(tileParma.worldx(), tileParma.worldy())) : length;
+        }
+
+        public static void collideLine(Bullet hitter, Team team, Effect effect, float x, float y, float angle, float length, boolean large, boolean laser) {
+            if (laser) length = findLaserLength(hitter, angle, length);
+
+            collidedBlocks.clear();
+            tV.trnsExact(angle, length);
+
+            Intc2 collider = (cx, cy) -> {
+                Building tile = world.build(cx, cy);
+                boolean collide = tile != null && collidedBlocks.add(tile.pos());
+
+                if (hitter.damage > 0) {
+                    float health = !collide ? 0 : tile.health;
+
+                    if (collide && tile.team != team && tile.collide(hitter)) {
+                        tile.collision(hitter);
+                        hitter.type.hit(hitter, tile.x, tile.y);
+                    }
+
+                    //try to heal the tile
+                    if (collide && hitter.type.testCollision(hitter, tile)) {
+                        hitter.type.hitTile(hitter, tile, cx * tilesize, cy * tilesize, health, false);
                     }
                 }
+            };
 
-                return false;
+            if (hitter.type.collidesGround) {
+                tV2.set(x, y);
+                tV3.set(tV2).add(tV);
+                World.raycastEachWorld(x, y, tV3.x, tV3.y, (cx, cy) -> {
+                    collider.get(cx, cy);
+
+                    for (Point2 p : Geometry.d4) {
+                        Tile other = world.tile(p.x + cx, p.y + cy);
+                        if (other != null && (large || Intersector.intersectSegmentRectangle(tV2, tV3, other.getBounds(Tmp.r1)))) {
+                            collider.get(cx + p.x, cy + p.y);
+                        }
+                    }
+                    return false;
+                });
+            }
+
+            rect.setPosition(x, y).setSize(tV.x, tV.y);
+            float x2 = tV.x + x, y2 = tV.y + y;
+
+            if (rect.width < 0) {
+                rect.x += rect.width;
+                rect.width *= -1;
+            }
+
+            if (rect.height < 0) {
+                rect.y += rect.height;
+                rect.height *= -1;
+            }
+
+            float expand = 3f;
+
+            rect.y -= expand;
+            rect.x -= expand;
+            rect.width += expand * 2;
+            rect.height += expand * 2;
+
+            Cons<Unit> cons = unit -> {
+                unit.hitbox(hitRect);
+
+                Vec2 vec = Geometry.raycastRect(x, y, x2, y2, hitRect.grow(expand * 2));
+
+                if (vec != null && hitter.damage > 0) {
+                    effect.at(vec.x, vec.y);
+                    unit.collision(hitter, vec.x, vec.y);
+                    hitter.collision(unit, vec.x, vec.y);
+                }
+            };
+
+            units.clear();
+
+            Units.nearbyEnemies(team, rect, unit -> {
+                if (unit.checkTarget(hitter.type.collidesAir, hitter.type.collidesGround)) {
+                    units.add(unit);
+                }
             });
+
+            units.sort(unit -> unit.dst2(hitter));
+            units.each(cons);
         }
 
-        rect.setPosition(x, y).setSize(tV.x, tV.y);
-        float x2 = tV.x + x;
-        float y2 = tV.y + y;
-        Rect var10000;
-        if (rect.width < 0.0F) {
-            var10000 = rect;
-            var10000.x += rect.width;
-            var10000 = rect;
-            var10000.width *= -1.0F;
+        public static Rand rand(long id) {
+            rand.setSeed(id);
+            return rand;
+        }
+        public static <T> void shuffle(Seq<T> seq, Rand rand){
+            T[] items = seq.items;
+            for(int i = seq.size - 1; i >= 0; i--){
+                int ii = Mathf.random(i);
+                T temp = items[i];
+                items[i] = items[ii];
+                items[ii] = temp;
+            }
         }
 
-        if (rect.height < 0.0F) {
-            var10000 = rect;
-            var10000.y += rect.height;
-            var10000 = rect;
-            var10000.height *= -1.0F;
-        }
+        public static class EffectWrapper extends Effect{
+            public Effect effect = Fx.none;
+            public Color color = Color.white.cpy();
+            public float rot = -1;
+            public boolean rotModifier = false;
 
-        float expand = 3.0F;
-        var10000 = rect;
-        var10000.y -= expand;
-        var10000 = rect;
-        var10000.x -= expand;
-        var10000 = rect;
-        var10000.width += expand * 2.0F;
-        var10000 = rect;
-        var10000.height += expand * 2.0F;
-        Cons<Unit> cons = (unit) -> {
-            unit.hitbox(hitRect);
-            Vec2 vec = Geometry.raycastRect(x, y, x2, y2, hitRect.grow(expand * 2.0F));
-            if (vec != null && hitter.damage > 0.0F) {
-                effect.at(vec.x, vec.y);
-                unit.collision(hitter, vec.x, vec.y);
-                hitter.collision(unit, vec.x, vec.y);
+            public EffectWrapper(){
             }
 
-        };
-        units.clear();
-        Units.nearbyEnemies(team, rect, (unit) -> {
-            if (unit.checkTarget(hitter.type.collidesAir, hitter.type.collidesGround)) {
-                units.add(unit);
+
+            public EffectWrapper(Effect effect, Color color){
+                this.effect = effect;
+                this.color = color;
             }
 
-        });
-        units.sort((unit) -> {
-            return unit.dst2(hitter);
-        });
-        units.each(cons);
-    }
+            public EffectWrapper(Effect effect, Color color, float rot){
+                this.effect = effect;
+                this.color = color;
+                this.rot = rot;
+            }
 
-    public static Rand rand(long id) {
-        rand.setSeed(id);
-        return rand;
-    }
 
-    public static <T> void shuffle(Seq<T> seq, Rand rand) {
-        T[] items = seq.items;
 
-        for(int i = seq.size - 1; i >= 0; --i) {
-            int ii = Mathf.random(i);
-            T temp = items[i];
-            items[i] = items[ii];
-            items[ii] = temp;
+            public static EffectWrapper wrap(Effect effect, Color color){
+                return new EffectWrapper(effect, color);
+            }
+            public static EffectWrapper wrap(Effect effect, Color color, float rot){
+                return new EffectWrapper(effect, color, rot);
+            }
+            public static EffectWrapper wrap(Effect effect, float rot, boolean rotModifier){
+                return new EffectWrapper(effect, Color.white, rot).setRotModifier(rotModifier);
+            }
+
+            public EffectWrapper setRotModifier(boolean rotModifier){
+                this.rotModifier = rotModifier;
+                return this;
+            }
+
+            @Override
+            public void init(){
+                effect.init();
+                clip = effect.clip;
+                lifetime = effect.lifetime;
+            }
+
+            @Override
+            public void render(EffectContainer e){
+            }
+
+            @Override
+            public void create(float x, float y, float rotation, Color color, Object data){
+                effect.create(x, y, rot > 0 ? rotModifier ? rot + rotation : rot : rotation, this.color, data);
+            }
+
         }
 
-    }
-
-    public static class EffectWrapper extends Effect {
-        public Effect effect;
-        public Color color;
-        public float rot;
-        public boolean rotModifier;
-
-        public EffectWrapper() {
-            this.effect = Fx.none;
-            this.color = Color.white.cpy();
-            this.rot = -1.0F;
-            this.rotModifier = false;
-        }
-
-        public EffectWrapper(Effect effect, Color color) {
-            this.effect = Fx.none;
-            this.color = Color.white.cpy();
-            this.rot = -1.0F;
-            this.rotModifier = false;
-            this.effect = effect;
-            this.color = color;
-        }
-
-        public EffectWrapper(Effect effect, Color color, float rot) {
-            this.effect = Fx.none;
-            this.color = Color.white.cpy();
-            this.rot = -1.0F;
-            this.rotModifier = false;
-            this.effect = effect;
-            this.color = color;
-            this.rot = rot;
-        }
-
-        public static EffectWrapper wrap(Effect effect, Color color) {
-            return new EffectWrapper(effect, color);
-        }
-
-        public static EffectWrapper wrap(Effect effect, Color color, float rot) {
-            return new EffectWrapper(effect, color, rot);
-        }
-
-        public static EffectWrapper wrap(Effect effect, float rot, boolean rotModifier) {
-            return (new EffectWrapper(effect, Color.white, rot)).setRotModifier(rotModifier);
-        }
-
-        public EffectWrapper setRotModifier(boolean rotModifier) {
-            this.rotModifier = rotModifier;
-            return this;
-        }
-
-        public void init() {
-            this.effect.init();
-            this.clip = this.effect.clip;
-            this.lifetime = this.effect.lifetime;
-        }
-
-        public void render(Effect.EffectContainer e) {
-        }
-
-        public void create(float x, float y, float rotation, Color color, Object data) {
-            this.effect.create(x, y, this.rot > 0.0F ? (this.rotModifier ? this.rot + rotation : this.rot) : rotation, this.color, data);
-        }
-    }
 }
