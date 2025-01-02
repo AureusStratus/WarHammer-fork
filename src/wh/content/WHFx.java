@@ -40,6 +40,9 @@ import wh.graphics.Drawn;
 import wh.graphics.PositionLightning;
 import wh.struct.Vec2Seq;
 
+import static arc.graphics.g2d.Draw.color;
+import static arc.math.Angles.randLenVectors;
+
 public final class WHFx {
     public static final float EFFECT_MASK = 110.0001F;
     public static final float EFFECT_BOTTOM = 99.89F;
@@ -276,6 +279,16 @@ public final class WHFx {
             }
 
         });
+    }
+    public static Effect shootCircleSmall(Color color){
+        return get("shootCircleSmall", color, new Effect(30, e -> {
+            color(color, Color.white, e.fout() * 0.75f);
+            rand.setSeed(e.id);
+            randLenVectors(e.id, 3, 3 + 23 * e.fin(), e.rotation, 22, (x, y) -> {
+                Fill.circle(e.x + x, e.y + y, e.fout() * rand.random(1.5f, 3.2f));
+                Drawf.light(e.x + x, e.y + y, e.fout() * 4.5f, color, 0.7f);
+            });
+        }));
     }
 
     public static Effect get(String m, Color c, Effect effect) {
