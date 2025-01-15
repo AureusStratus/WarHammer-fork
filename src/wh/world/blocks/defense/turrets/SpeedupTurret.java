@@ -101,8 +101,11 @@ public class SpeedupTurret extends PowerTurret {
                 if (overheat < 1) {
                     overheat = 0;
                     requireCompleteCooling = false;
+
                 }
+
             }
+
         }
 
         public void coolDown() {

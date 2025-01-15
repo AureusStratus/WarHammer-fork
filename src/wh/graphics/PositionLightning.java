@@ -44,7 +44,7 @@ public final class PositionLightning {
     };
     public static final Cons<Position> none = (p) -> {
     };
-    public static final float lifetime;
+    public static float lifetime;
     public static final float WIDTH = 2.5F;
     public static final float RANGE_RAND = 5.0F;
     public static final float ROT_DST = 4.8F;
@@ -227,7 +227,6 @@ public final class PositionLightning {
         Vec2Seq lines = new Vec2Seq(param);
         tmp1.trns(angle, from.dst(to) / (float)(param - 1));
         lines.add(from);
-
         for(int i = 1; i < param - 2; ++i) {
             lines.add(tmp3.trns(angle - 90.0F, randomVec.get(i)).add(tmp1, (float)i).add(from.getX(), from.getY()));
         }

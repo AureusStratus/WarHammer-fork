@@ -1,35 +1,29 @@
 //
-// Source code recreated from a .class file by IntelliJ IDEA
-// (powered by FernFlower decompiler)
-//
-
 package wh.content;
 
 import mindustry.content.Fx;
 import mindustry.content.Items;
-import mindustry.content.Liquids;
-import mindustry.entities.TargetPriority;
+import mindustry.content.StatusEffects;
 import mindustry.entities.effect.MultiEffect;
+import mindustry.gen.Sounds;
 import mindustry.graphics.Pal;
 import mindustry.type.Category;
 import mindustry.world.Block;
 import mindustry.world.blocks.defense.turrets.ItemTurret;
+import mindustry.world.blocks.defense.turrets.LaserTurret;
 import mindustry.world.blocks.defense.turrets.PowerTurret;
 import mindustry.world.blocks.environment.Floor;
 import mindustry.world.blocks.environment.OreBlock;
-import mindustry.world.blocks.heat.HeatConductor;
-import mindustry.world.blocks.production.BurstDrill;
-import mindustry.world.draw.DrawDefault;
-import mindustry.world.draw.DrawHeatInput;
-import mindustry.world.draw.DrawHeatOutput;
-import mindustry.world.draw.DrawMulti;
+import mindustry.world.draw.*;
 import mindustry.world.meta.BlockGroup;
 import mindustry.world.meta.Env;
 import wh.entities.bullet.PositionLightningBulletType;
+import wh.entities.bullet.SlowLaserBulletType;
 import wh.graphics.WHPal;
 import wh.world.blocks.distribution.CoveredConveyor;
 import wh.world.blocks.distribution.HeatBelt;
 import wh.world.blocks.production.SpecificMineralDrill;
+
 
 import static mindustry.type.ItemStack.with;
 
@@ -38,7 +32,7 @@ public final class WHBlocks {
     public static Block vibraniumOre;
     public static Block steelDust;
     //turret
-    public static Block flash, collapse;
+    public static Block flash, collapse,sb3, sb4;
     //Drill
     public static Block sb, sb2;
 
@@ -67,7 +61,7 @@ public final class WHBlocks {
         };
         collapse = new ItemTurret("Collapse") {
             {
-                this.ammo(new Object[]{WHItems.sealedPromethium, WHBullets.collapseSp, Items.phaseFabric, WHBullets.collaspsePf});
+                this.ammo(WHItems.sealedPromethium, WHBullets.collapseSp, Items.phaseFabric, WHBullets.collaspsePf);
             }
         };
         sb = new SpecificMineralDrill("傻逼"){{
@@ -94,5 +88,40 @@ public final class WHBlocks {
             size = 1;
             regionRotated1 = 1;
         }};
-    }
+
+        sb3 = new PowerTurret("激光"){{
+            requirements(Category.turret, with(Items.copper, 1200, Items.lead, 350, Items.graphite, 300, Items.surgeAlloy, 325, Items.silicon, 325));
+            shootEffect = Fx.shootBigSmoke2;
+            shootCone = 40f;
+            recoil = 4f;
+            size = 4;
+            shake = 2f;
+            range = 195f;
+            reload = 500f;
+            shootSound = Sounds.laserbig;
+            loopSound = Sounds.beam;
+            loopSoundVolume = 2f;
+            envEnabled |= Env.space;
+
+            shootType = new SlowLaserBulletType(100){{
+                maxLength = 400f;
+                maxRange = 400f;
+                hitEffect = Fx.hitMeltdown;
+                hitColor = Pal.meltdownHit;
+                status = StatusEffects.melting;
+                drawSize = 420f;
+                lifetime=180f;
+                pierceCap = 5;
+                width =collisionWidth= 15f;
+                incendChance = 0.4f;
+                incendSpread = 5f;
+                incendAmount = 1;
+                ammoMultiplier = 1f;
+            }};
+
+            scaledHealth = 200;
+            coolant = consumeCoolant(0.5f);
+            consumePower(17f);
+        }};
+}
 }

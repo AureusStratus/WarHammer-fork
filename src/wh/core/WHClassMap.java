@@ -16,7 +16,6 @@ import wh.entities.bullet.BoidBulletType;
 import wh.entities.bullet.ChainLightingBulletType;
 import wh.entities.bullet.EffectBulletType;
 import wh.entities.bullet.LightningLinkerBulletType;
-import wh.entities.bullet.MagmaBulletType;
 import wh.entities.bullet.PositionLightningBulletType;
 import wh.entities.bullet.ShieldBreakerType;
 import wh.entities.bullet.StrafeLaserBulletType;
@@ -51,7 +50,6 @@ final class WHClassMap {
         ClassMap.classes.put("AccelBulletType", AccelBulletType.class);
         ClassMap.classes.put("BoidBulletType", BoidBulletType.class);
         ClassMap.classes.put("EffectBulletType", EffectBulletType.class);
-        ClassMap.classes.put("MagmaBulletType", MagmaBulletType.class);
         ClassMap.classes.put("BlackHoleBulletType", BlackHoleBulletType.class);
         ClassMap.classes.put("LightningLinkerBulletType", LightningLinkerBulletType.class);
         ClassMap.classes.put("ChainLightingBulletType", ChainLightingBulletType.class);

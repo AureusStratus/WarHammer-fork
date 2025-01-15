@@ -80,25 +80,6 @@ public final class WHDamage {
 
     }
 
-    public static void trueEachTile(float wx, float wy, float range, Cons<Tile> cons) {
-        collidedBlocks.clear();
-        int tx = World.toTile(wx);
-        int ty = World.toTile(wy);
-        int tileRange = Mathf.floorPositive(range / 8.0F);
-
-        for(int x = tx - tileRange - 2; x <= tx + tileRange + 2; ++x) {
-            for(int y = ty - tileRange - 2; y <= ty + tileRange + 2; ++y) {
-                if (Mathf.within((float)(x * 8), (float)(y * 8), wx, wy, range)) {
-                    Tile other = Vars.world.tile(x, y);
-                    if (other != null && !collidedBlocks.contains(other.pos())) {
-                        cons.get(other);
-                        collidedBlocks.add(other.pos());
-                    }
-                }
-            }
-        }
-
-    }
 
     public static void allNearbyEnemies(Team team, float x, float y, float radius, Cons<Healthc> cons) {
         Units.nearbyEnemies(team, x - radius, y - radius, radius * 2.0F, radius * 2.0F, (unit) -> {
@@ -341,77 +322,5 @@ public final class WHDamage {
         });
         distances.sort();
         return Math.min(distances.size >= pierceCap && pierceCap >= 0 ? Math.max(6.0F, distances.get(pierceCap - 1)) : length, tmpFloat);
-    }
-
-    public static void completeDamage(Team team, float x, float y, float radius, float damage, float buildDmbMult, boolean air, boolean ground) {
-        allNearbyEnemies(team, x, y, radius, (t) -> {
-            if (t instanceof Unit) {
-                Unit u = (Unit)t;
-                if (u.isFlying() && air || u.isGrounded() && ground) {
-                    u.damage(damage);
-                }
-            } else if (t instanceof Building) {
-                Building b = (Building)t;
-                if (ground) {
-                    b.damage(team, damage * buildDmbMult);
-                }
-            }
-
-        });
-    }
-
-    public static void completeDamage(Team team, float x, float y, float radius, float damage) {
-        completeDamage(team, x, y, radius, damage, 1.0F, true, true);
-    }
-
-    public static Vec2 linecast(boolean ground, boolean air, Team team, float x, float y, float angle, float length) {
-        tr.trnsExact(angle, length);
-        tmpBuilding = null;
-        if (ground) {
-            seg1.set(x, y);
-            seg2.set(seg1).add(tr);
-            World.raycastEachWorld(x, y, seg2.x, seg2.y, (cx, cy) -> {
-                Building tile = Vars.world.build(cx, cy);
-                if (tile != null && tile.team != team) {
-                    tmpBuilding = tile;
-                    Tmp.v1.set((float)(cx * 8), (float)(cy * 8));
-                    return true;
-                } else {
-                    return false;
-                }
-            });
-        }
-
-        float expand = 3.0F;
-        rect.setPosition(x, y).setSize(tr.x, tr.y).normalize().grow(expand * 2.0F);
-        float x2 = tr.x + x;
-        float y2 = tr.y + y;
-        tmpUnit = null;
-        Units.nearbyEnemies(team, rect, (e) -> {
-            if ((tmpUnit == null || !(e.dst2(x, y) > tmpUnit.dst2(x, y))) && e.checkTarget(ground, air)) {
-                e.hitbox(hitrect);
-                Vec2 vec = Geometry.raycastRect(x, y, x2, y2, hitrect.grow(expand * 2.0F));
-                if (vec != null) {
-                    tmpUnit = e;
-                    Tmp.v2.set(vec);
-                }
-
-            }
-        });
-        if (tmpBuilding != null && tmpUnit != null) {
-            if (Mathf.dst2(x, y, Tmp.v1.x, Tmp.v1.y) <= Mathf.dst2(x, y, Tmp.v2.x, Tmp.v2.y)) {
-                return Tmp.v1;
-            }
-        } else {
-            if (tmpBuilding != null) {
-                return Tmp.v1;
-            }
-
-            if (tmpUnit != null) {
-                return Tmp.v2;
-            }
-        }
-
-        return tr.add(x, y);
     }
 }

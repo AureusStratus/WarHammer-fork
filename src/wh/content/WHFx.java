@@ -20,32 +20,40 @@ import arc.math.Mathf;
 import arc.math.Rand;
 import arc.math.geom.Position;
 import arc.math.geom.Vec2;
+import arc.struct.FloatSeq;
 import arc.struct.IntMap;
+import arc.util.Structs;
 import arc.util.Time;
 import arc.util.Tmp;
 import arc.util.pooling.Pool;
 
 import java.util.Objects;
 
+import arc.util.pooling.Pools;
 import mindustry.Vars;
 import mindustry.content.Fx;
 import mindustry.entities.Effect;
 import mindustry.gen.Bullet;
+import mindustry.gen.Unit;
 import mindustry.graphics.Drawf;
+import mindustry.graphics.Layer;
 import mindustry.graphics.Pal;
 import mindustry.graphics.Trail;
 import mindustry.type.UnitType;
 import mindustry.world.Tile;
 import mindustry.world.blocks.environment.Floor;
 import mindustry.world.blocks.environment.SteamVent;
+import wh.entities.abilities.PcShieldArcAbility;
+import wh.entities.bullet.SlowLaserBulletType;
 import wh.graphics.Drawn;
 import wh.graphics.PositionLightning;
 import wh.struct.Vec2Seq;
 import wh.util.WHUtils;
 
 import static arc.graphics.g2d.Draw.color;
-import static arc.graphics.g2d.Lines.lineAngle;
+import static arc.graphics.g2d.Lines.*;
 import static arc.math.Angles.randLenVectors;
+import static mindustry.content.Fx.rand;
 
 public final class WHFx {
     public static final float EFFECT_MASK = 110.0001F;
@@ -60,44 +68,6 @@ public final class WHFx {
     public static final Vec2 v9 = new Vec2();
     public static final IntMap<Effect> same = new IntMap();
     public static final int[] oneArr = new int[]{1};
-    private static int integer;
-    public static Effect boolSelector = new Effect(0.0F, 0.0F, (e) -> {
-    });
-    //8个线粒子
-    public static Effect hitSpark = new Effect(45.0F, (e) -> {
-        Draw.color(e.color, Color.white, e.fout() * 0.3F);
-        Lines.stroke(e.fout() * 1.6F);
-        //rand.setSeed(e.id);：这行代码设置了随机数生成器的种子，这样可以确保每次执行 Effect 时，随机数生成的结果都是一致的。
-        rand.setSeed(e.id);
-        //(x, y) -> {...}：这是一个 lambda 表达式，它定义了生成的每个向量的 x 和 y 分量将如何被使用。
-        // 在这个 lambda 表达式中，x 和 y 是生成的随机向量的分量，而 {...} 中的代码则定义了对这些分量的操作。
-        Angles.randLenVectors(e.id, 8, e.finpow() * 20.0F, (x, y) -> {
-            //float ang = Mathf.angle(x, y);：这行代码计算了点 (x, y) 与 x 轴正方向之间的角度，并将结果存储在变量 ang 中。
-            // Mathf.angle 方法返回的角度是弧度制的，范围从 -π 到 π。
-            float ang = Mathf.angle(x, y);
-            //e.fout() * rand.random(1.95F, 4.25F) + 1.0F 计算出线条的最终长度
-            //.x 和 e.y 是 Effect 对象的当前位置。
-            Lines.lineAngle(e.x + x, e.y + y, ang, e.fout() * rand.random(1.95F, 4.25F) + 1.0F);
-        });
-    });
-    public static Effect hitSparkLarge = new Effect(40.0F, (e) -> {
-        Draw.color(e.color, Color.white, e.fout() * 0.3F);
-        Lines.stroke(e.fout() * 1.6F);
-        rand.setSeed(e.id);
-        Angles.randLenVectors(e.id, 18, e.finpow() * 27.0F, (x, y) -> {
-            float ang = Mathf.angle(x, y);
-            Lines.lineAngle(e.x + x, e.y + y, ang, e.fout() * (float) rand.random(4, 8) + 2.0F);
-        });
-    });
-    public static Effect hitSparkHuge = new Effect(70.0F, (e) -> {
-        Draw.color(e.color, Color.white, e.fout() * 0.3F);
-        Lines.stroke(e.fout() * 1.6F);
-        rand.setSeed(e.id);
-        Angles.randLenVectors(e.id, 26, e.finpow() * 65.0F, (x, y) -> {
-            float ang = Mathf.angle(x, y);
-            Lines.lineAngle(e.x + x, e.y + y, ang, e.fout() * (float) rand.random(6, 9) + 3.0F);
-        });
-    });
     public static Effect lightningSpark;
     public static Effect collapserBulletExplode;
     public static Effect posLightning;
@@ -152,9 +122,72 @@ public final class WHFx {
     public static Effect groundRise;
     public static Effect squSpark1;
     public static Effect triSpark2;
-
+    public static Effect tank3sMissileTrailSmoke;
+    public static Effect tank3sExplosionSmoke;
     private WHFx() {
     }
+    public interface EffectParam {
+        void draw(long var1, float var3, float var4, float var5, float var6);
+    }
+
+    public static class ateData implements Pool.Poolable {
+        public float width;
+        public int length;
+        public float inRad;
+        public float outRad;
+        public float speed;
+        public transient Trail trail;
+        public Bullet owner;
+        public boolean out = false;
+
+        public ateData() {
+        }
+
+        public void reset() {
+            this.width = 0.0F;
+            this.length = 0;
+            this.inRad = this.outRad = this.speed = 0.0F;
+            this.trail = null;
+            this.owner = null;
+            this.out = false;
+        }
+    }
+    public static Effect boolSelector = new Effect(0, 0, e -> {});
+    public static Effect hitSpark = new Effect(45.0F, (e) -> {
+        Draw.color(e.color, Color.white, e.fout() * 0.3F);
+        Lines.stroke(e.fout() * 1.6F);
+        //rand.setSeed(e.id);：这行代码设置了随机数生成器的种子，这样可以确保每次执行 Effect 时，随机数生成的结果都是一致的。
+        rand.setSeed(e.id);
+        //(x, y) -> {...}：这是一个 lambda 表达式，它定义了生成的每个向量的 x 和 y 分量将如何被使用。
+        // 在这个 lambda 表达式中，x 和 y 是生成的随机向量的分量，而 {...} 中的代码则定义了对这些分量的操作。
+        Angles.randLenVectors(e.id, 8, e.finpow() * 20.0F, (x, y) -> {
+            //float ang = Mathf.angle(x, y);：这行代码计算了点 (x, y) 与 x 轴正方向之间的角度，并将结果存储在变量 ang 中。
+            // Mathf.angle 方法返回的角度是弧度制的，范围从 -π 到 π。
+            float ang = Mathf.angle(x, y);
+            //e.fout() * rand.random(1.95F, 4.25F) + 1.0F 计算出线条的最终长度
+            //.x 和 e.y 是 Effect 对象的当前位置。
+            Lines.lineAngle(e.x + x, e.y + y, ang, e.fout() * rand.random(1.95F, 4.25F) + 1.0F);
+        });
+    });
+
+    public static Effect hitSparkLarge = new Effect(40.0F, (e) -> {
+        Draw.color(e.color, Color.white, e.fout() * 0.3F);
+        Lines.stroke(e.fout() * 1.6F);
+        rand.setSeed(e.id);
+        Angles.randLenVectors(e.id, 18, e.finpow() * 27.0F, (x, y) -> {
+            float ang = Mathf.angle(x, y);
+            Lines.lineAngle(e.x + x, e.y + y, ang, e.fout() * (float) rand.random(4, 8) + 2.0F);
+        });
+    });
+    public static Effect hitSparkHuge = new Effect(70.0F, (e) -> {
+        Draw.color(e.color, Color.white, e.fout() * 0.3F);
+        Lines.stroke(e.fout() * 1.6F);
+        rand.setSeed(e.id);
+        Angles.randLenVectors(e.id, 26, e.finpow() * 65.0F, (x, y) -> {
+            float ang = Mathf.angle(x, y);
+            Lines.lineAngle(e.x + x, e.y + y, ang, e.fout() * (float) rand.random(6, 9) + 3.0F);
+        });
+    });
     //这行代码计算了 fout 的值。它使用了一个三元运算符 ?:，根据 fin 的值来决定返回的结果。
     // 如果 fin 大于等于 1.0F - margin，则返回 1.0F - (fin - (1.0F - margin)) / margin；否则，直接返回 1.0F。
     public static float fout(float fin, float margin) {
@@ -586,6 +619,54 @@ public final class WHFx {
 
         });
     }
+    public static Effect shootLine(float size, float angleRange) {
+        int num = Mathf.clamp((int) size / 6, 6, 20);
+        float thick = Mathf.clamp(0.75f, 2f, size / 22f);
+
+        return new Effect(37f, e -> {
+            color(e.color, Color.white, e.fout() * 0.7f);
+            rand.setSeed(e.id);
+            WHUtils.randLenVectors(e.id, num, 4 + (size * 1.2f) * e.fin(), size * 0.15f * e.fin(), e.rotation, angleRange, (x, y) -> {
+                Lines.stroke(thick * e.fout(0.32f));
+                lineAngle(e.x + x, e.y + y, Mathf.angle(x, y), (e.fslope() + e.fin()) * 0.5f * (size * rand.random(0.15f, 0.5f) + rand.random(2f)) + rand.random(2f));
+                Drawf.light(e.x + x, e.y + y, e.fslope() * (size * 0.5f + 14f) + 3, e.color, 0.7f);
+            });
+        });
+    }
+    public static Effect genericCharge(Color color, float size, float range, float lifetime){
+        return new Effect(lifetime, e -> {
+            color(color);
+            Lines.stroke(size / 7f * e.fin());
+
+            randLenVectors(e.id, 15, 3f + 60f * e.fout(), e.rotation, range, (x, y) -> {
+                lineAngle(e.x + x, e.y + y, Mathf.angle(x, y), e.fslope() * size + size / 4f);
+                Drawf.light(e.x + x, e.y + y, e.fout(0.25f) * size, color, 0.7f);
+            });
+
+            Fill.circle(e.x, e.y, size * 0.48f * Interp.pow3Out.apply(e.fin()));
+
+        });
+    }
+    public static Effect arcShieldBreak = new Effect(40, e -> {
+        Lines.stroke(3 * e.fout(), e.color);
+        if(e.data instanceof Unit u){
+            PcShieldArcAbility ab = (PcShieldArcAbility) Structs.find(u.abilities, a -> a instanceof PcShieldArcAbility);
+            if(ab != null){
+                Vec2 pos = Tmp.v1.set(ab.x, ab.y).rotate(u.rotation - 90f).add(u);
+                Lines.arc(pos.x, pos.y, ab.radius + ab.width/2, ab.angle / 360f, u.rotation + ab.angleOffset - ab.angle / 2f);
+                Lines.arc(pos.x, pos.y, ab.radius - ab.width/2, ab.angle / 360f, u.rotation + ab.angleOffset - ab.angle / 2f);
+                for(int i : Mathf.signs){
+                    float
+                            px = pos.x + Angles.trnsx(u.rotation + ab.angleOffset - ab.angle / 2f * i, ab.radius + ab.width / 2),
+                            py = pos.y + Angles.trnsy(u.rotation + ab.angleOffset - ab.angle / 2f * i, ab.radius + ab.width / 2),
+                            px1 = pos.x + Angles.trnsx(u.rotation + ab.angleOffset - ab.angle / 2f * i, ab.radius - ab.width / 2),
+                            py1 = pos.y + Angles.trnsy(u.rotation + ab.angleOffset - ab.angle / 2f * i, ab.radius - ab.width / 2);
+                    Lines.line(px, py, px1, py1);
+                }
+            }
+        }
+    });
+
 
     static {
         lightningSpark = new Effect(Fx.chainLightning.lifetime, (e) -> {
@@ -1096,122 +1177,119 @@ public final class WHFx {
                 Fill.circle(e.x + x, e.y + y, e.rotation * e.fout());
             });
         });
-        chainLightningFade = (new Effect(220.0F, 500.0F, (e) -> {
-            Object patt28005$temp = e.data;
-            if (patt28005$temp instanceof Position) {
-                Position p = (Position) patt28005$temp;
-                float tx = p.getX();
-                float ty = p.getY();
-                float dst = Mathf.dst(e.x, e.y, tx, ty);
-                Tmp.v1.set(p).sub(e.x, e.y).nor();
-                e.lifetime = dst * 0.3F;
-                float normx = Tmp.v1.x;
-                float normy = Tmp.v1.y;
-                float range = e.rotation;
-                int links = Mathf.ceil(dst / range);
-                float spacing = dst / (float) links;
-                Lines.stroke(2.5F * Mathf.curve(e.fout(), 0.0F, 0.7F));
-                Draw.color(e.color, Color.white, e.fout() * 0.6F);
-                Lines.beginLine();
-                Fill.circle(e.x, e.y, Lines.getStroke() / 2.0F);
-                Lines.linePoint(e.x, e.y);
-                rand.setSeed(e.id);
-                float fin = Mathf.curve(e.fin(), 0.0F, 0.5F);
-                float nx = e.x;
-                float ny = e.y;
 
-                int i;
-                float f;
-                for (i = 0; i < (int) ((float) links * fin); ++i) {
-                    if (i == links - 1) {
-                        nx = tx;
-                        ny = ty;
-                    } else {
-                        f = (float) (i + 1) * spacing;
-                        Tmp.v1.setToRandomDirection(rand).scl(range / 2.0F);
-                        nx = e.x + normx * f + Tmp.v1.x;
-                        ny = e.y + normy * f + Tmp.v1.y;
-                    }
 
-                    Lines.linePoint(nx, ny);
+        chainLightningFade = new Effect(220f, 500f, e -> {
+            if (!(e.data instanceof Position)) return;
+            Position p = e.data();
+            float tx = p.getX(), ty = p.getY(), dst = Mathf.dst(e.x, e.y, tx, ty);
+            Tmp.v1.set(p).sub(e.x, e.y).nor();
+
+            e.lifetime = dst * 0.3f;
+            float normx = Tmp.v1.x, normy = Tmp.v1.y;
+            float range = e.rotation;
+            int links = Mathf.ceil(dst / range);
+            float spacing = dst / links;
+
+            stroke(2.5f * Mathf.curve(e.fout(), 0, 0.7f));
+            color(e.color, Color.white, e.fout() * 0.6f);
+
+            beginLine();
+
+            Fill.circle(e.x, e.y, getStroke() / 2);
+            linePoint(e.x, e.y);
+
+            rand.setSeed(e.id);
+
+            float fin = Mathf.curve(e.fin(), 0, lightningAlign);
+            int i;
+            float nx = e.x, ny = e.y;
+            for (i = 0; i < (int) (links * fin); i++) {
+                if (i == links - 1) {
+                    nx = tx;
+                    ny = ty;
+                } else {
+                    float len = (i + 1) * spacing;
+                    Tmp.v1.setToRandomDirection(rand).scl(range / 2f);
+                    nx = e.x + normx * len + Tmp.v1.x;
+                    ny = e.y + normy * len + Tmp.v1.y;
                 }
 
-                if (i < links) {
-                    f = Mathf.clamp(fin * (float) links % 1.0F);
-                    float len = (float) (i + 1) * spacing;
-                    Tmp.v1.setToRandomDirection(rand).scl(range / 2.0F);
-                    Tmp.v2.set(nx, ny);
-                    if (i == links - 1) {
-                        Tmp.v2.lerp(tx, ty, f);
-                    } else {
-                        Tmp.v2.lerp(e.x + normx * len + Tmp.v1.x, e.y + normy * len + Tmp.v1.y, f);
-                    }
-
-                    Lines.linePoint(Tmp.v2.x, Tmp.v2.y);
-                    Fill.circle(Tmp.v2.x, Tmp.v2.y, Lines.getStroke() / 2.0F);
-                }
-
-                Lines.endLine();
+                linePoint(nx, ny);
             }
-        })).followParent(false);
-        chainLightningFadeReversed = (new Effect(220.0F, 500.0F, (e) -> {
-            Object patt30196$temp = e.data;
-            if (patt30196$temp instanceof Position) {
-                Position p = (Position) patt30196$temp;
-                float tx = e.x;
-                float ty = e.y;
-                float dst = Mathf.dst(p.getX(), p.getY(), tx, ty);
-                Tmp.v1.set(e.x, e.y).sub(p).nor();
-                e.lifetime = dst * 0.3F;
-                float normx = Tmp.v1.x;
-                float normy = Tmp.v1.y;
-                float range = e.rotation;
-                int links = Mathf.ceil(dst / range);
-                float spacing = dst / (float) links;
-                Lines.stroke(2.5F * Mathf.curve(e.fout(), 0.0F, 0.7F));
-                Draw.color(e.color, Color.white, e.fout() * 0.6F);
-                Lines.beginLine();
-                Fill.circle(p.getX(), p.getY(), Lines.getStroke() / 2.0F);
-                Lines.linePoint(p);
-                rand.setSeed(e.id);
-                float fin = Mathf.curve(e.fin(), 0.0F, 0.5F);
-                float nx = p.getX();
-                float ny = p.getY();
 
-                int i;
-                float f;
-                for (i = 0; i < (int) ((float) links * fin); ++i) {
-                    if (i == links - 1) {
-                        nx = tx;
-                        ny = ty;
-                    } else {
-                        f = (float) (i + 1) * spacing;
-                        Tmp.v1.setToRandomDirection(rand).scl(range / 2.0F);
-                        nx = p.getX() + normx * f + Tmp.v1.x;
-                        ny = p.getY() + normy * f + Tmp.v1.y;
-                    }
+            if (i < links) {
+                float f = Mathf.clamp(fin * links % 1);
+                float len = (i + 1) * spacing;
+                Tmp.v1.setToRandomDirection(rand).scl(range / 2f);
+                Tmp.v2.set(nx, ny);
+                if (i == links - 1) Tmp.v2.lerp(tx, ty, f);
+                else Tmp.v2.lerp(e.x + (normx * len + Tmp.v1.x), e.y + (normy * len + Tmp.v1.y), f);
 
-                    Lines.linePoint(nx, ny);
-                }
-
-                if (i < links) {
-                    f = Mathf.clamp(fin * (float) links % 1.0F);
-                    float len = (float) (i + 1) * spacing;
-                    Tmp.v1.setToRandomDirection(rand).scl(range / 2.0F);
-                    Tmp.v2.set(nx, ny);
-                    if (i == links - 1) {
-                        Tmp.v2.lerp(tx, ty, f);
-                    } else {
-                        Tmp.v2.lerp(p.getX() + normx * len + Tmp.v1.x, p.getY() + normy * len + Tmp.v1.y, f);
-                    }
-
-                    Lines.linePoint(Tmp.v2.x, Tmp.v2.y);
-                    Fill.circle(Tmp.v2.x, Tmp.v2.y, Lines.getStroke() / 2.0F);
-                }
-
-                Lines.endLine();
+                linePoint(Tmp.v2.x, Tmp.v2.y);
+                Fill.circle(Tmp.v2.x, Tmp.v2.y, getStroke() / 2);
             }
-        })).followParent(false);
+
+            endLine();
+        }).followParent(false);
+
+
+        /**{@link Effect.EffectContainer} as Target */
+        chainLightningFadeReversed = new Effect(220f, 500f, e -> {
+            if (!(e.data instanceof Position)) return;
+            Position p = e.data();
+            float tx = e.x, ty = e.y, dst = Mathf.dst(p.getX(), p.getY(), tx, ty);
+            Tmp.v1.set(e.x, e.y).sub(p).nor();
+
+            e.lifetime = dst * 0.3f;
+            float normx = Tmp.v1.x, normy = Tmp.v1.y;
+            float range = e.rotation;
+            int links = Mathf.ceil(dst / range);
+            float spacing = dst / links;
+
+            Lines.stroke(2.5f * Mathf.curve(e.fout(), 0, 0.7f));
+            color(e.color, Color.white, e.fout() * 0.6f);
+
+            Lines.beginLine();
+
+            Fill.circle(p.getX(), p.getY(), Lines.getStroke() / 2);
+            Lines.linePoint(p);
+
+            rand.setSeed(e.id);
+
+            float fin = Mathf.curve(e.fin(), 0, lightningAlign);
+            int i;
+            float nx = p.getX(), ny = p.getY();
+            for (i = 0; i < (int) (links * fin); i++) {
+                if (i == links - 1) {
+                    nx = tx;
+                    ny = ty;
+                } else {
+                    float len = (i + 1) * spacing;
+                    Tmp.v1.setToRandomDirection(rand).scl(range / 2f);
+                    nx = p.getX() + normx * len + Tmp.v1.x;
+                    ny = p.getY() + normy * len + Tmp.v1.y;
+                }
+
+                linePoint(nx, ny);
+            }
+
+            if (i < links) {
+                float f = Mathf.clamp(fin * links % 1);
+                float len = (i + 1) * spacing;
+                Tmp.v1.setToRandomDirection(rand).scl(range / 2f);
+                Tmp.v2.set(nx, ny);
+                if (i == links - 1) Tmp.v2.lerp(tx, ty, f);
+                else Tmp.v2.lerp(p.getX() + (normx * len + Tmp.v1.x), p.getY() + (normy * len + Tmp.v1.y), f);
+
+                linePoint(Tmp.v2.x, Tmp.v2.y);
+                Fill.circle(Tmp.v2.x, Tmp.v2.y, getStroke() / 2);
+            }
+
+            Lines.endLine();
+        }).followParent(false);
+
+
         techBlueCircleSplash = new Effect(26.0F, (e) -> {
             Draw.color(Pal.techBlue);
             Angles.randLenVectors(e.id, 4, 3.0F + 23.0F * e.fin(), (x, y) -> {
@@ -1445,46 +1523,38 @@ public final class WHFx {
                 Fill.poly(e.x + x, e.y + y, 3, e.fout() * 8.0F * rand.random(0.8F, 1.2F), e.rotation + randN * e.fin());
             });
         });
-    }
+        tank3sMissileTrailSmoke = new Effect(180f, 300f, b -> {
+            float intensity = 2f;
+            color(b.color, 0.4f);
+                rand.setSeed(b.id);
+                float lenScl = rand.random(0.5f, 1f);
+                b.scaled(b.lifetime * lenScl, e -> {
+                    randLenVectors(e.id , e.fin(Interp.pow10Out), (int)(intensity*2), 10f * intensity, (x, y, in, out) -> {
+                        float fout = e.fout(Interp.pow5Out) * rand.random(0.5f, 1f);
+                        float rad = 4*intensity*fout;
+                        Fill.circle(e.x + x, e.y + y, rad);
+                        Drawf.light(e.x + x, e.y + y, rad * 2.5f, b.color, 0.5f);
+                    });
+                });
+        }).layer(Layer.bullet - 0.5f);
 
-    public interface EffectParam {
-        void draw(long var1, float var3, float var4, float var5, float var6);
-    }
+        tank3sExplosionSmoke = new Effect(180f, 300f, b -> {
+            float intensity = 2f;
+            color(b.color, 0.7f);
+            for(int i = 0; i < 4; i++){
+                rand.setSeed(b.id*2 + i);
+                float lenScl = rand.random(0.5f, 1f);
+                int fi = i;
+                b.scaled(b.lifetime * lenScl, e -> {
+                    randLenVectors(e.id + fi - 1, e.fin(Interp.pow10Out), (int)( intensity), 15f * intensity, (x, y, in, out) -> {
+                        float fout = e.fout(Interp.pow5Out) * rand.random(0.5f, 1f);
+                        float rad = fout * ((2f + intensity) * 2.35f);
 
-    public static class ateData implements Pool.Poolable {
-        public float width;
-        public int length;
-        public float inRad;
-        public float outRad;
-        public float speed;
-        public transient Trail trail;
-        public Bullet owner;
-        public boolean out = false;
-
-        public ateData() {
-        }
-
-        public void reset() {
-            this.width = 0.0F;
-            this.length = 0;
-            this.inRad = this.outRad = this.speed = 0.0F;
-            this.trail = null;
-            this.owner = null;
-            this.out = false;
-        }
-    }
-    public static Effect shootLine(float size, float angleRange){
-        int num = Mathf.clamp((int)size / 6, 6, 20);
-        float thick = Mathf.clamp(0.75f, 2f, size / 22f);
-
-        return new Effect(37f, e -> {
-            color(e.color, Color.white, e.fout() * 0.7f);
-            rand.setSeed(e.id);
-            WHUtils.randLenVectors(e.id, num, 4 + (size * 1.2f) * e.fin(), size * 0.15f * e.fin(), e.rotation, angleRange, (x, y) -> {
-                Lines.stroke(thick * e.fout(0.32f));
-                lineAngle(e.x + x, e.y + y, Mathf.angle(x, y), (e.fslope() + e.fin()) * 0.5f * (size * rand.random(0.15f, 0.5f) + rand.random(2f)) + rand.random(2f));
-                Drawf.light(e.x + x, e.y + y, e.fslope() * (size * 0.5f + 14f) + 3, e.color, 0.7f);
-            });
+                        Fill.circle(e.x + x, e.y + y, rad);
+                        Drawf.light(e.x + x, e.y + y, rad * 2.5f, b.color, 0.5f);
+                    });
+                });
+            }
         });
     }
 }

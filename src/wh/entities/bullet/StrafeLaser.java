@@ -188,7 +188,7 @@ public class StrafeLaser extends BulletType{
 		if(hitShake > 0){
 			Effect.shake(hitShake, hitShake, b);
 		}
-	}
+    }
 	
 	@Override
 	public void hit(Bullet b, float x, float y){

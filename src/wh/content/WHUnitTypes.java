@@ -5,7 +5,6 @@
 
 package wh.content;
 
-import arc.Core;
 import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
 import arc.graphics.g2d.Fill;
@@ -15,7 +14,6 @@ import arc.math.Angles;
 import arc.math.Interp;
 import arc.math.Mathf;
 import arc.math.geom.Vec2;
-import arc.struct.Seq;
 import arc.util.Time;
 import arc.util.Tmp;
 import mindustry.content.Fx;
@@ -29,7 +27,7 @@ import mindustry.entities.bullet.*;
 import mindustry.entities.effect.MultiEffect;
 import mindustry.entities.effect.ParticleEffect;
 import mindustry.entities.effect.WaveEffect;
-import mindustry.entities.part.DrawPart;
+import mindustry.entities.effect.WrapEffect;
 import mindustry.entities.part.RegionPart;
 import mindustry.entities.part.ShapePart;
 import mindustry.entities.pattern.*;
@@ -41,34 +39,39 @@ import mindustry.type.UnitType;
 import mindustry.type.Weapon;
 import mindustry.type.unit.TankUnitType;
 import mindustry.type.weapons.PointDefenseWeapon;
-import mindustry.world.Block;
-import mindustry.world.blocks.defense.turrets.Turret;
 import wh.entities.abilities.AdaptedHealAbility;
+import wh.entities.abilities.PcShieldArcAbility;
 import wh.entities.abilities.ShockWaveAbility;
 import wh.entities.bullet.*;
 import wh.gen.NucleoidUnit;
 import wh.gen.PesterUnit;
 import wh.gen.WHSounds;
-import wh.graphics.PositionLightning;
 import wh.graphics.WHPal;
 import wh.type.unit.NucleoidUnitType;
 import wh.type.unit.PesterUnitType;
 import wh.util.WHUtils;
 import wh.util.WHUtils.EffectWrapper;
-import wh.world.blocks.turrets.MinigunTurret;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import static arc.graphics.g2d.Draw.color;
+import static arc.math.Angles.randLenVectors;
 import static mindustry.content.Fx.*;
 import static mindustry.content.Fx.none;
+import static mindustry.content.StatusEffects.blasted;
 import static mindustry.gen.Sounds.*;
+import static mindustry.gen.Sounds.explosion;
 import static mindustry.gen.Sounds.shootBig;
-import static mindustry.ui.Fonts.outline;
-import static wh.core.WarHammerMod.name;
+import static wh.content.WHFx.*;
+import static wh.content.WHStatusEffects.assault;
+import static wh.content.WHStatusEffects.bless;
 
 public final class WHUnitTypes {
-    public static UnitType cMoon, tankAG, tankl, M4, StarrySky;
+    public static UnitType
+    //空军
+            cMoon, StarrySky,
+    //载具
+            tank2s,tank3S,tankAG, tankl,
+    //陆军
+            M4;
 
     private WHUnitTypes() {
     }
@@ -325,7 +328,7 @@ public final class WHUnitTypes {
                                 tracerStroke -= 0.3f;
                                 tracers = 1;
                                 keepVelocity = true;
-
+                                hitEffect = none;
                                 tracerSpacing = 10f;
                                 tracerUpdateSpacing *= 1.25f;
                                 pierce = true;
@@ -365,18 +368,6 @@ public final class WHUnitTypes {
                                         cone = 15.0F;
                                     }
                                 };
-                                hitEffect = new MultiEffect(new ParticleEffect() {
-                                    {
-                                        particles = 4;
-                                        region = "wh-菱形";
-                                        sizeFrom = 12.0F;
-                                        sizeTo = 0.0F;
-                                        length = 30.0F;
-                                        baseLength = 0.0F;
-                                        lifetime = 45.0F;
-                                        colorFrom = colorTo = WHPal.pop;
-                                    }
-                                });
                                 despawnEffect = new MultiEffect() {
                                     {
                                         new ParticleEffect() {
@@ -515,18 +506,7 @@ public final class WHUnitTypes {
                                         cone = 15.0F;
                                     }
                                 };
-                                hitEffect = new MultiEffect(new ParticleEffect() {
-                                    {
-                                        particles = 4;
-                                        region = "wh-菱形";
-                                        sizeFrom = 12.0F;
-                                        sizeTo = 0.0F;
-                                        length = 30.0F;
-                                        baseLength = 0.0F;
-                                        lifetime = 45.0F;
-                                        colorFrom = colorTo = WHPal.pop;
-                                    }
-                                });
+                                hitEffect = none;
                                 despawnEffect = new MultiEffect() {
                                     {
                                         new ParticleEffect() {
@@ -672,7 +652,7 @@ public final class WHUnitTypes {
                                         colorFrom = colorTo = WHPal.pop;
                                     }
                                 }, new Effect(180.0F, (e) -> {
-                                    Draw.color(Tmp.c1);
+                                    Draw.color(WHPal.pop);
                                     Fill.circle(e.x, e.y, 23.0F * e.finpow());
                                     float z = Draw.z();
                                     Draw.z(212.0F);
@@ -680,7 +660,7 @@ public final class WHUnitTypes {
                                     Fill.circle(e.x, e.y, 20.0F * e.finpow());
                                     Draw.z(z);
                                     Angles.randLenVectors(e.id, 16, 60.0F * e.foutpow(), Mathf.randomSeed(e.id, 360.0F), 360.0F, (x, y) -> {
-                                        Draw.color(Tmp.c1);
+                                        Draw.color(WHPal.pop);
                                         Fill.circle(e.x + x, e.y + y, 12.0F * e.foutpow());
                                         float zs = Draw.z();
                                         Draw.z(210.0F);
@@ -710,6 +690,7 @@ public final class WHUnitTypes {
                                         fragLifeMin = 0.4F;
                                         fragBullet = new LightningLinkerBulletType(3.5F, 800.0F) {
                                             {
+
                                                 size = 12.0F;
                                                 randomLightningNum = 2;
                                                 lightning = 2;
@@ -743,578 +724,7 @@ public final class WHUnitTypes {
                 });
             }
         };
-        tankAG = new UnitType("tankAG") {
-            {
-                constructor = ElevationMoveUnit::create;
-                weapons.add(new Weapon("tankAG-weapon7") {
-                    final float rangeWeapon = 650.0F;
 
-                    {
-                        reload = 1300.0F;
-                        x = 0.0F;
-                        shake = 0.0F;
-                        rotate = true;
-                        rotateSpeed = 10.0F;
-                        mirror = false;
-                        inaccuracy = 0.0F;
-                        shootSound = Sounds.plasmadrop;
-                        recoil = 0.0F;
-                        bullet = new BasicBulletType(10.0F, 150.0F) {
-                            {
-                                sprite = "wh-jump-arrow";
-                                height = 65.0F;
-                                width = 55.0F;
-                                lifetime = 65.0F;
-                                shrinkY = 0.0F;
-                                frontColor = Color.valueOf("FFC397FF");
-                                backColor = Color.valueOf("FFC397FF");
-                                absorbable = false;
-                                hittable = false;
-                                despawnEffect = smokeEffect = none;
-                                hitEffect = new MultiEffect(new ParticleEffect() {
-                                    {
-                                        particles = 1;
-                                        region = "wh-jump";
-                                        sizeFrom = 15.0F;
-                                        sizeTo = 0.0F;
-                                        length = 0.0F;
-                                        baseLength = 0.0F;
-                                        lifetime = 180.0F;
-                                        colorFrom = Color.valueOf("FFC397FF");
-                                        colorTo = Color.valueOf("FFC397FF00");
-                                    }
-                                }, new WaveEffect() {
-                                    {
-                                        lifetime = 60.0F;
-                                        sizeFrom = 100.0F;
-                                        sizeTo = 0.0F;
-                                        strokeFrom = 4.0F;
-                                        strokeTo = 1.0F;
-                                        colorFrom = Color.valueOf("FFC397FF");
-                                        colorTo = Color.valueOf("FFC397FF");
-                                    }
-                                });
-                                trailColor = Color.valueOf("FFC397FF");
-                                trailRotation = true;
-                                trailWidth = 8.0F;
-                                trailLength = 12;
-                                targetInterval = 0.3F;
-                                trailChance = 0.7F;
-                                trailEffect = new MultiEffect(new Effect(60.0F, (e) -> {
-                                    Draw.color(e.color);
-                                    Fx.rand.setSeed(e.id);
-                                    float fin = 1.0F - Mathf.curve(e.fout(), 0.0F, 0.85F);
-                                    Tmp.v1.set((float) (Fx.rand.chance(0.5) ? 5 : -5) * (Fx.rand.chance(0.20000000298023224) ? 0.0F : fin), 0.0F).rotate(e.rotation - 90.0F);
-                                    float exx = e.x + Tmp.v1.x;
-                                    float ey = e.y + Tmp.v1.y;
-                                    Draw.rect("wh-jump-arrow", exx, ey, 64.0F * e.fout(), 64.0F * e.fout(), e.rotation - 90.0F);
-                                }));
-                                shootEffect = Fx.bigShockwave;
-                                fragRandomSpread = 1.0F;
-                                fragVelocityMax = 1.0F;
-                                fragVelocityMin = 1.0F;
-                                fragLifeMin = 1.0F;
-                                fragLifeMax = 1.0F;
-                                fragAngle = 180.0F;
-                                fragBullets = 1;
-                                fragBullet = new PointBulletType() {
-                                    {
-                                        damage = 20.0F;
-                                        lifetime = 125.0F;
-                                        speed = 10.0F;
-                                        trailEffect = none;
-                                        hitEffect = none;
-                                        despawnEffect = new MultiEffect(new ParticleEffect() {
-                                            {
-                                                particles = 1;
-                                                sizeFrom = 0.0F;
-                                                sizeTo = 30.0F;
-                                                length = 0.0F;
-                                                baseLength = 0.0F;
-                                                lifetime = 20.0F;
-                                                colorFrom = Color.valueOf("FFC397FF");
-                                                colorTo = Color.valueOf("FFC397FF6E");
-                                            }
-                                        }, new WaveEffect() {
-                                            {
-                                                lifetime = 20.0F;
-                                                sizeFrom = 60.0F;
-                                                sizeTo = 0.0F;
-                                                strokeFrom = 4.0F;
-                                                strokeTo = 0.0F;
-                                                colorFrom = Color.valueOf("FFC397FF");
-                                                colorTo = Color.valueOf("FFC397FF");
-                                            }
-                                        });
-                                        fragBullets = 1;
-                                        fragAngle = 180.0F;
-                                        fragRandomSpread = 1.0F;
-                                        fragVelocityMax = 1.0F;
-                                        fragVelocityMin = 1.0F;
-                                        fragLifeMin = 1.0F;
-                                        fragLifeMax = 1.0F;
-                                        fragBullet = new BasicBulletType(15.0F, 1000.0F, "wh-大导弹") {
-                                            {
-                                                lifetime = 83.3F;
-                                                splashDamageRadius = 150.0F;
-                                                splashDamage = 200.0F;
-                                                scaledSplashDamage = true;
-                                                buildingDamageMultiplier = 1.25F;
-                                                shrinkX = 0.5F;
-                                                shrinkY = 0.5F;
-                                                width = 55.0F;
-                                                height = 200.0F;
-                                                hitSize = 20.0F;
-                                                trailLength = 40;
-                                                trailWidth = 5.0F;
-                                                trailColor = Color.valueOf("FFC397FF");
-                                                trailChance = 0.8F;
-                                                trailEffect = new ParticleEffect() {
-                                                    {
-                                                        particles = 4;
-                                                        region = "wh-菱形";
-                                                        sizeFrom = 7.0F;
-                                                        sizeTo = 16.0F;
-                                                        length = 42.0F;
-                                                        baseLength = 0.0F;
-                                                        lifetime = 33.0F;
-                                                        colorFrom = Color.valueOf("FFC397FF");
-                                                        colorTo = Color.valueOf("FFC397FF");
-                                                    }
-                                                };
-                                                hitShake = 20.0F;
-                                                collides = false;
-                                                pierce = true;
-                                                absorbable = false;
-                                                hittable = false;
-                                                pierceBuilding = true;
-                                                backColor = Color.valueOf("FF5B5B");
-                                                frontColor = Color.valueOf("EEC591");
-                                                heatColor = Color.valueOf("EEC591");
-                                                hitSound = Sounds.plasmaboom;
-                                                hitEffect = new MultiEffect(new ParticleEffect() {
-                                                    {
-                                                        particles = 60;
-                                                        line = true;
-                                                        strokeFrom = 4.0F;
-                                                        strokeTo = 0.0F;
-                                                        lenFrom = 85.0F;
-                                                        lenTo = 23.0F;
-                                                        length = 203.0F;
-                                                        baseLength = 20.0F;
-                                                        lifetime = 30.0F;
-                                                        colorFrom = Color.valueOf("FFC397FF");
-                                                        colorTo = Color.valueOf("FFC397FF");
-                                                    }
-                                                }, new WaveEffect() {
-                                                    {
-                                                        lifetime = 15.0F;
-                                                        sizeFrom = 0.0F;
-                                                        sizeTo = 230.0F;
-                                                        strokeFrom = 19.0F;
-                                                        strokeTo = 0.0F;
-                                                        colorFrom = Color.valueOf("FFC397FF");
-                                                        colorTo = Color.valueOf("FFC397FF");
-                                                    }
-                                                });
-                                                despawnEffect = none;
-                                                fragBullets = 1;
-                                                fragLifeMin = 1.0F;
-                                                fragLifeMax = 1.0F;
-                                                fragVelocityMin = 0.0F;
-                                                fragVelocityMax = 0.0F;
-                                                fragBullet = WHBullets.tankAG7;
-                                            }
-                                        };
-                                    }
-                                };
-                            }
-                        };
-                    }
-
-                    public void draw(Unit unit, WeaponMount mount) {
-                        float z = Draw.z();
-                        Tmp.v1.trns(unit.rotation, y);
-                        float f = 1.0F - mount.reload / reload;
-                        float rad = 12.0F;
-                        float f1 = Mathf.curve(f, 0.4F, 1.0F);
-                        Draw.z(100.0F);
-                        Draw.color(heatColor);
-                        TextureRegion arrowRegion = WHContent.arrowRegion;
-                        Tmp.v6.set(mount.aimX, mount.aimY).sub(unit);
-                        Tmp.v2.set(mount.aimX, mount.aimY).sub(unit).nor().scl(Math.min(Tmp.v6.len(), rangeWeapon)).add(unit);
-
-                        for (int l = 0; l < 4; ++l) {
-                            float angle = (float) (45 + 90 * l);
-
-                            for (int i = 0; i < 3; ++i) {
-                                Tmp.v3.trns(angle, (float) ((i - 4) * 8 + 8)).add(Tmp.v2);
-                                float fS = (100.0F - (Time.time + (float) (25 * i)) % 100.0F) / 100.0F * f1 / 4.0F;
-                                Draw.rect(arrowRegion, Tmp.v3.x, Tmp.v3.y, (float) arrowRegion.width * fS, (float) arrowRegion.height * fS, angle + 90.0F);
-                            }
-                        }
-
-                        Lines.stroke((1.0F + Mathf.absin(Time.time + 4.0F, 8.0F, 1.5F)) * f1, heatColor);
-                        Lines.square(Tmp.v2.x, Tmp.v2.y, 4.0F + Mathf.absin(8.0F, 4.0F), 45.0F);
-                        Lines.stroke(rad / 2.5F * mount.heat, heatColor);
-                        Lines.circle(unit.x + Tmp.v1.x, unit.y + Tmp.v1.y, rad * 2.0F * (1.0F - mount.heat));
-                        Draw.color(heatColor);
-                        Draw.z(z);
-                    }
-
-
-                });
-
-                weapons.add(new Weapon("wh-tankAG-weapon1") {
-                    {
-                        x = -40.0F;
-                        y = 33.5F;
-                        shootY = 16.0F;
-                        reload = 60.0F;
-                        rotate = true;
-                        alternate = true;
-                        mirror = true;
-                        rotateSpeed = 1.5F;
-                        shootSound = Sounds.missile;
-                        recoil = 2.0F;
-                        shoot = new ShootSpread() {
-                            {
-                                spread = 1.2F;
-                                shots = 2;
-                                firstShotDelay = 30.0F;
-                            }
-                        };
-                        bullet = new PositionLightningBulletType() {
-                            {
-                                maxRange = 550.0F;
-                                rangeOverride = 550.0F;
-                                lightningColor = Color.valueOf("FFA05C");
-                                lightningDamage = 65.0F;
-                                lightning = 2;
-                                lightningLength = 4;
-                                lightningLengthRand = 6;
-                                hitEffect = WHFx.lightningSpark;
-                                spawnBullets.add(new LaserBulletType() {
-                                    {
-                                        damage = 500.0F;
-                                        length = 550.0F;
-                                        width = 12.0F;
-                                        sideAngle = 0.0F;
-                                        sideWidth = 0.0F;
-                                        sideLength = 0.0F;
-                                        laserAbsorb = true;
-                                        pierce = true;
-                                        pierceBuilding = false;
-                                        colors = new Color[]{Color.valueOf("FFA05C"), Color.valueOf("FFA05C"), Color.valueOf("FFA05C")};
-                                        shootEffect = new ParticleEffect() {
-                                            {
-                                                particles = 1;
-                                                sizeFrom = 12.0F;
-                                                sizeTo = 0.0F;
-                                                length = 0.0F;
-                                                baseLength = 0.0F;
-                                                lifetime = 15.0F;
-                                                colorFrom = Color.valueOf("FFC397FF");
-                                                colorTo = Color.valueOf("FFC397FF");
-                                            }
-                                        };
-                                        smokeEffect = none;
-                                    }
-                                });
-                            }
-                        };
-                    }
-                });
-                weapons.add(new Weapon("wh-tankAG-weapon2") {
-                    {
-                        shoot = new ShootAlternate() {
-                            {
-                                barrels = 2;
-                                spread = 12.5F;
-                                shots = 6;
-                                shotDelay = 6.0F;
-                            }
-                        };
-                        reload = 60.0F;
-                        recoil = 3.0F;
-                        x = 0.0F;
-                        y = 19.0F;
-                        shootY = 21.0F;
-                        mirror = false;
-                        rotateSpeed = 1.5F;
-                        rotate = true;
-                        inaccuracy = 8.0F;
-                        shootSound = shootBig;
-                        alternate = false;
-                        ejectEffect = Fx.casing4;
-                        shootCone = 15.0F;
-                        bullet = new BasicBulletType() {
-                            {
-                                damage = 140.0F;
-                                pierce = true;
-                                pierceBuilding = false;
-                                pierceArmor = true;
-                                pierceCap = 5;
-                                speed = 25.0F;
-                                lifetime = 22.0F;
-                                hitSound = Sounds.explosion;
-                                shootEffect = shootBig2;
-                                smokeEffect = shootBigSmoke;
-                                trailLength = 4;
-                                trailWidth = 3.3F;
-                                trailColor = Color.valueOf("FFC397FF");
-                                backColor = Color.valueOf("FFC397FF");
-                                frontColor = Color.valueOf("FFFFFF");
-                                width = 14.0F;
-                                height = 33.0F;
-                                hitEffect = new ParticleEffect() {
-                                    {
-                                        particles = 15;
-                                        line = true;
-                                        strokeFrom = 3.0F;
-                                        strokeTo = 0.0F;
-                                        lenFrom = 0.0F;
-                                        lenTo = 11.0F;
-                                        length = 60.0F;
-                                        baseLength = 0.0F;
-                                        lifetime = 10.0F;
-                                        colorFrom = Color.valueOf("FFC397FF");
-                                        colorTo = Color.valueOf("FFFFFF");
-                                        cone = 60.0F;
-                                    }
-                                };
-                                despawnEffect = Fx.flakExplosionBig;
-                            }
-                        };
-                    }
-                });
-                weapons.add(new Weapon("wh-tankAG-weapon3") {
-                    {
-                        reload = 15.0F;
-                        recoil = 2.0F;
-                        recoilTime = 20.0F;
-                        mirror = false;
-                        x = 0.0F;
-                        y = -21.0F;
-                        rotate = true;
-                        rotateSpeed = 0.8F;
-                        shootCone = 20.0F;
-                        xRand = 1.0F;
-                        inaccuracy = 5.0F;
-                        shootSound = laser;
-                        shake = 1.0F;
-                        layerOffset = 0.02F;
-                        recoils = 2;
-                        cooldownTime = 120.0F;
-                        heatColor = Color.valueOf("FF4040");
-                        shoot = new ShootBarrel() {
-                            {
-                                shots = 1;
-                                barrels = new float[]{-24.0F, 62.0F, 0.0F, 24.0F, 62.0F, 0.0F};
-                            }
-                        };
-                        ejectEffect = none;
-                        velocityRnd = 0.06F;
-                        parts.add(new RegionPart("-管l") {
-                            {
-                                y = -2.0F;
-                                outline = true;
-                                mirror = false;
-                                moveY = -20.0F;
-                                under = true;
-                                recoilIndex = 0;
-                                heatColor = Color.valueOf("FF4040");
-                                heatProgress = PartProgress.recoil;
-                                progress = PartProgress.recoil;
-                            }
-                        }, new RegionPart("-管r") {
-                            {
-                                y = -2.0F;
-                                outline = true;
-                                mirror = false;
-                                moveY = -20.0F;
-                                under = true;
-                                recoilIndex = 1;
-                                heatColor = Color.valueOf("FF4040");
-                                heatProgress = PartProgress.recoil;
-                                progress = PartProgress.recoil;
-                            }
-                        });
-                        bullet = new BasicBulletType(10.3F, 900.0F) {
-                            public final float hitChance;
-
-                            {
-                                keepVelocity = false;
-                                sprite = "wh-透彻";
-                                absorbable = false;
-                                hittable = true;
-                                pierce = true;
-                                lightningColor = Color.valueOf("FFC397FF");
-                                pierceArmor = true;
-                                pierceBuilding = true;
-                                pierceCap = 8;
-                                splashDamageRadius = 48.0F;
-                                splashDamage = 300.0F;
-                                hitEffect = WHFx.sharpBlast(Color.valueOf("FFC397FF"), Color.valueOf("FFC397FF"), 35.0F, splashDamageRadius * 1.25F);
-                                despawnEffect = WHFx.lightningHitLarge(Color.valueOf("FFC397FF"));
-                                trailRotation = true;
-                                hitSound = Sounds.plasmaboom;
-                                trailLength = 12;
-                                trailWidth = 5.0F;
-                                trailColor = Color.valueOf("FFC397FF");
-                                backColor = Color.valueOf("FFC397FF");
-                                frontColor = Color.valueOf("FFFFFF");
-                                drag = -0.07F;
-                                width = 23.0F;
-                                height = 75.0F;
-                                hitSize = 25.0F;
-                                lifetime = 25.5F;
-                                hitChance = 0.2F;
-                            }
-
-                            public void despawned(Bullet b) {
-                                Units.nearbyEnemies(b.team, b.x, b.y, splashDamageRadius, (u) -> {
-                                    if (u.checkTarget(collidesAir, collidesGround) && u.type != null && u.targetable(b.team) && Mathf.chance(0.20000000298023224)) {
-                                        float pDamage = splashDamage * 3.0F;
-                                        if (u.health <= pDamage) {
-                                            u.kill();
-                                        } else {
-                                            u.health -= pDamage;
-                                        }
-                                    }
-
-                                });
-                                super.despawned(b);
-                            }
-                        };
-                    }
-                });
-            }
-        };
-        M4 = new UnitType("m4") {
-            {
-                constructor = MechUnit::create;
-                canDrown = false;
-                rotateSpeed = 1.1f;
-                mechStepParticles = true;
-                mechFrontSway = 1.3f;
-                mechSideSway = 1.1f;
-                mechLandShake = 0.1f;
-                speed = 1f;
-                weapons.add(new Weapon("wh-m4-weapon1") {
-                    {
-                        reload = 240f;
-                        mirror = false;
-                        shootY = 1f;
-                        x = y = 0;
-                        layerOffset = 0.002f;
-                        shootCone = 30f;
-                        shoot = new ShootBarrel() {{
-                            shotDelay = 4.5f;
-                            shots = 5;
-                            barrels = new float[]
-                                    {
-                                            -5, 0, 0,
-                                            0, 0, 0,
-                                            5, 0, 0,
-                                    };
-                        }};
-                        velocityRnd = 0.05f;
-                        shootSound = WHSounds.launch;
-                        bullet = new AccelBulletType(5f, 50) {
-                            {
-                                sprite = "wh-重型导弹";
-                                width = 16f;
-                                height = 16f;
-                                shrinkY = 0f;
-                                backColor = hitColor = lightColor = lightningColor = Color.valueOf("FFC397FF");
-                                trailColor = Color.gray;
-                                frontColor = Color.valueOf("FFC397FF");
-                                homingPower = 0.08f;
-                                homingDelay = 5f;
-                                lifetime = 65f;
-                                hitEffect = WHFx.instHit(backColor, 2, 10f);
-                                despawnEffect = WHFx.shootCircleSmall(backColor);
-                                lightning = 1;
-                                lightningLength = 6;
-                                lightningDamage = 40;
-                                smokeEffect = Fx.shootPyraFlame;
-                                shootEffect = WHFx.hugeSmokeGray;
-                                trailColor = WHPal.pop2;
-                                trailWidth = 2f;
-                                trailLength = 5;
-
-                            }
-                        };
-                    }
-
-                    {
-                        weapons.add(new Weapon("wh-m4-weapon2") {
-                            {
-                                x = -13;
-                                y = 0;
-                                reload = 10;
-                                shootY = 10;
-                                shootX = 0;
-                                {
-                                    shoot = new ShootAlternate() {
-                                        {
-                                            barrels = 2;
-                                            spread = 4F;
-                                            shots = 2;
-                                        }
-                                    };
-
-                                    layerOffset = -0.001f;
-                                    rotate = true;
-                                    rotateSpeed = 0.7f;
-                                    rotationLimit = 30;
-                                    mirror = true;
-                                    alternate = true;
-                                    ejectEffect = none;
-                                    recoil = 4;
-                                    inaccuracy = 6;
-                                    shootSound = shootBig;
-                                    shootCone = 10;
-                                    minWarmup = 0.95f;
-                                    shootWarmupSpeed = 0.15f;
-                                    bullet = new BasicBulletType() {
-                                        {
-                                            pierceCap = 3;
-                                            absorbable = false;
-                                            damage = 180;
-                                            splashDamage = 100;
-                                            splashDamageRadius = 32;
-                                            speed = 20;
-                                            hitShake = 1;
-                                            lifetime = 10.5f;
-                                            shootEffect = shootBig2;
-                                            smokeEffect = shootBigSmoke;
-                                            hitSound = Sounds.explosion;
-                                            width = 9;
-                                            height = 15;
-                                            backColor = Color.valueOf("FFC397FF");
-
-                                            frontColor = Color.valueOf("FFFFFF");
-
-                                            trailLength = 18;
-                                            trailWidth = 2;
-                                            trailColor = Color.valueOf("FFC397FF");
-
-                                            hitEffect = WHFx.shootCircleSmall(backColor);
-                                            despawnEffect = blastExplosion;
-                                        }
-
-                                    };
-
-                                }
-                            }
-                        });
-                    }
-                });
-            }
-
-        };
         StarrySky = new PesterUnitType("Starry-sky") {
             {
                 constructor = PesterUnit::create;
@@ -1329,7 +739,7 @@ public final class WHUnitTypes {
                 addEngine(50, -113.25F, 0.0F, 4.0F, false);
                 engineOffset = 45.25f;
                 engineSize = -1;
-                abilities.add(new AdaptedHealAbility(1500, 900, hitSize * 2f, healColor).modify(a -> {
+                abilities.add(new AdaptedHealAbility(2000, 900, hitSize * 2f, healColor).modify(a -> {
                     a.selfHealReloadTime = 480;
                     a.selfHealAmount /= 8;
                 }));
@@ -1662,7 +1072,7 @@ public final class WHUnitTypes {
 
 
                             hitShake = despawnShake = 2f;
-                            despawnSound = hitSound = Sounds.explosion;
+                            despawnSound = hitSound = explosion;
                         }};
                         reload = 300f;
                         inaccuracy = 2f;
@@ -1727,7 +1137,7 @@ public final class WHUnitTypes {
                             lightningDamage = 130;
 
                             hitShake = despawnShake = 2f;
-                            despawnSound = hitSound = Sounds.explosion;
+                            despawnSound = hitSound = explosion;
                         }};
                         reload = 300f;
                         inaccuracy = 2f;
@@ -1794,7 +1204,7 @@ public final class WHUnitTypes {
                             lightningColor = WHPal.pop;
 
                             hitShake = despawnShake = 2f;
-                            despawnSound = hitSound = Sounds.explosion;
+                            despawnSound = hitSound = explosion;
                         }};
                         reload = 300f;
                         inaccuracy = 2f;
@@ -2031,19 +1441,504 @@ public final class WHUnitTypes {
                         };
                     }
                 });
-
-
             }
+        };
+        tankAG = new UnitType("tankAG") {
+            {
+                constructor = ElevationMoveUnit::create;
+                weapons.add(new Weapon("tankAG-weapon7") {
+                    final float rangeWeapon = 650.0F;
+
+                    {
+                        reload = 1300.0F;
+                        x = 0.0F;
+                        shake = 0.0F;
+                        rotate = true;
+                        rotateSpeed = 10.0F;
+                        mirror = false;
+                        inaccuracy = 0.0F;
+                        shootSound = Sounds.plasmadrop;
+                        recoil = 0.0F;
+                        bullet = new BasicBulletType(10.0F, 150.0F) {
+                            {
+                                sprite = "wh-jump-arrow";
+                                height = 65.0F;
+                                width = 55.0F;
+                                lifetime = 65.0F;
+                                shrinkY = 0.0F;
+                                frontColor = Color.valueOf("FFC397FF");
+                                backColor = Color.valueOf("FFC397FF");
+                                absorbable = false;
+                                hittable = false;
+                                despawnEffect = smokeEffect = none;
+                                hitEffect = new MultiEffect(new ParticleEffect() {
+                                    {
+                                        particles = 1;
+                                        region = "wh-jump";
+                                        sizeFrom = 15.0F;
+                                        sizeTo = 0.0F;
+                                        length = 0.0F;
+                                        baseLength = 0.0F;
+                                        lifetime = 180.0F;
+                                        colorFrom = Color.valueOf("FFC397FF");
+                                        colorTo = Color.valueOf("FFC397FF00");
+                                    }
+                                }, new WaveEffect() {
+                                    {
+                                        lifetime = 60.0F;
+                                        sizeFrom = 100.0F;
+                                        sizeTo = 0.0F;
+                                        strokeFrom = 4.0F;
+                                        strokeTo = 1.0F;
+                                        colorFrom = Color.valueOf("FFC397FF");
+                                        colorTo = Color.valueOf("FFC397FF");
+                                    }
+                                });
+                                trailColor = Color.valueOf("FFC397FF");
+                                trailRotation = true;
+                                trailWidth = 8.0F;
+                                trailLength = 12;
+                                targetInterval = 0.3F;
+                                trailChance = 0.7F;
+                                trailEffect = new MultiEffect(new Effect(60.0F, (e) -> {
+                                    Draw.color(e.color);
+                                    Fx.rand.setSeed(e.id);
+                                    float fin = 1.0F - Mathf.curve(e.fout(), 0.0F, 0.85F);
+                                    Tmp.v1.set((float) (Fx.rand.chance(0.5) ? 5 : -5) * (Fx.rand.chance(0.20000000298023224) ? 0.0F : fin), 0.0F).rotate(e.rotation - 90.0F);
+                                    float exx = e.x + Tmp.v1.x;
+                                    float ey = e.y + Tmp.v1.y;
+                                    Draw.rect("wh-jump-arrow", exx, ey, 64.0F * e.fout(), 64.0F * e.fout(), e.rotation - 90.0F);
+                                }));
+                                shootEffect = Fx.bigShockwave;
+                                fragRandomSpread = 1.0F;
+                                fragVelocityMax = 1.0F;
+                                fragVelocityMin = 1.0F;
+                                fragLifeMin = 1.0F;
+                                fragLifeMax = 1.0F;
+                                fragAngle = 180.0F;
+                                fragBullets = 1;
+                                fragBullet = new PointBulletType() {
+                                    {
+                                        damage = 20.0F;
+                                        lifetime = 125.0F;
+                                        speed = 10.0F;
+                                        trailEffect = none;
+                                        hitEffect = none;
+                                        despawnEffect = new MultiEffect(new ParticleEffect() {
+                                            {
+                                                particles = 1;
+                                                sizeFrom = 0.0F;
+                                                sizeTo = 30.0F;
+                                                length = 0.0F;
+                                                baseLength = 0.0F;
+                                                lifetime = 20.0F;
+                                                colorFrom = Color.valueOf("FFC397FF");
+                                                colorTo = Color.valueOf("FFC397FF6E");
+                                            }
+                                        }, new WaveEffect() {
+                                            {
+                                                lifetime = 20.0F;
+                                                sizeFrom = 60.0F;
+                                                sizeTo = 0.0F;
+                                                strokeFrom = 4.0F;
+                                                strokeTo = 0.0F;
+                                                colorFrom = Color.valueOf("FFC397FF");
+                                                colorTo = Color.valueOf("FFC397FF");
+                                            }
+                                        });
+                                        fragBullets = 1;
+                                        fragAngle = 180.0F;
+                                        fragRandomSpread = 1.0F;
+                                        fragVelocityMax = 1.0F;
+                                        fragVelocityMin = 1.0F;
+                                        fragLifeMin = 1.0F;
+                                        fragLifeMax = 1.0F;
+                                        fragBullet = new BasicBulletType(15.0F, 1000.0F, "wh-大导弹") {
+                                            {
+                                                lifetime = 83.3F;
+                                                splashDamageRadius = 150.0F;
+                                                splashDamage = 200.0F;
+                                                scaledSplashDamage = true;
+                                                buildingDamageMultiplier = 1.25F;
+                                                shrinkX = 0.5F;
+                                                shrinkY = 0.5F;
+                                                width = 55.0F;
+                                                height = 200.0F;
+                                                hitSize = 20.0F;
+                                                trailLength = 40;
+                                                trailWidth = 5.0F;
+                                                trailColor = Color.valueOf("FFC397FF");
+                                                trailChance = 0.8F;
+                                                trailEffect = new ParticleEffect() {
+                                                    {
+                                                        particles = 4;
+                                                        region = "wh-菱形";
+                                                        sizeFrom = 7.0F;
+                                                        sizeTo = 16.0F;
+                                                        length = 42.0F;
+                                                        baseLength = 0.0F;
+                                                        lifetime = 33.0F;
+                                                        colorFrom = Color.valueOf("FFC397FF");
+                                                        colorTo = Color.valueOf("FFC397FF");
+                                                    }
+                                                };
+                                                hitShake = 20.0F;
+                                                collides = false;
+                                                pierce = true;
+                                                absorbable = false;
+                                                hittable = false;
+                                                pierceBuilding = true;
+                                                backColor = Color.valueOf("FF5B5B");
+                                                frontColor = Color.valueOf("EEC591");
+                                                heatColor = Color.valueOf("EEC591");
+                                                hitSound = Sounds.plasmaboom;
+                                                hitEffect = new MultiEffect(new ParticleEffect() {
+                                                    {
+                                                        particles = 60;
+                                                        line = true;
+                                                        strokeFrom = 4.0F;
+                                                        strokeTo = 0.0F;
+                                                        lenFrom = 85.0F;
+                                                        lenTo = 23.0F;
+                                                        length = 203.0F;
+                                                        baseLength = 20.0F;
+                                                        lifetime = 30.0F;
+                                                        colorFrom = Color.valueOf("FFC397FF");
+                                                        colorTo = Color.valueOf("FFC397FF");
+                                                    }
+                                                }, new WaveEffect() {
+                                                    {
+                                                        lifetime = 15.0F;
+                                                        sizeFrom = 0.0F;
+                                                        sizeTo = 230.0F;
+                                                        strokeFrom = 19.0F;
+                                                        strokeTo = 0.0F;
+                                                        colorFrom = Color.valueOf("FFC397FF");
+                                                        colorTo = Color.valueOf("FFC397FF");
+                                                    }
+                                                });
+                                                despawnEffect = none;
+                                                fragBullets = 1;
+                                                fragLifeMin = 1.0F;
+                                                fragLifeMax = 1.0F;
+                                                fragVelocityMin = 0.0F;
+                                                fragVelocityMax = 0.0F;
+                                                fragBullet = WHBullets.tankAG7;
+                                            }
+                                        };
+                                    }
+                                };
+                            }
+                        };
+                    }
+
+                    public void draw(Unit unit, WeaponMount mount) {
+                        float z = Draw.z();
+                        Tmp.v1.trns(unit.rotation, y);
+                        float f = 1.0F - mount.reload / reload;
+                        float rad = 12.0F;
+                        float f1 = Mathf.curve(f, 0.4F, 1.0F);
+                        Draw.z(100.0F);
+                        Draw.color(heatColor);
+                        TextureRegion arrowRegion = WHContent.arrowRegion;
+                        Tmp.v6.set(mount.aimX, mount.aimY).sub(unit);
+                        Tmp.v2.set(mount.aimX, mount.aimY).sub(unit).nor().scl(Math.min(Tmp.v6.len(), rangeWeapon)).add(unit);
+
+                        for (int l = 0; l < 4; ++l) {
+                            float angle = (float) (45 + 90 * l);
+
+                            for (int i = 0; i < 3; ++i) {
+                                Tmp.v3.trns(angle, (float) ((i - 4) * 8 + 8)).add(Tmp.v2);
+                                float fS = (100.0F - (Time.time + (float) (25 * i)) % 100.0F) / 100.0F * f1 / 4.0F;
+                                Draw.rect(arrowRegion, Tmp.v3.x, Tmp.v3.y, (float) arrowRegion.width * fS, (float) arrowRegion.height * fS, angle + 90.0F);
+                            }
+                        }
+
+                        Lines.stroke((1.0F + Mathf.absin(Time.time + 4.0F, 8.0F, 1.5F)) * f1, heatColor);
+                        Lines.square(Tmp.v2.x, Tmp.v2.y, 4.0F + Mathf.absin(8.0F, 4.0F), 45.0F);
+                        Lines.stroke(rad / 2.5F * mount.heat, heatColor);
+                        Lines.circle(unit.x + Tmp.v1.x, unit.y + Tmp.v1.y, rad * 2.0F * (1.0F - mount.heat));
+                        Draw.color(heatColor);
+                        Draw.z(z);
+                    }
 
 
+                });
+
+                weapons.add(new Weapon("wh-tankAG-weapon1") {
+                    {
+                        x = -40.0F;
+                        y = 33.5F;
+                        shootY = 16.0F;
+                        reload = 60.0F;
+                        rotate = true;
+                        alternate = true;
+                        mirror = true;
+                        rotateSpeed = 1.5F;
+                        shootSound = Sounds.missile;
+                        recoil = 2.0F;
+                        shoot = new ShootSpread() {
+                            {
+                                spread = 1.2F;
+                                shots = 2;
+                                firstShotDelay = 30.0F;
+                            }
+                        };
+                        bullet = new PositionLightningBulletType() {
+                            {
+                                maxRange = 550.0F;
+                                rangeOverride = 550.0F;
+                                lightningColor = Color.valueOf("FFA05C");
+                                lightningDamage = 65.0F;
+                                lightning = 2;
+                                lightningLength = 4;
+                                lightningLengthRand = 6;
+                                hitEffect = WHFx.lightningSpark;
+                                spawnBullets.add(new LaserBulletType() {
+                                    {
+                                        damage = 500.0F;
+                                        length = 550.0F;
+                                        width = 12.0F;
+                                        sideAngle = 0.0F;
+                                        sideWidth = 0.0F;
+                                        sideLength = 0.0F;
+                                        laserAbsorb = true;
+                                        pierce = true;
+                                        pierceBuilding = false;
+                                        colors = new Color[]{Color.valueOf("FFA05C"), Color.valueOf("FFA05C"), Color.valueOf("FFA05C")};
+                                        shootEffect = new ParticleEffect() {
+                                            {
+                                                particles = 1;
+                                                sizeFrom = 12.0F;
+                                                sizeTo = 0.0F;
+                                                length = 0.0F;
+                                                baseLength = 0.0F;
+                                                lifetime = 15.0F;
+                                                colorFrom = Color.valueOf("FFC397FF");
+                                                colorTo = Color.valueOf("FFC397FF");
+                                            }
+                                        };
+                                        smokeEffect = none;
+                                    }
+                                });
+                            }
+                        };
+                    }
+                });
+                weapons.add(new Weapon("wh-tankAG-weapon2") {
+                    {
+                        shoot = new ShootAlternate() {
+                            {
+                                barrels = 2;
+                                spread = 12.5F;
+                                shots = 6;
+                                shotDelay = 6.0F;
+                            }
+                        };
+                        reload = 60.0F;
+                        recoil = 3.0F;
+                        x = 0.0F;
+                        y = 19.0F;
+                        shootY = 21.0F;
+                        mirror = false;
+                        rotateSpeed = 1.5F;
+                        rotate = true;
+                        inaccuracy = 8.0F;
+                        shootSound = shootBig;
+                        alternate = false;
+                        ejectEffect = Fx.casing4;
+                        shootCone = 15.0F;
+                        bullet = new BasicBulletType() {
+                            {
+                                damage = 140.0F;
+                                pierce = true;
+                                pierceBuilding = false;
+                                pierceArmor = true;
+                                pierceCap = 5;
+                                speed = 25.0F;
+                                lifetime = 22.0F;
+                                hitSound = explosion;
+                                shootEffect = shootBig2;
+                                smokeEffect = shootBigSmoke;
+                                trailLength = 4;
+                                trailWidth = 3.3F;
+                                trailColor = Color.valueOf("FFC397FF");
+                                backColor = Color.valueOf("FFC397FF");
+                                frontColor = Color.valueOf("FFFFFF");
+                                width = 14.0F;
+                                height = 33.0F;
+                                hitEffect = new ParticleEffect() {
+                                    {
+                                        particles = 15;
+                                        line = true;
+                                        strokeFrom = 3.0F;
+                                        strokeTo = 0.0F;
+                                        lenFrom = 0.0F;
+                                        lenTo = 11.0F;
+                                        length = 60.0F;
+                                        baseLength = 0.0F;
+                                        lifetime = 10.0F;
+                                        colorFrom = Color.valueOf("FFC397FF");
+                                        colorTo = Color.valueOf("FFFFFF");
+                                        cone = 60.0F;
+                                    }
+                                };
+                                despawnEffect = Fx.flakExplosionBig;
+                            }
+                        };
+                    }
+                });
+                weapons.add(new Weapon("wh-tankAG-weapon3") {
+                    {
+                        reload = 15.0F;
+                        recoil = 2.0F;
+                        recoilTime = 20.0F;
+                        mirror = false;
+                        x = 0.0F;
+                        y = -21.0F;
+                        rotate = true;
+                        rotateSpeed = 0.8F;
+                        shootCone = 20.0F;
+                        xRand = 1.0F;
+                        inaccuracy = 5.0F;
+                        shootSound = laser;
+                        shake = 1.0F;
+                        layerOffset = 0.02F;
+                        recoils = 2;
+                        cooldownTime = 120.0F;
+                        heatColor = Color.valueOf("FF4040");
+                        shoot = new ShootBarrel() {
+                            {
+                                shots = 1;
+                                barrels = new float[]{-24.0F, 62.0F, 0.0F, 24.0F, 62.0F, 0.0F};
+                            }
+                        };
+                        ejectEffect = none;
+                        velocityRnd = 0.06F;
+                        parts.add(new RegionPart("-管l") {
+                            {
+                                y = -2.0F;
+                                outline = true;
+                                mirror = false;
+                                moveY = -20.0F;
+                                under = true;
+                                recoilIndex = 0;
+                                heatColor = Color.valueOf("FF4040");
+                                heatProgress = PartProgress.recoil;
+                                progress = PartProgress.recoil;
+                            }
+                        }, new RegionPart("-管r") {
+                            {
+                                y = -2.0F;
+                                outline = true;
+                                mirror = false;
+                                moveY = -20.0F;
+                                under = true;
+                                recoilIndex = 1;
+                                heatColor = Color.valueOf("FF4040");
+                                heatProgress = PartProgress.recoil;
+                                progress = PartProgress.recoil;
+                            }
+                        });
+                        bullet = new BasicBulletType(10.3F, 900.0F) {
+                            public final float hitChance;
+
+                            {
+                                keepVelocity = false;
+                                sprite = "wh-透彻";
+                                absorbable = false;
+                                hittable = true;
+                                pierce = true;
+                                lightningColor = Color.valueOf("FFC397FF");
+                                pierceArmor = true;
+                                pierceBuilding = true;
+                                pierceCap = 8;
+                                splashDamageRadius = 48.0F;
+                                splashDamage = 300.0F;
+                                hitEffect = WHFx.sharpBlast(Color.valueOf("FFC397FF"), Color.valueOf("FFC397FF"), 35.0F, splashDamageRadius * 1.25F);
+                                despawnEffect = WHFx.lightningHitLarge(Color.valueOf("FFC397FF"));
+                                trailRotation = true;
+                                hitSound = Sounds.plasmaboom;
+                                trailLength = 12;
+                                trailWidth = 5.0F;
+                                trailColor = Color.valueOf("FFC397FF");
+                                backColor = Color.valueOf("FFC397FF");
+                                frontColor = Color.valueOf("FFFFFF");
+                                drag = -0.07F;
+                                width = 23.0F;
+                                height = 75.0F;
+                                hitSize = 25.0F;
+                                lifetime = 25.5F;
+                                hitChance = 0.2F;
+                            }
+
+                            public void despawned(Bullet b) {
+                                Units.nearbyEnemies(b.team, b.x, b.y, splashDamageRadius, (u) -> {
+                                    if (u.checkTarget(collidesAir, collidesGround) && u.type != null && u.targetable(b.team) && Mathf.chance(0.20000000298023224)) {
+                                        float pDamage = splashDamage * 3.0F;
+                                        if (u.health <= pDamage) {
+                                            u.kill();
+                                        } else {
+                                            u.health -= pDamage;
+                                        }
+                                    }
+
+                                });
+                                super.despawned(b);
+                            }
+                        };
+                    }
+                });
+            }
         };
         tankl = new TankUnitType("tankl") {
+
+            class ProgressWeapon extends Weapon {
+                public float originalReload;
+                private float timeSinceLastShot = 0f;
+                private boolean firstShot;
+
+                public ProgressWeapon(String name) {
+                    super(name);
+                    originalReload = reload;
+                    firstShot = true;
+                }
+
+                @Override
+                public void update(Unit unit, WeaponMount mount) {
+                    super.update(unit, mount);
+
+                    if (mount.shoot) {
+                        if (firstShot) {
+                            firstShot = false;
+                            reload = originalReload * 0.9f;
+                        }
+                        timeSinceLastShot = 0f;
+                        float reloadFinal = 6f;
+                        if (reload > reloadFinal) {
+                            reload -= Mathf.lerpDelta(0, originalReload - reloadFinal, 0.005f);
+                        }
+                    } else {
+                        timeSinceLastShot += Time.delta;
+                    }
+
+                    if (timeSinceLastShot > 560f) {
+                        reload = originalReload;
+                    }
+                    if (reload < 4f) {
+                        reload = originalReload * 0.9f;
+                    }
+                }
+            }
+
             {
                 constructor = TankUnit::create;
-                weapons.add(new Weapon("wh-tankl-weapon1") {
+                weapons.add(new ProgressWeapon("wh-tankl-weapon1") {
                     {
+                        originalReload = 40f;
                         //中右下
                         parts.add(new RegionPart("-barrel") {
+
 
                                       {
                                           recoilIndex = 0;
@@ -2057,7 +1952,9 @@ public final class WHUnitTypes {
                                           color = Color.valueOf("82848CFF");
                                           colorTo = Color.valueOf("4A4B53FF");
                                           heatColor = Color.valueOf("FF774280");
-                                          heatProgress = PartProgress.reload;
+                                          heatProgress = PartProgress.warmup
+
+                                          ;
                                           progress = PartProgress.heat;
                                           turretHeatLayer = 50;
                                           xScl = 1.1f;
@@ -2081,7 +1978,9 @@ public final class WHUnitTypes {
                                           color = Color.valueOf("4A4B53FF");
                                           colorTo = Color.valueOf("82848CFF");
                                           heatColor = Color.valueOf("FF774280");
-                                          heatProgress = PartProgress.reload;
+                                          heatProgress = PartProgress.warmup
+
+                                          ;
                                           progress = PartProgress.heat;
                                           turretHeatLayer = 50;
                                           xScl = 1f;
@@ -2107,7 +2006,9 @@ public final class WHUnitTypes {
                                           color = Color.valueOf("4A4B53FF");
                                           colorTo = Color.valueOf("82848CFF");
                                           heatColor = Color.valueOf("FF774280");
-                                          heatProgress = PartProgress.reload;
+                                          heatProgress = PartProgress.warmup
+
+                                          ;
                                           progress = PartProgress.heat;
                                           turretHeatLayer = 50;
                                           xScl = 1f;
@@ -2131,7 +2032,7 @@ public final class WHUnitTypes {
                                           color = Color.valueOf("4A4B53FF");
                                           colorTo = Color.valueOf("4A4B53FF");
                                           heatColor = Color.valueOf("FF774280");
-                                          heatProgress = PartProgress.reload;
+                                          heatProgress = PartProgress.warmup;
                                           progress = PartProgress.heat;
                                           turretHeatLayer = 50;
                                           xScl = 1f;
@@ -2157,7 +2058,7 @@ public final class WHUnitTypes {
                                           color = Color.valueOf("4A4B53FF");
                                           colorTo = Color.valueOf("4A4B53FF");
                                           heatColor = Color.valueOf("FF774280");
-                                          heatProgress = PartProgress.reload;
+                                          heatProgress = PartProgress.warmup;
                                           progress = PartProgress.heat;
                                           turretHeatLayer = 50;
                                           xScl = 1f;
@@ -2181,7 +2082,7 @@ public final class WHUnitTypes {
                                           color = Color.valueOf("82848CFF");
                                           colorTo = Color.valueOf("4A4B53FF");
                                           heatColor = Color.valueOf("FF774280");
-                                          heatProgress = PartProgress.reload;
+                                          heatProgress = PartProgress.warmup;
                                           progress = PartProgress.heat;
                                           turretHeatLayer = 50;
                                           xScl = 1f;
@@ -2209,7 +2110,7 @@ public final class WHUnitTypes {
                                           color = Color.valueOf("565761FF");
                                           colorTo = Color.valueOf("4A4B53FF");
                                           heatColor = Color.valueOf("FF774280");
-                                          heatProgress = PartProgress.reload;
+                                          heatProgress = PartProgress.warmup;
                                           progress = PartProgress.heat;
                                           turretHeatLayer = 50;
                                           xScl = 1.1f;
@@ -2233,7 +2134,7 @@ public final class WHUnitTypes {
                                           color = Color.valueOf("989AA4FF");
                                           colorTo = Color.valueOf("82848CFF");
                                           heatColor = Color.valueOf("FF774280");
-                                          heatProgress = PartProgress.reload;
+                                          heatProgress = PartProgress.warmup;
                                           progress = PartProgress.heat;
                                           turretHeatLayer = 50;
                                           xScl = 1.1f;
@@ -2258,7 +2159,7 @@ public final class WHUnitTypes {
                                           color = Color.valueOf("565761FF");
                                           colorTo = Color.valueOf("4A4B53FF");
                                           heatColor = Color.valueOf("FF774280");
-                                          heatProgress = PartProgress.reload;
+                                          heatProgress = PartProgress.warmup;
                                           progress = PartProgress.heat;
                                           turretHeatLayer = 50;
                                           xScl = 1f;
@@ -2282,7 +2183,7 @@ public final class WHUnitTypes {
                                           color = Color.valueOf("989AA4FF");
                                           colorTo = Color.valueOf("82848CFF");
                                           heatColor = Color.valueOf("FF774280");
-                                          heatProgress = PartProgress.reload;
+                                          heatProgress = PartProgress.warmup;
                                           progress = PartProgress.heat;
                                           turretHeatLayer = 50;
                                           xScl = 1f;
@@ -2292,65 +2193,467 @@ public final class WHUnitTypes {
                                       }
                                   }
                         );
-
                         heatColor = Color.valueOf("FF774280");
+                        //shoot.firstShotDelay=10f;
                         x = 0;
-                        y = -6.5f;
-                        reload = 10;
-                        shootY = 34f;
+                        y = -5f;
+                        shootY = 35f;
                         shootX = 0;
                         layerOffset = 0.01f;
                         rotate = true;
-                        rotateSpeed = 0.8f;
+                        rotateSpeed = 0.7f;
                         mirror = false;
                         ejectEffect = none;
                         recoil = 0;
-                        inaccuracy = 8;
-                        xRand = 0.3f;
+                        inaccuracy = 0.3f;
+                        xRand = 2f;
                         shootSound = shootBig;
-                        shootCone = 10;
-                        minWarmup = 0.95f;
-                        shootWarmupSpeed = 0.15f;
-                        bullet = new BasicBulletType() {
+                        shootCone = 30;
+                        minWarmup = 0.9f;
+                        shootWarmupSpeed = 0.2f;
+                        velocityRnd = 0.1f;
+                        bullet = new BasicBulletType(15, 200) {
                             {
-                                pierceCap = 3;
-                                absorbable = false;
-                                damage = 180;
-                                splashDamage = 100;
+                                splashDamage = 80;
                                 splashDamageRadius = 32;
-                                speed = 20;
                                 hitShake = 1;
-                                lifetime = 10.5f;
+                                lifetime = 20f;
                                 shootEffect = shootBig2;
                                 smokeEffect = shootBigSmoke;
-                                hitSound = Sounds.explosion;
+                                hitSound = explosion;
                                 width = 9;
-                                height = 15;
+                                height = 14;
                                 backColor = Color.valueOf("FFC397FF");
-
                                 frontColor = Color.valueOf("FFFFFF");
-
-                                trailLength = 18;
-                                trailWidth = 2;
+                                trailLength = 4;
+                                trailWidth = 1.8f;
                                 trailColor = Color.valueOf("FFC397FF");
-
                                 hitEffect = WHFx.shootCircleSmall(backColor);
                                 despawnEffect = blastExplosion;
                             }
 
-
+                            @Override
+                            public void hitEntity(Bullet b, Hitboxc entity, float health) {
+                                if (entity instanceof Unit unit) {
+                                    unit.damage(damage * 2);
+                                }
+                                super.despawned(b);
+                            }
                         };
-
-
                     }
-
                 });
-
-
             }
         };
-    }
-}
+        tank3S = new UnitType("tank3s") {
+            {
+                constructor = TankUnit::create;
+                weapons.add(new Weapon("wh-tank3s-weapon1") {
 
+                    {
+                        mirror = false;
+                        shake = 4;
+                        shootY = 40;
+                        rotate = true;
+                        rotateSpeed = 1.2f;
+                        x = 0;
+                        y = 0;
+                        reload = 260;
+                        shoot.firstShotDelay = 60;
+                        shootStatusDuration = 240;
+                        shootStatus = bless;
+                        chargeSound = lasercharge;
+                        shootSound = laserbig;
+                        continuous = true;
+                        cooldownTime = 200;
+                        heatColor = Color.valueOf("FF4040");
+                        bullet = new lightingContinuousLaserBullet() {
+                            {
+                                damage = 500;
+                                width = 7;
+                                length = 330;
+                                colors = new Color[]{Color.valueOf("DB7F4DFF"), Color.valueOf("DB7F4DFF"), Color.valueOf("FFAA69FF")};
+                                hitEffect = WHFx.shootCircleSmall(Color.valueOf("FFAA69FF"));
+                                lightningColor = Color.valueOf("FFA05C");
+                                lifetime = 320;
+                                hitShake = 2;
+                                despawnEffect = smokeCloud;
+                                smokeEffect = none;
+                                shootEffect = none;
+                                incendChance = 0.1f;
+                                incendSpread = 8;
+                                incendAmount = 1;
+                            }
+
+                        };
+                    }
+                });
+            }
+        };
+        tank2s = new UnitType("tank2s") {
+            {
+                abilities.add(new PcShieldArcAbility(){{
+                    whenShooting = false;
+                    y=25;
+                    radius = 30;
+                    max = 12000;
+                    regen = 30;
+                    cooldown = 1500;
+                    angle = 100;
+                    width = 6f;
+                }});
+                abilities.add(new MoveEffectAbility(){{
+                    interval=8;
+                    minVelocity = 0;
+                    rotateEffect = false;
+                    effectParam = engineSize;
+                    parentizeEffects = true;
+                    teamColor = true;
+                    display = false;
+                    y = 5;
+                    x=-5;
+                    effect = new MultiEffect(new ParticleEffect() {
+                        {
+                            particles = 1;
+                            sizeFrom = 4;
+                            sizeTo = 0;
+                            length = 30;
+                            lifetime = 80;
+                            cone = 150;
+                            colorFrom = Color.valueOf("767676FF");
+                            colorTo = Color.valueOf("767676FF");
+                        }
+                    },
+                        new ParticleEffect() {
+                            {
+                                particles = 1;
+                                sizeFrom = 8;
+                                sizeTo = 0;
+                                length = 30;
+                                lifetime = 80;
+                                cone = 150;
+                                colorFrom = Color.valueOf("767676FF");
+                                colorTo = Color.valueOf("767676FF");
+                            }
+                    });
+                }});
+                constructor = TankUnit::create;
+                singleTarget = true;
+                weapons.add(new Weapon("wh-tank2s-weapon1") {
+                    {
+                        mirror = false;
+                        shake = 4;
+                        shootY = 40;
+                        rotate = true;
+                        rotateSpeed = 1.2f;
+                        layerOffset = 0.01f;
+                        heatColor = Color.valueOf("FFAE66FF");
+                        cooldownTime = 60;
+                        recoilTime = 80;
+                        x = 0;
+                        y = 0;
+                        reload = 400;
+                        mirror = false;
+                        shootCone = 90;
+                        rotate = false;
+                        shoot = new ShootBarrel() {
+                            {
+                                shots = 1;
+                                barrels = new float[]{0f, 15f, 0f};
+                            }
+                        };
+                        parts.add(new RegionPart("-barrel") {
+                            {
+                                under = true;
+                                mirror = false;
+                                suffix = "-管";
+                                heatProgress = PartProgress.recoil;
+                                progress = PartProgress.recoil;
+                                moveY = -7f;
+                            }
+                        });
+
+                        bullet = new AccelBulletType() {
+                            {
+                                width = 16;
+                                height = 42;
+                                speed = 10;
+                                lifetime = 30;
+                                recoil = 2;
+                                damage = 900;
+                                collidesTiles = true;
+                                collidesAir = false;
+                                hittable = false;
+                                absorbable = false;
+                                sprite = "missile-large";
+                                backColor = Color.valueOf("FFFFFFF");
+                                frontColor = Color.valueOf("FFA05C");
+                                scaledSplashDamage = true;
+                                splashDamageRadius = 64;
+                                splashDamage = 700;
+                                buildingDamageMultiplier = 2;
+                                hitSound = boom;
+                                hitShake = 9;
+                                shootEffect = new MultiEffect(new ParticleEffect() {
+                                    {
+                                        particles = 15;
+                                        sizeFrom = 14;
+                                        sizeTo = 0;
+                                        length = 90;
+                                        baseLength = 5;
+                                        lifetime = 80;
+                                        cone = -30;
+                                        interp = Interp.pow10Out;
+                                        sizeInterp = Interp.pow3In;
+                                        colorFrom = Color.valueOf("BEBEBAFF");
+                                        colorTo = Color.valueOf("737373FF");
+                                    }
+                                }, new WaveEffect() {
+                                    {
+                                        lifetime = 9;
+                                        sizeFrom = 1;
+                                        sizeTo = 90;
+                                        strokeFrom = 6;
+                                        strokeTo = 0;
+                                        colorFrom = Color.valueOf("FFA05C");
+                                        colorTo = Color.valueOf("FFC397FF");
+                                    }
+                                });
+                                smokeEffect = none;
+                                trailChance = 0.5f;
+                                trailInterval = 1;
+                                trailRotation = true;
+                                trailEffect = new WrapEffect(tank3sMissileTrailSmoke, frontColor);
+                                despawnEffect = hitEffect = new MultiEffect(massiveExplosion,
+                                        WHFx.hitSpark(frontColor, 75f, 70, 90f, 2f, 15f),
+                                        WHFx.lineCircleOut(frontColor, 70f, 70, 2),
+                                        WHFx.sharpBlast(frontColor, backColor, 120f, 40f),
+                                        WHFx.sharpBlast(frontColor, backColor, 180f, 40f),
+                                        new WrapEffect(tank3sExplosionSmoke, Color.valueOf("737373"))
+                                );
+                                fragBullets = 7;
+                                fragBullet = new BasicBulletType() {
+                                    {
+                                        status = blasted;
+                                        speed = 3;
+                                        lifetime = 20;
+                                        backColor = Color.valueOf("FFC397FF");
+                                        frontColor = Color.valueOf("FFC397FF");
+                                        width = 16;
+                                        height = 16;
+                                        damage = 148;
+                                        scaledSplashDamage = true;
+                                        splashDamageRadius = 49;
+                                        splashDamage = 200;
+                                        buildingDamageMultiplier = 1.8f;
+                                        hitSound = explosion;
+                                        absorbable = false;
+                                        sprite = "circle-bullet";
+                                        shrinkY = 0;
+                                        hitEffect = new Effect(60f, e -> {
+                                            Fx.rand.setSeed(e.id);
+                                            Draw.color(Color.valueOf("FFC397FF"), Color.valueOf("FFC397FF"), e.finpow());
+                                            Lines.stroke(1.75f * e.fout());
+                                            Lines.spikes(e.x, e.y, Fx.rand.random(10, 20) * e.finpow(), Fx.rand.random(1, 5) * e.fout() + Fx.rand.random(5, 8) * e.fin(), 8);
+                                            randLenVectors(e.id, 4, 4f + e.fin() * 5f, (x, y) -> {
+                                                color(Color.valueOf("FFC397FF"), Color.valueOf("FFC397FF"), e.finpow());
+                                                Fill.square(e.x + x, e.y + y, 0.5f + e.fout() * 6f, 45);
+                                            });
+                                        });
+                                        despawnEffect = none;
+                                    }
+                                };
+                            }};
+                    }});
+
+                            weapons.add(new Weapon("wh-tank2s-weapon2") {
+                                {
+                                    layerOffset = 0.001f;
+                                x = 8.25f;
+                                y = 4.25f;
+                                reload = 160;
+                                    shoot = new ShootBarrel() {{
+                                        shotDelay = 4f;
+                                        shots = 6;
+                                        barrels = new float[]
+                                                {
+                                                        -3.2f, 6, 0,
+                                                        0, 6, 0,
+                                                        3.2f, 0, 0,
+                                                };
+                                    }};
+                                rotate = true;
+                                rotateSpeed = 2;
+                                xRand = 0.1f;
+                                mirror = false;
+                                shootSound = missile;
+                                inaccuracy = 8;
+                                shootStatusDuration = 70;
+                                shootStatus = assault;
+                                bullet = new MissileBulletType(){{
+
+
+                                backColor =Color.valueOf("FFC397FF");
+                                trailColor = Color.valueOf("FFC397FF");
+                                speed = 10;
+                                lifetime = 30;
+                                damage = 50;
+                                width = 10;
+                                height = 10;
+                                trailLength = 6;
+                                trailWidth = 1.5f;
+                                despawnEffect = blastExplosion;
+                                hitEffect = blastExplosion;
+                                shootEffect = none;
+                                splashDamageRadius = 32;
+                                splashDamage = 35;
+                                fragLifeMin = 0.1f;
+                                fragBullets = 2;
+                                pierceArmor = true;
+                                fragBullet
+                                        =new  BasicBulletType(){{
+                                pierceArmor = true;
+                                damage = 20;
+                                despawnEffect = flakExplosion;
+                                status = blasted;
+                                statusDuration = 60;
+                                knockback = 0.7f;
+                                backColor = Color.valueOf("FFC397FF");
+                                width = 3;
+                                height = 3;
+                                splashDamageRadius = 30;
+                                splashDamage = 50;
+                                lifetime = 20;
+                                speed = 2.5f;
+                                }};
+
+                            }};
+                        }});
+                    }
+        };
+                M4 = new UnitType("m4") {
+                    {
+                        constructor = MechUnit::create;
+                        canDrown = false;
+                        rotateSpeed = 1.1f;
+                        mechStepParticles = true;
+                        mechFrontSway = 1.3f;
+                        mechSideSway = 1.1f;
+                        mechLandShake = 0.1f;
+                        speed = 1f;
+                        weapons.add(new Weapon("wh-m4-weapon1") {
+                            {
+                                reload = 240f;
+                                mirror = false;
+                                shootY = 1f;
+                                x = y = 0;
+                                layerOffset = 0.002f;
+                                shootCone = 30f;
+                                shoot = new ShootBarrel() {{
+                                    shotDelay = 4.5f;
+                                    shots = 5;
+                                    barrels = new float[]
+                                            {
+                                                    -5, 0, 0,
+                                                    0, 0, 0,
+                                                    5, 0, 0,
+                                            };
+                                }};
+                                velocityRnd = 0.05f;
+                                shootSound = WHSounds.launch;
+                                bullet = new AccelBulletType(5f, 50) {
+                                    {
+                                        sprite = "wh-重型导弹";
+                                        width = 16f;
+                                        height = 16f;
+                                        shrinkY = 0f;
+                                        backColor = hitColor = lightColor = lightningColor = Color.valueOf("FFC397FF");
+                                        trailColor = Color.gray;
+                                        frontColor = Color.valueOf("FFC397FF");
+                                        homingPower = 0.08f;
+                                        homingDelay = 5f;
+                                        lifetime = 65f;
+                                        hitEffect = WHFx.instHit(backColor, 2, 10f);
+                                        despawnEffect = WHFx.shootCircleSmall(backColor);
+                                        lightning = 1;
+                                        lightningLength = 6;
+                                        lightningDamage = 40;
+                                        smokeEffect = Fx.shootPyraFlame;
+                                        shootEffect = WHFx.hugeSmokeGray;
+                                        trailColor = WHPal.pop2;
+                                        trailWidth = 2f;
+                                        trailLength = 5;
+
+                                    }
+                                };
+                            }
+
+                            {
+                                weapons.add(new Weapon("wh-m4-weapon2") {
+                                    {
+                                        x = -13;
+                                        y = 0;
+                                        reload = 10;
+                                        shootY = 10;
+                                        shootX = 0;
+                                        {
+                                            shoot = new ShootAlternate() {
+                                                {
+                                                    barrels = 2;
+                                                    spread = 4F;
+                                                    shots = 2;
+                                                }
+                                            };
+
+                                            layerOffset = -0.001f;
+                                            rotate = true;
+                                            rotateSpeed = 0.7f;
+                                            rotationLimit = 30;
+                                            mirror = true;
+                                            alternate = true;
+                                            ejectEffect = none;
+                                            recoil = 4;
+                                            inaccuracy = 6;
+                                            shootSound = shootBig;
+                                            shootCone = 10;
+                                            minWarmup = 0.95f;
+                                            shootWarmupSpeed = 0.15f;
+                                            bullet = new BasicBulletType() {
+                                                {
+                                                    pierceCap = 3;
+                                                    absorbable = false;
+                                                    damage = 180;
+                                                    splashDamage = 100;
+                                                    splashDamageRadius = 32;
+                                                    speed = 20;
+                                                    hitShake = 1;
+                                                    lifetime = 10.5f;
+                                                    shootEffect = shootBig2;
+                                                    smokeEffect = shootBigSmoke;
+                                                    hitSound = explosion;
+                                                    width = 9;
+                                                    height = 15;
+                                                    backColor = Color.valueOf("FFC397FF");
+
+                                                    frontColor = Color.valueOf("FFFFFF");
+
+                                                    trailLength = 18;
+                                                    trailWidth = 2;
+                                                    trailColor = Color.valueOf("FFC397FF");
+
+                                                    hitEffect = WHFx.shootCircleSmall(backColor);
+                                                    despawnEffect = blastExplosion;
+                                                }
+
+                                            };
+
+                                        }
+                                    }
+                                });
+                            }
+                        });
+                    }
+                };
+            }
+        }
 
 

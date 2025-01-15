@@ -1,5 +1,5 @@
 {
-	"type": "tank",
+	//"type": "tank",
 	"name": "飞刃",
 	"squareShape": true,
 	"omniMovement": false,
@@ -38,7 +38,7 @@
 	"rotateSpeed": 1,
 	"itemCapacity": 55,
 	"faceTarget": false,
-	"weapons": [
+	/*"weapons": [
 		{
 			"name": "tank3s-weapon1",
 			"mirror": false,
@@ -203,5 +203,5 @@
 				}
 			}
 		}
-	]
+	]*/
 }

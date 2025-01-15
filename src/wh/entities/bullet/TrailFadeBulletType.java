@@ -147,7 +147,7 @@ public class TrailFadeBulletType extends AccelBulletType {
         if (!Vars.headless && b.timer(2, this.tracerUpdateSpacing)) {
             Object var3 = b.data;
             if (!(var3 instanceof Vec2Seq[])) {
-                return;
+
             }
 
             Vec2Seq[] vecs = (Vec2Seq[])var3;
@@ -161,6 +161,7 @@ public class TrailFadeBulletType extends AccelBulletType {
                 seq.add(v3.set(b.x, b.y).add(v1).add(v2));
             }
         }
+
 
     }
 

@@ -99,5 +99,6 @@ public class AccelBulletType extends BasicBulletType {
         }
 
         super.update(b);
+      ;
     }
 }

@@ -103,7 +103,6 @@ public class BlackHoleBulletType extends BulletType {
                 WHFx.AccretionDiskEffect.at(b.x, b.y, 0.0F, this.accColor, data);
             }
         }
-
     }
 
     public float F(float x, float y, float tx, float ty, float G, float r) {

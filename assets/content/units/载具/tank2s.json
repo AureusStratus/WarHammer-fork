@@ -1,5 +1,5 @@
 {
-	"type": "tank",
+	/*"type": "tank",*/
 	"name": "维护",
 	"squareShape": true,
 	"omniMovement": false,
@@ -15,12 +15,12 @@
 	"treadRects": [
 		{
 			"x": -102,
-			"y": -131,
+			"y": -132,
 			"width": 53,
-			"height": 248
+			"height": 272
 		}
 	],
-	"abilities": [
+	/*"abilities": [
 		{
 			"type": "ShieldArcAbility",
 			"region": "wh-tank2s-sprite-shield",
@@ -64,7 +64,7 @@
 				]
 			}
 		}
-	],
+	],*/
 	"ammoType": "refine-ceramite",
 	"targetAir": false,
 	"faceTarget": true,
@@ -84,7 +84,7 @@
 		"block": "tetrative-reconstructor",
 		"previous": "tank1s"
 	},
-	"weapons": [
+	/*"weapons": [
 		{
 			"name": "tank2s-weapon1",
 			"layerOffset": 0.01,
@@ -398,5 +398,5 @@
 				}
 			}
 		}
-	]
+	]*/
 }

@@ -367,7 +367,7 @@ public final class WHBullets {
             public void update(Bullet b){
                 super.update(b);
 
-                if(!(b.data instanceof Seq))return;
+                if(!(b.data instanceof Seq)) ;
                 Seq<Sized> data = (Seq<Sized>)b.data;
                 data.remove(d -> !((Healthc)d).isValid());
             }
@@ -542,6 +542,7 @@ public final class WHBullets {
                       trailEffect2.at(b.x, b.y);
                 }
 
+                 ;
             }
         };
         executor = new TrailFadeBulletType(28.0F, 1800.0F) {
@@ -699,6 +700,7 @@ public final class WHBullets {
 
             public void update(Bullet b) {
                 super.update(b);
+                 ;
             }
 
             public void updateTrailEffects(Bullet b) {
@@ -875,6 +877,7 @@ public final class WHBullets {
                     }
                 }
 
+                 ;
             }
 
             public void init(Bullet b) {
@@ -1190,6 +1193,7 @@ public final class WHBullets {
                     }
                 }
 
+                 ;
             }
 
             public void draw(Bullet b) {
@@ -1321,6 +1325,7 @@ public final class WHBullets {
             public void update(Bullet b) {
                 super.update(b);
                 b.fdata += b.vel.len() / 3.0F;
+                 ;
             }
 
             public void despawned(Bullet b) {
@@ -1502,7 +1507,6 @@ public final class WHBullets {
                     Tmp.v1.rnd(rad / 4.0F * b.fin());
                     WHFx.shuttleLerp.at(b.x + Tmp.v1.x, b.y + Tmp.v1.y, Tmp.v1.angle(),   hitColor, Mathf.random(rad, rad * 3.0F) * (Mathf.curve(b.fin(Interp.pow2In), 0.0F, 0.7F) + 2.0F) / 3.0F);
                 }
-
             }
 
             public void draw(Bullet b) {

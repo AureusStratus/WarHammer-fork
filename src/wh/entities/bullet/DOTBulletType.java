@@ -78,6 +78,5 @@ public class DOTBulletType extends ContinuousBulletType {
 
             });
         }
-
     }
 }
