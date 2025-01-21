@@ -5,6 +5,7 @@
 
 package wh.content;
 
+import arc.graphics.Blending;
 import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
 import arc.graphics.g2d.Fill;
@@ -43,9 +44,8 @@ import wh.entities.abilities.AdaptedHealAbility;
 import wh.entities.abilities.PcShieldArcAbility;
 import wh.entities.abilities.ShockWaveAbility;
 import wh.entities.bullet.*;
-import wh.gen.NucleoidUnit;
-import wh.gen.PesterUnit;
-import wh.gen.WHSounds;
+import wh.gen.*;
+import wh.graphics.Drawn;
 import wh.graphics.WHPal;
 import wh.type.unit.NucleoidUnitType;
 import wh.type.unit.PesterUnitType;
@@ -64,6 +64,7 @@ import static mindustry.gen.Sounds.explosion;
 import static mindustry.gen.Sounds.shootBig;
 import static mindustry.gen.Sounds.titanExplosion;
 import static wh.content.WHFx.*;
+import static wh.content.WHFx.rand;
 import static wh.content.WHStatusEffects.assault;
 import static wh.content.WHStatusEffects.bless;
 
@@ -1770,7 +1771,6 @@ public final class WHUnitTypes {
                                 trailColor = WHPal.OR;
                                 backColor = WHPal.OR;
                                 frontColor = WHPal.pop2;
-                                ;
                                 width = 14.0F;
                                 height = 33.0F;
                                 hitEffect = new ParticleEffect() {
@@ -1786,7 +1786,6 @@ public final class WHUnitTypes {
                                         lifetime = 10.0F;
                                         colorFrom = WHPal.OR;
                                         colorTo = WHPal.pop2;
-                                        ;
                                         cone = 60.0F;
                                     }
                                 };
@@ -3064,8 +3063,8 @@ public final class WHUnitTypes {
                                             despawnEffect = hitEffect = new MultiEffect(
                                                     WHFx.circleOut(WHPal.OR, 110),
                                                     lineCircleOut(WHPal.OR, 20f, 70, 4),
-                                                    lineCircleOut(WHPal.OR, 20f, 40, 4),
-                                                    WHFx.hitSpark(WHPal.ORL, 80, 40, 150, 2, 12),
+                                                    WHFx.hitSpark(WHPal.ORL, 40, 16, 150, 4f, 20),
+                                                    WHFx.lightningHitLarge(WHPal.ORL),
                                                     WHFx.blast(WHPal.ORL, 60)
                                             );
                                             hitSound = plasmaboom;
@@ -3101,15 +3100,13 @@ public final class WHUnitTypes {
                                                     sprite = "missile-large";
                                                     hitSound = plasmaboom;
                                                     despawnEffect = none;
-                                                    hitEffect = new MultiEffect(new Effect(40, e -> {
+                                                    hitEffect = new MultiEffect(new Effect(25, e -> {
                                                         Draw.color(WHPal.ORL, WHPal.OR, e.fout() * 0.7F);
                                                         Lines.stroke(2 * e.fout());
-                                                        Lines.circle(e.x, e.y, 40 * e.fin(Interp.pow3Out));
-                                                        Angles.randLenVectors(e.id, 2, 18 * e.finpow(), e.rotation, 40, (x, y) ->
+                                                        Lines.circle(e.x, e.y, 25 * e.fin(Interp.pow3Out));
+                                                        Angles.randLenVectors(e.id, 3, 18 * e.finpow(), e.rotation, 40, (x, y) ->
                                                                 Fill.circle(e.x + x, e.y + y, e.fout() * 5));
-                                                    }),
-                                                            WHFx.hitSpark(WHPal.ORL, 60, 8, 40, 2, 12));
-
+                                                    }));
                                                 }
                                             };
                                         }
@@ -3170,24 +3167,19 @@ public final class WHUnitTypes {
                                         color(WHPal.ORL);
                                     });
 
-                                    randLenVectors(e.id, 2, 2f + 40f * e.finpow(), (x, y) -> {
-                                        Fill.circle(e.x + x, e.y + y, e.fout(Interp.pow2Out) * Mathf.clamp(range / 15.0F, 3.0F, 14.0F));
-                                    });
+                                    randLenVectors(e.id, 2, 2f + 40f * e.finpow(), (x, y) -> Fill.circle(e.x + x, e.y + y, e.fout(Interp.pow2Out) * Mathf.clamp(range / 15.0F, 3.0F, 14.0F)));
 
                                     color(WHPal.ORL);
                                     stroke(e.fout());
 
-                                    randLenVectors(e.id + 1, 20, 15f + 23f * e.finpow(), (x, y) -> {
-                                        lineAngle(e.x + x, e.y + y, Mathf.angle(x, y), 2f + e.fout() * 3f);
-                                    });
+                                    randLenVectors(e.id + 1, 20, 15f + 23f * e.finpow(), (x, y) -> lineAngle(e.x + x, e.y + y, Mathf.angle(x, y), 2f + e.fout() * 3f));
 
                                     Drawf.light(e.x, e.y, 70f, WHPal.ORL, 0.7f * e.fout());
                                 }));
                             }
                         };
-                        weapons.add(new Weapon("wh-m4-weapon3") {
+                        weapons.add(new Weapon("wh-mecha6-weapon3") {
                                         {
-
                                             x = -23;
                                             y = -6;
                                             reload = 60;
@@ -3207,7 +3199,6 @@ public final class WHUnitTypes {
                                                                 3.2f, 0, 0,
                                                         };
                                             }};
-
                                             bullet = new MissileBulletType() {
                                                 {
                                                     backColor = WHPal.ORL;
@@ -3236,6 +3227,542 @@ public final class WHUnitTypes {
                                         }
                                     }
                         );
+                    }
+                });
+            }
+        };
+        Mecha5 = new UnitType("mecha5") {
+            {
+                constructor = MechUnit::create;
+                weapons.add(new Weapon("wh-mecha5-weapon1") {
+                                {
+                                    reload = 15;
+                                    x = 21.5f;
+                                    y = 1;
+                                    shootY = 20;
+                                    mirror = true;
+                                    top = false;
+                                    alternate = true;
+                                    layerOffset = -0.001f;
+                                    rotationLimit = 35;
+                                    rotateSpeed = 1;
+                                    rotate = true;
+                                    shootCone = 45;
+                                    shootSound = pulseBlast;
+                                    inaccuracy = 6;
+                                    recoil = 6;
+                                    bullet = new BasicBulletType() {
+                                        {
+                                            sprite = "missile-large";
+                                            damage = 200;
+                                            splashDamageRadius = 48;
+                                            splashDamage = 100;
+                                            lightning = 4;
+                                            lightningDamage = 40;
+                                            lightningLength = 5;
+                                            lightningLengthRand = 3;
+                                            lightningColor = WHPal.ORL;
+                                            speed = 16;
+                                            lifetime = 20;
+                                            shrinkY = 0;
+                                            shrinkX = 0;
+                                            width = 16;
+                                            height = 16;
+                                            frontColor = WHPal.pop2;
+                                            backColor = WHPal.OR;
+                                            hitSound = spark;
+                                            hitShake = 1;
+                                            trailColor = WHPal.OR;
+                                            trailParam = 2;
+                                            trailWidth = 5;
+                                            trailLength = 16;
+                                            trailChance = 0.3f;
+                                            trailInterval = 3;
+                                            trailEffect = new Effect(50, e -> {
+                                                Draw.color(e.color);
+                                                Angles.randLenVectors(e.id, 1, -20 * e.finpow(), e.rotation, 80, (x, y) ->
+                                                        Fill.square(e.x + x, e.y + y, 5 * e.foutpow(), Mathf.randomSeed(e.id, 360) + e.time));
+                                            });
+                                            shootEffect = new MultiEffect(new Effect(20, e -> {
+                                                color(Color.white, WHPal.OR, e.fin());
+                                                Fx.rand.setSeed(e.id);
+                                                for (int i = 0; i < 2; i++) {
+                                                    float rot = e.rotation + Fx.rand.range(30f);
+                                                    v.trns(rot, Fx.rand.random(e.finpow() * 27f));
+                                                    Fill.square(e.x + v.x, e.y + v.y, 3 * e.foutpow(), e.fout() * 3.8f + 0.2f);
+                                                }
+                                                WHFx.shootLineSmall(WHPal.OR).followParent(true);
+                                            }));
+
+                                            despawnEffect = hitEffect = new MultiEffect(
+                                                    WHFx.lineCircleOut(WHPal.OR, 30, 60, 3),
+                                                    WHFx.hitSpark(WHPal.OR, 30, 15, 70, 2, 12),
+                                                    new Effect(30, e -> {
+                                                        Draw.color(WHPal.OR);
+                                                        randLenVectors(e.id, 4, 30f * e.finpow(), (x, y) -> {
+                                                            Fill.square(e.x + x, e.y + y, 8f * e.fout(), 45);
+                                                            Drawf.light(e.x + x, e.y + y, e.fout() * 6f, e.color, 0.7f);
+                                                        });
+                                                    }));
+                                        }
+                                    };
+
+                                }
+                            }
+                );
+
+
+                weapons.add(new Weapon("wh-mecha5-weapon2") {
+                    {
+                        x = 12;
+                        y = -5;
+                        shootY = 10;
+                        reload = 60;
+                        rotate = true;
+                        alternate = true;
+                        mirror = true;
+                        rotateSpeed = 1.6f;
+                        shootSound = missile;
+                        recoil = 1;
+                        shoot.firstShotDelay = 20f;
+                        bullet = new LightingLaserBulletType() {
+                            {
+                                damage = 200;
+                                width = 14;
+                                length = 250;
+                                sideAngle = 0;
+                                sideWidth = 0;
+                                sideLength = 0;
+                                laserAbsorb = true;
+                                pierce = true;
+                                pierceBuilding = false;
+                                lightningColor = WHPal.OR;
+                                colors = new Color[]{Color.valueOf("FFA05C"), Color.valueOf("FFA05C"), Color.valueOf("FFC397FF")};
+                                hitEffect = new WrapEffect(Fx.hitLancer, WHPal.OR);
+                            }
+                        };
+                    }
+                });
+            }
+        };
+        Mecha4 = new UnitType("mecha4") {
+            {
+                constructor = MechUnit::create;
+                weapons.add(new Weapon("wh-mecha4-weapon1") {
+                    {
+                        x = 9;
+                        y = -5;
+                        reload = 180;
+                        cooldownTime = 100;
+                        mirror = false;
+                        shootY = 16;
+                        recoil = 3;
+                        inaccuracy = 3;
+                        rotate = true;
+                        rotateSpeed = 0.4f;
+                        shoot.firstShotDelay = 70f;
+                        bullet = new AccelBulletType() {{
+                            absorbable = false;
+                            width = 36;
+                            height = 36;
+                            shrinkX = 0;
+                            shrinkY = 0;
+                            trailLength = 11;
+                            trailWidth = 4;
+                            trailColor = WHPal.SkyBlue;
+                            frontColor = WHPal.SkyBlueF;
+                            backColor = WHPal.SkyBlue;
+                            lifetime = 130;
+                            velocityBegin = 1f;
+                            velocityIncrease = 3.43f;
+                            accelerateBegin = 0f;
+                            accelerateEnd = 0.09f;
+                            sprite = "large-orb";
+                            chargeEffect = new Effect(70, (e) -> {
+                                Draw.color(WHPal.SkyBlue);
+                                Lines.stroke(e.fout() * 3);
+                                Lines.circle(e.x, e.y, e.fout(Interp.pow3In) * 50);
+                                randLenVectors(e.id, 8, 40f * e.fout(Interp.pow3In), (x, y) -> {
+                                    Fill.circle(e.x + x, e.y + y, e.fin() * 2f);
+                                    Drawf.light(e.x + x, e.y + y, e.fin() * 6f, WHPal.SkyBlue, 0.7f);
+                                });
+                            });
+                            shootEffect = new MultiEffect(new WrapEffect(Fx.shootBigColor, WHPal.SkyBlue),
+                                    new WrapEffect(Fx.colorSparkBig, WHPal.SkyBlue));
+                            scaleLife = true;
+                            collidesAir = false;
+                            damage = 150;
+                            splashDamageRadius = 80;
+                            splashDamage = 300;
+                            hitShake = 4;
+                            bulletInterval = 2;
+                            intervalBullets = 1;
+                            intervalRandomSpread = 360;
+                            intervalSpread = 20;
+                            intervalAngle = 0;
+                            chargeSound = Sounds.lasercharge2;
+                            shootSound = Sounds.cannon;
+                            intervalBullet = new LightningBulletType() {
+                                {
+                                    damage = 36;
+                                    lightningColor = WHPal.SkyBlue;
+                                    lightningLength = 4;
+                                    lightningLengthRand = 3;
+                                    hitEffect = hitLancer;
+                                    despawnEffect = none;
+                                    lightningDamage = 45;
+                                    lightning = 2;
+                                }
+                            };
+                            hitEffect = despawnEffect = new MultiEffect(
+                                    new Effect(120F, (e) -> {
+                                        float rad = 22.5F;
+                                        rand.setSeed(e.id);
+                                        Draw.color(Color.white, WHPal.SkyBlue, e.fin() + 0.6F);
+                                        float circleRad = e.fin(Interp.circleOut) * rad * 4.0F;
+                                        Lines.stroke(6.0F * e.fout());
+                                        Lines.circle(e.x, e.y, circleRad);
+
+                                        for (int i = 0; i < 4; i++) {
+                                            Drawf.tri(e.x, e.y, 6f, 110 * e.fout(), i * 90);
+                                        }
+
+                                        color();
+                                        for (int i = 0; i < 4; i++) {
+                                            Drawf.tri(e.x, e.y, 3f, 70 * e.fout(), i * 90);
+                                        }
+
+                                        for (int i = 0; i < 8; ++i) {
+                                            Tmp.v1.set(1.0F, 0.0F).setToRandomDirection(rand).scl(circleRad);
+                                            Drawn.tri(e.x + Tmp.v1.x, e.y + Tmp.v1.y, rand.random(circleRad / 8.0F, circleRad / 6.0F) * e.fout(), rand.random(circleRad / 2, circleRad / 1.3f) * (1.0F + e.fin()) / 2.0F, Tmp.v1.angle() - 180.0F);
+                                        }
+                                        Draw.blend(Blending.additive);
+                                        Draw.z(110.1F);
+                                        Fill.light(e.x, e.y, Lines.circleVertices(circleRad), circleRad, Color.clear, Tmp.c1.set(WHPal.SkyBlue).a(e.fout(Interp.pow10Out)));
+                                        Drawf.light(e.x, e.y, rad * e.fout(Interp.circleOut) * 4.0F, WHPal.SkyBlue, 0.7F);
+                                        Draw.blend();
+                                    }), WHFx.lightningHitLarge(WHPal.SkyBlue)).layer(110.001F);
+                            fragBullets = 5;
+                            fragLifeMin = 0.6f;
+                            fragLifeMax = 1.5f;
+                            fragVelocityMin = 0.6f;
+                            fragVelocityMax = 1.5f;
+                            fragRandomSpread = 360;
+                            fragBullet = new BasicBulletType() {{
+                                hitSound = plasmaboom;
+                                speed = 3;
+                                lifetime = 20;
+                                splashDamageRadius = 64;
+                                splashDamage = 80;
+                                lightningColor = WHPal.SkyBlue;
+                                lightningLength = 12;
+                                lightningDamage = 50;
+                                lightning = 1;
+                                width = 16;
+                                height = 16;
+                                sprite = "large-orb";
+                                shrinkY = 0;
+                                hitShake = 4;
+                                frontColor = WHPal.SkyBlue;
+                                backColor = WHPal.SkyBlueF;
+                                hitEffect = despawnEffect = new MultiEffect(
+                                        WHFx.lineCircleOut(WHPal.SkyBlue, 40, 30, 3f),
+                                        WHFx.smoothColorCircle(WHPal.SkyBlue, 30, 40),
+                                        WHFx.blast(WHPal.SkyBlue, 40));
+                            }};
+                        }};
+                    }
+                });
+                weapons.add(new Weapon("wh-mecha4-weapon2") {
+                    {
+                        x = 18;
+                        y = 1;
+                        reload = 15;
+                        shoot = new ShootAlternate() {{
+                            barrels = 5;
+                            spread = 1.2f;
+                            shots = 5;
+                        }};
+                        shootSound = Sounds.shootAltLong;
+                        shootX = -0.8f;
+                        shootY = 15;
+                        mirror = true;
+                        recoil = 5;
+                        inaccuracy = 13;
+                        rotate = true;
+                        rotateSpeed = 0.8f;
+                        rotationLimit = 35;
+                        layerOffset = -0.001f;
+                        alternate = true;
+                        xRand = 0.2f;
+                        velocityRnd = 0.2f;
+                        bullet = new BasicBulletType() {{
+                            lifetime = 22;
+                            drag = 0.06f;
+                            speed = 25;
+                            sprite = "wh-透彻";
+                            width = 22;
+                            height = 30;
+                            frontColor = WHPal.pop2;
+                            backColor = Color.valueOf("F3E979FF");
+                            trailWidth = 5;
+                            trailLength = 8;
+                            hitColor = Color.valueOf("F2E87980");
+                            trailColor = Color.valueOf("F3E979FF");
+                            pierceCap = 3;
+                            pierce = true;
+                            pierceArmor = true;
+                            pierceBuilding = true;
+                            damage = 120;
+                            hitEffect = new WrapEffect(WHFx.hitSparkLarge, Color.valueOf("F2E87980"));
+                            despawnEffect = new WrapEffect(WHFx.square45_6_45, Color.valueOf("F2E87980"));
+
+                        }};
+                    }
+                });
+            }
+        };
+        Mecha3 = new UnitType("mecha3") {
+            {
+                abilities.add(new PcShieldArcAbility() {{
+                    whenShooting = false;
+                    y = -10;
+                    radius = 40;
+                    max = 4000;
+                    regen = 7;
+                    cooldown = 1500;
+                    angle = 140;
+                    width = 10f;
+                }});
+                constructor = MechUnit::create;
+                weapons.add(new Weapon("wh-mecha3-weapon1") {
+                    {
+                        {
+                            x = 16.5f;
+                            reload = 30;
+                            shoot = new ShootAlternate() {{
+                                barrels = 2;
+                                spread = 3f;
+                                shots = 4;
+                                shotDelay = 3;
+                            }};
+                            shootX = -0.75f;
+                            shootY = 18;
+                            mirror = true;
+                            recoil = 2.5f;
+                            inaccuracy = 5;
+                            shootSound = Sounds.bang;
+                            rotate = true;
+                            rotateSpeed = 0.8f;
+                            rotationLimit = 30;
+                            layerOffset = -0.0001f;
+                            alternate = true;
+                            xRand = 0.3f;
+                            velocityRnd = 0.12f;
+                            bullet = new BasicBulletType() {
+                                {
+                                    damage = 100;
+                                    splashDamageRadius = 32;
+                                    splashDamage = 120;
+                                    pierceArmor = true;
+                                    trailLength = 6;
+                                    trailWidth = 1.8f;
+                                    trailColor = WHPal.SkyBlue;
+                                    frontColor = WHPal.SkyBlueF;
+                                    backColor = WHPal.SkyBlue;
+                                    width = 15;
+                                    height = 26;
+                                    status = WHStatusEffects.PlasmaFireBurn;
+                                    statusDuration = 180;
+                                    speed = 17;
+                                    lifetime = 16;
+                                    hitEffect = new MultiEffect(new Effect(30, e -> {
+                                        Draw.color(WHPal.SkyBlue);
+                                        Angles.randLenVectors(e.id, 3, 10f + 30f * e.finpow(), (x, y) -> {
+                                            Fill.poly(e.x + x, e.y + y, 6, e.fout() * 8f, 45);
+                                            Drawf.light(e.x + x, e.y + y, e.fout() * 8f, e.color, 0.7f);
+                                        });
+                                    }),
+                                            WHFx.hitSpark(WHPal.SkyBlue, 30, 10, 60, 2, 10),
+                                            WHFx.lineCircleOut(WHPal.SkyBlue, 15, 50, 2)
+                                    );
+                                    despawnEffect = none;
+                                    shootEffect = WHFx.lineCircleOut(WHPal.SkyBlue, 16, 30, 2);
+
+                                }
+
+                                @Override
+                                public void hit(Bullet b) {
+                                    super.hit(b);
+                                    PlasmaFire.createChance(b, splashDamageRadius, 0.15f);
+                                }
+                            }
+                            ;
+                        }
+                    }
+                });
+                weapons.add(new Weapon("wh-mecha3-weapon2") {
+                    {
+                        x = 6.75f;
+                        y = -11;
+                        reload = 4;
+                        shootY = 7.5f;
+                        mirror = false;
+                        rotate = true;
+                        rotateSpeed = 0.6f;
+                        recoil = 0;
+                        shootSound = Sounds.flame;
+                        bullet = new BulletType() {
+                            {
+                                damage = 60;
+                                hitSize = 10;
+                                pierceBuilding = false;
+                                hittable = false;
+                                absorbable = false;
+                                pierce = true;
+                                status = WHStatusEffects.PlasmaFireBurn;
+                                statusDuration = 360;
+                                speed = 8;
+                                lifetime = 25;
+                                shootEffect = new Effect(33f, 80f, e -> {
+                                    color(WHPal.SkyBlueF, WHPal.SkyBlue, Color.gray, e.fin());
+
+                                    randLenVectors(e.id, 10, e.finpow() * 150f, e.rotation, 10f, (x, y) -> Fill.circle(e.x + x, e.y + y, 2f + e.fout(Interp.pow10Out) * 1.6f));
+                                });
+                                smokeEffect = new Effect(38f, e -> {
+                                    color(Color.valueOf("f8ad42"), Color.valueOf("FFE176"), e.fout());
+                                    stroke(e.fout() * 2.2f);
+
+                                    randLenVectors(e.id, 3, 10f + 150f * e.fin(), e.rotation, 10f, (x, y) -> lineAngle(e.x + x, e.y + y, Mathf.angle(x, y), e.fslope() * 12f + 1f));
+                                });
+                                hitEffect = new Effect(12, e -> {
+                                    color(WHPal.SkyBlue);
+                                    stroke(e.fout() * 2.2f);
+                                    randLenVectors(e.id, 10, e.finpow() * 10f, e.rotation, 10f, (x, y) -> {
+                                        Fill.circle(e.x + x, e.y + y, 2f + e.fout(Interp.pow10In) * 1.6f);
+                                        lineAngle(e.x + x, e.y + y, Mathf.angle(x, y), e.finpow() * 3f + 1f);
+                                    });
+
+                                }
+                                );
+                                despawnEffect = none;
+                            }
+
+                        };
+                    }
+                });
+            }
+        };
+        Mecha2 = new UnitType("mecha2") {
+            {
+                constructor = LegsUnit::create;
+                weapons.add(new Weapon("wh-mecha2-weapon1") {
+                    {
+                        x = -12.5f;
+                        y = 0;
+                        shootY = 8.5f;
+                        layerOffset = -0.001f;
+                        mirror = false;
+                        rotate = true;
+                        rotateSpeed = 0.8f;
+                        alternate = false;
+                        rotationLimit = 45;
+                        shootSound = Sounds.missileLarge;
+                        reload = 240;
+                        cooldownTime = 180;
+                        heatColor = WHPal.Heat;
+                        shootCone = 10;
+                        recoil = 5;
+                        bullet = new BasicBulletType() {{
+                            damage = 350;
+                            splashDamageRadius = 50;
+                            shrinkY = 0;
+                            splashDamage = 150;
+                            speed = 8;
+                            lifetime = 39.5f;
+                            status = blasted;
+                            statusDuration = 60;
+                            width = 25;
+                            height = 50;
+                            homingDelay = 0;
+                            homingPower = 1;
+                            homingRange = 50;
+                            sprite = "wh-重型导弹";
+                            backColor = WHPal.OR;
+                            frontColor = WHPal.pop2;
+                            trailLength = 15;
+                            trailWidth = 2.5f;
+                            trailColor = WHPal.OR;
+                            trailEffect = smoke;
+                            hitShake = 1;
+                            smokeEffect = shootSmallFlame;
+                            hitEffect = despawnEffect = new MultiEffect(WHFx.lineCircleOut(WHPal.OR, 20, 60, 2),
+                                    WHFx.lineCircleOut(WHPal.OR, 20, 40, 2),
+                                    WHFx.hitSpark(WHPal.OR, 20, 12, 50, 2, 13),
+                                    new Effect(30, e -> {
+                                        Draw.color(WHPal.OR);
+                                        Angles.randLenVectors(e.id, 3, 10f + 30f * e.finpow(), (x, y) -> {
+                                            Drawf.square(e.x + x, e.y + y, e.fout() * 8f, 45, WHPal.OR);
+                                            Drawf.light(e.x + x, e.y + y, e.fout() * 8f, WHPal.OR, 0.7f);
+                                        });
+                                    })
+                            );
+                            shootEffect = Fx.shootTitan;
+                            smokeEffect = new WrapEffect(Fx.shootSmokeTitan, WHPal.OR);
+                        }};
+                    }
+                });
+                weapons.add(new Weapon("wh-mecha2-weapon2") {
+                    {
+                        reload = 70;
+                        shake = 3;
+                        recoil = 5;
+                        shoot.shots = 4;
+                        shoot.shotDelay = 5;
+                        x = 12;
+                        y = -2;
+                        shootY = 13;
+                        shootX = 1.5f;
+                        mirror = false;
+                        rotate = true;
+                        rotateSpeed = 0.8f;
+                        rotationLimit = 35;
+                        inaccuracy = 3;
+                        shootSound = shootBig;
+                        alternate = false;
+                        ejectEffect = casing4;
+                        layerOffset = -0.001f;
+                        shootCone = 20;
+                        bullet = new BasicBulletType() {
+                            {
+                                absorbable = false;
+                                damage = 100;
+                                speed = 14;
+                                hitShake = 1;
+                                lifetime = 20;
+                                shootEffect = shootBig2;
+                                smokeEffect = shootBigSmoke;
+                                hitSound = explosion;
+                                width = 9;
+                                height = 15;
+                                backColor = WHPal.OR;
+                                frontColor = WHPal.pop2;
+                                trailLength = 11;
+                                trailWidth = 2;
+                                trailColor = WHPal.OR;
+                                hitEffect = despawnEffect = new MultiEffect(
+                                        blastExplosion,
+                                        new Effect(20.0F, (e) -> {
+                                            Draw.color(WHPal.OR, WHPal.ORL, e.fout() * 0.3F);
+                                            Lines.stroke(e.fout() * 1.6F);
+                                            rand.setSeed(e.id);
+                                            Angles.randLenVectors(e.id, 8, e.finpow() * 20.0F + 10f, e.rotation, 20, (x, y) -> {
+                                                Lines.lineAngle(e.x + x, e.y + y, Mathf.angle(x, y), e.fout() * rand.random(1.95F, 4.25F) + 2.0F);
+                                            });
+                                        })
+                                );
+                            }
+                        };
                     }
                 });
             }

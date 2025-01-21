@@ -109,7 +109,7 @@ public class SwirlEffect extends Effect {
         this.clip = Math.max(this.clip, this.maxDst * 2.0F);
     }
 
-    public void render(Effect.EffectContainer e) {
+    public void render(EffectContainer e) {
         float lifetime = e.lifetime - (float)this.length;
         float dst;
         if (!(this.minDst < 0.0F) && !(this.maxDst < 0.0F)) {
@@ -151,7 +151,7 @@ public class SwirlEffect extends Effect {
     }
 
     protected void add(float x, float y, float rotation, Color color, Object data) {
-        BlackHoleEffectState entity = SwirlEffect.BlackHoleEffectState.create();
+        BlackHoleEffectState entity = BlackHoleEffectState.create();
         entity.effect = this;
         entity.rotation = this.baseRotation + rotation;
         entity.lifetime = this.lifetime;

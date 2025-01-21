@@ -2,9 +2,11 @@ package wh.content;
 
 import mindustry.graphics.*;
 import mindustry.type.*;
+import wh.gen.PlasmaFire;
+import wh.graphics.WHPal;
 
 public final class WHStatusEffects {
-    public static StatusEffect ultFireBurn, assault, bless, distort, energyAmplification, forcesOfChaos, melta, palsy, plasma;
+    public static StatusEffect ultFireBurn,PlasmaFireBurn, assault, bless, distort, energyAmplification, forcesOfChaos, melta, palsy, plasma;
 
     private WHStatusEffects() {}
 
@@ -15,6 +17,12 @@ public final class WHStatusEffects {
             speedMultiplier = 1.2f;
             effect = WHFx.ultFireBurn;
         }};
+        PlasmaFireBurn = new StatusEffect("plasma") {{
+            color = WHPal.SkyBlue;
+            effect = WHFx.PlasmaFireBurn;
+            }};
+
+
         assault = new StatusEffect("assault");
         bless = new StatusEffect("bless");
         distort = new StatusEffect("distort");
@@ -22,6 +30,6 @@ public final class WHStatusEffects {
         forcesOfChaos = new StatusEffect("forces-of-chaos");
         melta = new StatusEffect("melta");
         palsy = new StatusEffect("palsy");
-        plasma = new StatusEffect("plasma");
+        //plasma = new StatusEffect("plasma");
     }
 }

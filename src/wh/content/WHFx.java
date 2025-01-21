@@ -45,8 +45,10 @@ import mindustry.world.blocks.environment.Floor;
 import mindustry.world.blocks.environment.SteamVent;
 import wh.entities.abilities.PcShieldArcAbility;
 import wh.entities.bullet.SlowLaserBulletType;
+import wh.gen.PlasmaFire;
 import wh.graphics.Drawn;
 import wh.graphics.PositionLightning;
+import wh.graphics.WHPal;
 import wh.struct.Vec2Seq;
 import wh.util.WHUtils;
 
@@ -101,6 +103,7 @@ public final class WHFx {
     public static Effect crossBlast_45;
     public static Effect crossSpinBlast;
     public static Effect ultFireBurn;
+    public static Effect PlasmaFireBurn;
     public static Effect skyTrail;
     public static Effect trailToGray;
     public static Effect trailFromWhite;
@@ -1151,12 +1154,22 @@ public final class WHFx {
             }
 
         })).followParent(true).layer(100.0F);
+
         ultFireBurn = (new Effect(25.0F, (e) -> {
             Draw.color(Pal.techBlue, Color.gray, e.fin() * 0.75F);
             Angles.randLenVectors(e.id, 2, 2.0F + e.fin() * 7.0F, (x, y) -> {
                 Fill.square(e.x + x, e.y + y, 0.2F + e.fout() * 1.5F, 45.0F);
             });
         })).layer(101.0F);
+
+
+        PlasmaFireBurn = (new Effect(25.0F, (e) -> {
+            Draw.color(WHPal.SkyBlue, Color.gray, e.fin() * 0.75F);
+            Angles.randLenVectors(e.id, 2, 2.0F + e.fin() * 7.0F, (x, y) -> {
+                Fill.poly(e.x + x, e.y + y, 6, 0.2F + e.fout() * 2F, 45);
+            });
+        })).layer(101.0F);
+
         skyTrail = new Effect(22.0F, (e) -> {
             Draw.color(Pal.techBlue, Pal.gray, e.fin() * 0.6F);
             rand.setSeed(e.id);

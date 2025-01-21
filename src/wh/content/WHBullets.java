@@ -52,6 +52,7 @@ import mindustry.graphics.Drawf;
 import mindustry.graphics.Pal;
 import wh.entities.bullet.*;
 import wh.entities.effect.WrapperEffect;
+import wh.gen.PlasmaFire;
 import wh.gen.UltFire;
 import wh.gen.WHSounds;
 import wh.graphics.Drawn;
@@ -80,8 +81,9 @@ public final class WHBullets {
     public static BulletType hyperBlastLinker;
     public static BulletType arc9000frag;
     public static BulletType arc9000;
+
     public static BulletType arc9000hyper;
-    public static BulletType cMoonExplosion;
+    public static BulletType PlasmaFireBall;
     public static BulletType AGFrag;
     public static BulletType tankAG7;
     public static BulletType collaspsePf;
@@ -1368,6 +1370,37 @@ public final class WHBullets {
                 });
             }
         };
+        PlasmaFireBall = new FireBulletType(1.0F, 10.0F) {
+            {
+                colorFrom =   colorMid = WHPal.SkyBlue;
+                lifetime = 12.0F;
+                radius = 4.0F;
+                trailEffect = WHFx.PlasmaFireBurn;
+            }
+
+            public void draw(Bullet b) {
+                Draw.color(  colorFrom,   colorMid,   colorTo, b.fin());
+                Fill.poly(b.x , b.y , 6, b.fout() * radius, 0);
+                Draw.reset();
+            }
+
+            public void update(Bullet b) {
+                if (Mathf.chanceDelta((double)  fireTrailChance)) {
+                    UltFire.create(b.tileOn());
+                }
+
+                if (Mathf.chanceDelta((double)  fireEffectChance)) {
+                    trailEffect.at(b.x, b.y);
+                }
+
+                if (Mathf.chanceDelta((double)  fireEffectChance2)) {
+                    trailEffect2.at(b.x, b.y);
+                }
+
+                ;
+            }
+        };
+
         AGFrag = new LightningLinkerBulletType() {
             {
                   effectLightningChance = 0.15F;

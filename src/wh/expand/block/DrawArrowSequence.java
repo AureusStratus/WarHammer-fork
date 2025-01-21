@@ -30,8 +30,8 @@ public class DrawArrowSequence extends DrawPart {
     public float colorToFinScl;
     public Blending blending;
     public float opacity;
-    public DrawPart.PartProgress progress;
-    public DrawPart.PartProgress colorProgress;
+    public PartProgress progress;
+    public PartProgress colorProgress;
     public float spacing;
     public int arrows;
     public float scl;
@@ -66,7 +66,7 @@ public class DrawArrowSequence extends DrawPart {
         this.arrowName = arrowName;
     }
 
-    public void draw(DrawPart.PartParams params) {
+    public void draw(PartParams params) {
         float z = Draw.z();
         if (this.layer > 0.0F) {
             Draw.z(this.layer);

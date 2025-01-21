@@ -5,6 +5,7 @@
 
 package wh.graphics;
 
+import arc.KeyBinds;
 import arc.graphics.Color;
 import mindustry.content.Items;
 import mindustry.graphics.Pal;
@@ -24,6 +25,8 @@ public final class WHPal {
     public static Color OR;
     public static Color ORL;
     public static Color Heat;
+    public static Color SkyBlue;
+    public static Color SkyBlueF;
 
     private WHPal() {
     }
@@ -43,5 +46,7 @@ public final class WHPal {
         OR = Color.valueOf("FFC397FF");
         ORL =Color.valueOf("FFA05C");
         Heat=Color.valueOf("FF4040");
+        SkyBlue=Color.valueOf("579ED4FF");
+        SkyBlueF=Color.valueOf("DBFFFDFF");
     }
 }

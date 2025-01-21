@@ -20,6 +20,7 @@ import static wh.util.WHUtils.*;
 @SuppressWarnings("unused")
 public class UltFire extends Fire {
     public static final float baseLifetime = 1200f;
+
     public static TextureRegion[] ultRegion;
     public static final Effect remove = new Effect(70f, e -> {
         Draw.alpha(e.fout());

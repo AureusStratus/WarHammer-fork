@@ -57,7 +57,7 @@ public class HeatBelt extends Duct {
 
         //TODO show number
         addBar("heat", (
-                HeatBelt.HeatBletBuild entity) -> new Bar(() -> Core.bundle.format("bar.heatamount", (int) (entity.heat + 0.001f)), () -> Pal.lightOrange, () -> entity.heat / visualMaxHeat));
+                HeatBletBuild entity) -> new Bar(() -> Core.bundle.format("bar.heatamount", (int) (entity.heat + 0.001f)), () -> Pal.lightOrange, () -> entity.heat / visualMaxHeat));
     }
 
     @Override

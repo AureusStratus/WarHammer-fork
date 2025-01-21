@@ -1,10 +1,9 @@
 {
     "name": "等离子",
-    "color": "DBFFFD80",
-    "damage": 12,
+    "damage": 10,
     "speedMultiplier": 0.8,
-    "effectChance": 0.088,
-    "effect": {
+    "effectChance": 0.088
+   /* "effect": {
         "type": "MultiEffect",
         "effects": [
             {
@@ -28,5 +27,5 @@
                 "colorTo": "DBFFFD80"
             }
         ]
-    }
+    }*/
 }

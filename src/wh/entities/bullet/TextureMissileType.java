@@ -1,5 +1,6 @@
 package wh.entities.bullet;
 
+import arc.Core;
 import arc.graphics.g2d.Draw;
 import arc.math.Mathf;
 import arc.util.Tmp;
@@ -12,6 +13,7 @@ import mindustry.gen.Bullet;
 import mindustry.graphics.Drawf;
 import mindustry.graphics.Layer;
 import mindustry.graphics.Trail;
+import wh.gen.PlasmaFire;
 import wh.gen.UltFire;
 
 import static mindustry.Vars.headless;
@@ -21,6 +23,10 @@ public class TextureMissileType extends AccelBulletType{
 		super(damage, bulletSprite);
 		
 		absorbable = false;
+	}
+	@Override
+	public void load(){
+		backRegion = frontRegion = Core.atlas.find(sprite);
 	}
 
 	
@@ -69,7 +75,7 @@ public class TextureMissileType extends AccelBulletType{
 			}
 			
 			if(makeFire){
-				UltFire.createChance(x, y, splashDamageRadius, 0.35f, b.team);
+				PlasmaFire.createChance(x, y, splashDamageRadius, 0.35f, b.team);
 			}
 		}
 		
@@ -79,7 +85,7 @@ public class TextureMissileType extends AccelBulletType{
 	}
 	
 	public void hitTile(Bullet b, Building build, float initialHealth, boolean direct){
-		UltFire.create(build.tile);
+		PlasmaFire.create(build.tile);
 		
 		if(build.team != b.team && direct){
 			hit(b);
