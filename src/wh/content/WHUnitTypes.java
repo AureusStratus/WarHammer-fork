@@ -3708,6 +3708,7 @@ public final class WHUnitTypes {
                                     })
                             );
                             shootEffect = Fx.shootTitan;
+                            // test git
                             smokeEffect = new WrapEffect(Fx.shootSmokeTitan, WHPal.OR);
                         }};
                     }
