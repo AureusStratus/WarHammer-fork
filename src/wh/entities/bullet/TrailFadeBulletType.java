@@ -67,131 +67,104 @@ public class TrailFadeBulletType extends AccelBulletType {
         this(speed, damage, "bullet");
     }
 
-    public void despawned(Bullet b) {
-        if (!Vars.headless) {
-            Object var3 = b.data;
-            if (var3 instanceof Vec2Seq[]) {
-                Vec2Seq[] pointsArr = (Vec2Seq[])var3;
-                Vec2Seq[] var8 = pointsArr;
-                int var4 = pointsArr.length;
-
-                for(int var5 = 0; var5 < var4; ++var5) {
-                    Vec2Seq points = var8[var5];
-                    points.add(b.x, b.y);
-                    if (!this.despawnBlinkTrail && (!b.absorbed || !this.hitBlinkTrail)) {
-                        points.add(this.tracerStroke, (float)this.tracerFadeOffset);
-                        WHFx.lightningFade.at(b.x, b.y, (float)this.tracerStrokeOffset, this.hitColor, points);
-                    } else {
-                        PositionLightning.createBoltEffect(this.hitColor, this.tracerStroke * 2.0F, points);
-                        Vec2 v = points.firstTmp();
-                        WHFx.lightningHitSmall.at(v.x, v.y, this.hitColor);
-                    }
-                }
-
-                b.data = null;
-            }
-        }
-
-        super.despawned(b);
-    }
-
-    public void hitEntity(Bullet b, Hitboxc entity, float health) {
-        super.hitEntity(b, entity, health);
-        this.hit(b);
-    }
-
-    public void hit(Bullet b) {
-        super.hit(b);
-        if (!Vars.headless && b.data instanceof Vec2Seq[]) {
+    @Override
+    public void despawned(Bullet b){
+        if(!Vars.headless && (b.data instanceof Vec2Seq[])){
             Vec2Seq[] pointsArr = (Vec2Seq[])b.data();
-            Vec2Seq[] var3 = pointsArr;
-            int var4 = pointsArr.length;
-
-            for(int var5 = 0; var5 < var4; ++var5) {
-                Vec2Seq points = var3[var5];
+            for(Vec2Seq points : pointsArr){
                 points.add(b.x, b.y);
-                if (this.hitBlinkTrail) {
-                    PositionLightning.createBoltEffect(this.hitColor, this.tracerStroke * 2.0F, points);
+                if(despawnBlinkTrail || (b.absorbed && hitBlinkTrail)){
+                    PositionLightning.createBoltEffect(hitColor, tracerStroke * 2f, points);
                     Vec2 v = points.firstTmp();
-                    WHFx.lightningHitSmall.at(v.x, v.y, this.hitColor);
-                } else {
-                    points.add(this.tracerStroke, (float)this.tracerFadeOffset);
-                    WHFx.lightningFade.at(b.x, b.y, (float)this.tracerStrokeOffset, this.hitColor, points);
+                    WHFx.lightningHitSmall.at(v.x, v.y, hitColor);
+                }else{
+                    points.add(tracerStroke, tracerFadeOffset);
+                    WHFx.lightningFade.at(b.x, b.y, tracerStrokeOffset, hitColor, points);
                 }
             }
 
             b.data = null;
         }
+
+        super.despawned(b);
     }
 
-    public void init(Bullet b) {
-        super.init(b);
-        if (!Vars.headless && this.trailLength > 0) {
-            Vec2Seq[] points = new Vec2Seq[this.tracers];
+    @Override
+    public void hitEntity(Bullet b, Hitboxc entity, float health){
+        super.hitEntity(b, entity, health);
 
-            for(int i = 0; i < this.tracers; ++i) {
-                Vec2Seq p = new Vec2Seq();
-                if (this.addBeginPoint) {
-                    p.add(b.x, b.y);
-                }
+        hit(b);
+    }
 
-                points[i] = p;
+    @Override
+    public void hit(Bullet b){
+        super.hit(b);
+
+        if(Vars.headless || !(b.data instanceof Vec2Seq[]))return;
+        // 将b的数据转换为Vec2Seq[]类型
+        Vec2Seq[] pointsArr = (Vec2Seq[])b.data();
+        for(Vec2Seq points : pointsArr){
+            points.add(b.x, b.y);
+            if(hitBlinkTrail){
+                PositionLightning.createBoltEffect(hitColor, tracerStroke * 2f, points);
+                Vec2 v = points.firstTmp();
+                WHFx.lightningHitSmall.at(v.x, v.y, hitColor);
+            }else{
+                points.add(tracerStroke, tracerFadeOffset);
+                WHFx.lightningFade.at(b.x, b.y, tracerStrokeOffset, hitColor, points);
             }
-
-            b.data = points;
         }
+
+        b.data = null;
     }
 
-    public void update(Bullet b) {
+    @Override
+    public void init(Bullet b){
+        super.init(b);
+        if(Vars.headless && trailLength > 0)return;
+        Vec2Seq[] points = new Vec2Seq[tracers];
+        for(int i = 0; i < tracers; i++){
+            Vec2Seq p = new Vec2Seq();
+            if(addBeginPoint)p.add(b.x, b.y);
+            points[i] = p;
+        }
+        b.data = points;
+    }
+
+    @Override
+    public void update(Bullet b){
         super.update(b);
-        if (!Vars.headless && b.timer(2, this.tracerUpdateSpacing)) {
-            Object var3 = b.data;
-            if (!(var3 instanceof Vec2Seq[])) {
-
-            }
-
-            Vec2Seq[] vecs = (Vec2Seq[])var3;
-            Vec2Seq[] var7 = vecs;
-            int var4 = vecs.length;
-
-            for(int var5 = 0; var5 < var4; ++var5) {
-                Vec2Seq seq = var7[var5];
-                v2.trns(b.rotation(), 0.0F, rand.range(this.tracerRandX));
-                v1.setToRandomDirection(rand).scl(this.tracerSpacing);
+        if(!Vars.headless && b.timer(2, tracerUpdateSpacing)){
+            if(!(b.data instanceof Vec2Seq[]))return;
+            Vec2Seq[] points = (Vec2Seq[])b.data();
+            for(Vec2Seq seq : points){
+                v2.trns(b.rotation(), 0, rand.range(tracerRandX));
+                v1.setToRandomDirection(rand).scl(tracerSpacing);
                 seq.add(v3.set(b.x, b.y).add(v1).add(v2));
             }
         }
-
-
     }
 
-    public void drawTrail(Bullet b) {
+    @Override
+    public void drawTrail(Bullet b){
         super.drawTrail(b);
-        Object var3 = b.data;
-        if (var3 instanceof Vec2Seq[]) {
-            Vec2Seq[] vecs = (Vec2Seq[])var3;
-            Vec2Seq[] var10 = vecs;
-            int var4 = vecs.length;
 
-            for(int var5 = 0; var5 < var4; ++var5) {
-                Vec2Seq points = var10[var5];
-                if (points.size() < 2) {
-                    return;
-                }
-
-                Draw.color(this.hitColor);
-
-                for(int i = 1; i < points.size(); ++i) {
-                    Lines.stroke(Mathf.clamp(((float)i + (float)this.tracerFadeOffset / 2.0F) / (float)points.size() * (float)(this.tracerStrokeOffset - (points.size() - i)) / (float)this.tracerStrokeOffset) * this.tracerStroke);
+        if((b.data instanceof Vec2Seq[])){
+            Vec2Seq[] pointsArr = (Vec2Seq[])b.data();
+            for(Vec2Seq points : pointsArr){
+                if(points.size() < 2)return;
+                Draw.color(hitColor);
+                for(int i = 1; i < points.size(); i++){
+//					Draw.alpha(((float)(i + fadeOffset) / points.size));
+                    Lines.stroke(Mathf.clamp((i + tracerFadeOffset / 2f) / points.size() * (tracerStrokeOffset - (points.size() - i)) / tracerStrokeOffset) * tracerStroke);
                     Vec2 from = points.setVec2(i - 1, Tmp.v1);
                     Vec2 to = points.setVec2(i, Tmp.v2);
                     Lines.line(from.x, from.y, to.x, to.y, false);
-                    Fill.circle(from.x, from.y, Lines.getStroke() / 2.0F);
+                    Fill.circle(from.x, from.y, Lines.getStroke() / 2);
                 }
 
-                Fill.circle(points.peekTmp().x, points.peekTmp().y, this.tracerStroke);
+                Fill.circle(points.peekTmp().x, points.peekTmp().y, tracerStroke);
             }
         }
-
     }
 }

@@ -5,7 +5,6 @@
 
 package wh.util;
 
-import arc.Core;
 import arc.func.*;
 import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
@@ -25,7 +24,6 @@ import arc.struct.Seq;
 import arc.util.Tmp;
 import arc.util.pooling.Pool;
 import arc.util.pooling.Pools;
-import mindustry.Vars;
 import mindustry.content.Fx;
 import mindustry.core.World;
 import mindustry.entities.Effect;
@@ -36,10 +34,7 @@ import mindustry.type.Liquid;
 import mindustry.world.Tile;
 import org.jetbrains.annotations.Contract;
 
-import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
-import java.util.zip.DeflaterOutputStream;
-import java.util.zip.InflaterOutputStream;
 
 import static arc.Core.atlas;
 import static mindustry.Vars.*;

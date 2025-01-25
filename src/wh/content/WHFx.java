@@ -33,6 +33,7 @@ import arc.util.pooling.Pools;
 import mindustry.Vars;
 import mindustry.content.Fx;
 import mindustry.entities.Effect;
+import mindustry.entities.effect.MultiEffect;
 import mindustry.gen.Bullet;
 import mindustry.gen.Unit;
 import mindustry.graphics.Drawf;
@@ -55,7 +56,10 @@ import wh.util.WHUtils;
 import static arc.graphics.g2d.Draw.color;
 import static arc.graphics.g2d.Lines.*;
 import static arc.math.Angles.randLenVectors;
+import static mindustry.Vars.headless;
+import static mindustry.Vars.state;
 import static mindustry.content.Fx.rand;
+import static mindustry.content.Fx.v;
 
 public final class WHFx {
     public static final float EFFECT_MASK = 110.0001F;
@@ -554,13 +558,6 @@ public final class WHFx {
         });
     }
 
-    public static float dx(float px, float r, float angle) {
-        return px + r * (float) Math.cos((double) angle * Math.PI / 180.0);
-    }
-
-    public static float dy(float py, float r, float angle) {
-        return py + r * (float) Math.sin((double) angle * Math.PI / 180.0);
-    }
 
     public static Effect aimEffect(float lifetime, Color color, float width, float length, float spacing) {
         return new Effect(lifetime, length, (e) -> {
@@ -661,13 +658,58 @@ public final class WHFx {
     public static Effect ExplosionSlash(Color color,float size, float range, float lifetime) {
         return new Effect(lifetime, range*2, e -> {
             Draw.color(color);
-            Angles.randLenVectors(e.id, (int) Mathf.clamp(range / 8.0F, 4.0F, 18.0F), range / 8.0F, range * (1.0F + e.fout(Interp.pow2OutInverse)) / 2.0F, (x, y) -> {
+            Angles.randLenVectors(e.id, (int) Mathf.clamp(range / 8.0F, 4.0F, 18.0F), range / 8.0F, e.rotation,360, (x, y) -> {
                 for (int s : Mathf.signs) {
-                    Drawf.tri(e.x, e.y, e.fout() * size/2, e.foutpow() * size * 2.5f + 6f, e.rotation + s * 90f);
+                    Drawf.tri(e.x+x, e.y+y, e.fout() * size/2, e.foutpow() * size * 2.5f + 6f, Mathf.angle(x, y) + s * 90f);
                 }
             });
         });
     }
+    public static Effect airAsh(float lifetime, float range, float start, float pin, Color color, float width, int amount) {
+        return new MultiEffect(
+                new Effect(lifetime, e -> {
+                    float fee = e.time < e.lifetime/2 ? e.fin() * 2 : e.fout() * 2;
+                    for(int a : Mathf.signs) {
+                        for (int i = 0; i < amount; i++) {
+                            float dx = dx(e.x, range * e.fin() + start, (e.time * 8 + i) * a + Mathf.randomSeed(e.id, -10, 10)),
+                                    dy = dy(e.y, range * e.fin() + start, (e.time * 8 + i) * a + Mathf.randomSeed(e.id, -10, 10));
+                            Draw.color(color);
+                            Fill.circle(dx, dy, (width * i / amount + 0.2f) * fee);
+                        }
+                    }
+                }),
+                new Effect(lifetime, e -> {
+                    float fee = e.time < e.lifetime/2 ? e.fin() * 2 : e.fout() * 2;
+                    for(int a : Mathf.signs) {
+                        for (int i = 0; i < amount; i++) {
+                            float dx = dx(e.x, (range - pin) * e.fin() + start, (e.time * 8 + i) * a + Mathf.randomSeed(e.id, -10, 10) + 120),
+                                    dy = dy(e.y, (range - pin) * e.fin() + start, (e.time * 8 + i) * a + Mathf.randomSeed(e.id, -10, 10) + 120);
+                            Draw.color(color);
+                            Fill.circle(dx, dy, (width * i / amount + 0.2f) * fee);
+                        }
+                    }
+                }),
+                new Effect(lifetime, e -> {
+                    float fee = e.time < e.lifetime/2 ? e.fin() * 2 : e.fout() * 2;
+                    for(int a : Mathf.signs) {
+                        for (int i = 0; i < amount; i++) {
+                            float dx = dx(e.x, (range - pin * 2) * e.fin() + start, (e.time * 8 + i) * a + Mathf.randomSeed(e.id, -10, 10) + 240),
+                                    dy = dy(e.y, (range - pin * 2) * e.fin() + start, (e.time * 8 + i) * a + Mathf.randomSeed(e.id, -10, 10) + 240);
+                            Draw.color(color);
+                            Fill.circle(dx, dy, (width * i / amount + 0.2f) * fee);
+                        }
+                    }
+                })
+        );
+    }
+    //参数方程
+    public static float dx(float px, float r, float angle){
+        return px + r * (float) Math.cos(angle * Math.PI/180);
+    }
+    public static float dy(float py, float r, float angle){
+        return py + r * (float) Math.sin(angle * Math.PI/180);
+    }
+
     static {
         lightningSpark = new Effect(Fx.chainLightning.lifetime, (e) -> {
             Draw.color(Color.white, e.color, e.fin() + 0.25F);
@@ -1461,38 +1503,34 @@ public final class WHFx {
 
             }
         });
-        AccretionDiskEffect = new Effect(60.0F, (e) -> {
-            if (!Vars.headless) {
-                Object patt55787$temp = e.data;
-                if (patt55787$temp instanceof ateData) {
-                    ateData data = (ateData) patt55787$temp;
-                    if (data.owner != null) {
-                        float fin = data.out ? e.finpow() : e.foutpow();
-                        float fout = data.out ? e.foutpow() : e.finpow();
-                        float start = Mathf.randomSeed(e.id, 360.0F);
-                        Bullet b = data.owner;
-                        float ioRad = data.outRad - (data.outRad - data.inRad) * fin;
-                        float rad = data.speed * e.time * 8.0F;
-                        float dx = dx(b.x, ioRad, start - rad);
-                        float dy = dy(b.y, ioRad, start - rad);
-                        if (data.trail == null) {
-                            data.trail = new Trail(data.length);
-                        }
+             AccretionDiskEffect = new Effect(60, e -> {
+            if(headless || !(e.data instanceof ateData data) || data.owner == null) return;
 
-                        float dzin = data.out && e.time > e.lifetime - 10.0F ? Interp.pow2Out.apply((e.lifetime - e.time) / 10.0F) : fin;
-                        data.trail.length = data.length;
-                        if (!Vars.state.isPaused()) {
-                            data.trail.update(dx, dy, 2.0F);
-                        }
+            float fin = data.out ? e.finpow() : e.foutpow();
+            float fout = data.out ? e.foutpow() : e.finpow();
+            //float fout = 1 - fin;
 
-                        float z = Draw.z();
-                        Draw.z(110.0F - 19.0F * fout);
-                        data.trail.draw(Tmp.c3.set(e.color).shiftValue(-e.color.value() * fout), data.width * dzin);
-                        Draw.z(z);
-                    }
-                }
-            }
+            float start = Mathf.randomSeed(e.id, 360f);
+            var b = data.owner;
 
+            float ioRad = data.outRad - (data.outRad - data.inRad) * fin;
+            float rad = data.speed * e.time * 6;
+            float dx = dx(b.x, ioRad, start - rad),
+                    dy = dy(b.y, ioRad, start - rad);
+
+            if(data.trail == null) data.trail = new Trail(data.length);
+            float dzin = data.out && e.time > e.lifetime - 10 ? Interp.pow2Out.apply((e.lifetime - e.time)/10) : fin;
+            data.trail.length = data.length;
+            //data.trail.length = (int) (data.length * dzin);
+
+            if(!state.isPaused()) data.trail.update(dx, dy, 1);
+
+            float z = Draw.z();
+            Draw.z(Layer.effect - 19 * fout);
+            //Draw.z(Layer.max - 1);
+            data.trail.draw(Tmp.c3.set(e.color).shiftValue(-e.color.value() * fout), data.width * dzin);
+            //data.trail.draw(e.color, data.width);
+            Draw.z(z);
         });
         groundRise = (new Effect(30.0F, (e) -> {
             Tile t = Vars.world.tileWorld(e.x, e.y);

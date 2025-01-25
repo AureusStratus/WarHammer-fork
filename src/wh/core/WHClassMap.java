@@ -38,6 +38,7 @@ import wh.world.blocks.storage.FrontlineCoreBlock;
 import wh.world.blocks.storage.UnloaderF;
 
 final class WHClassMap {
+
     private WHClassMap() {
     }
 
