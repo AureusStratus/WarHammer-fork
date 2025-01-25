@@ -1,0 +1,7 @@
+.gradle
+.gradle/*
+list.txt
+*.class
+*.jar
+*.war
+build
