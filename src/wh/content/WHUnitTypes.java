@@ -5,7 +5,6 @@
 
 package wh.content;
 
-import arc.Core;
 import arc.graphics.Blending;
 import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
@@ -16,10 +15,8 @@ import arc.math.Angles;
 import arc.math.Interp;
 import arc.math.Mathf;
 import arc.math.geom.Vec2;
-import arc.struct.ObjectSet;
 import arc.util.Time;
 import arc.util.Tmp;
-import mindustry.Vars;
 import mindustry.content.Fx;
 import mindustry.content.StatusEffects;
 import mindustry.entities.*;
@@ -78,7 +75,7 @@ import static wh.content.WHStatusEffects.bless;
 public final class WHUnitTypes {
     public static UnitType
             //空军
-            cMoon, StarrySky, air6, air5, air4,
+            cMoon, StarrySky, air6, air5, air4,air3, air2, air1,
     //载具
     tankAG,
             tank3s, tank2s, tank1s, tankl,
@@ -4676,22 +4673,90 @@ public final class WHUnitTypes {
                 });
             }
         };
-     /*   M1 = new UnitType("m1") {
-            {
-                constructor = MechUnit::create;
-                canDrown = false;
-                rotateSpeed = 1.1f;
-                mechStepParticles = true;
-                mechFrontSway = 1.3f;
-                mechSideSway = 1.1f;*/
+       M1 = new UnitType("m1") {
+           {
+               constructor = MechUnit::create;
+               canDrown = false;
+               rotateSpeed = 1.1f;
+               mechStepParticles = true;
+               mechSideSway = 0.54f;
+               mechFrontSway = 0.1f;
+               weapons.add(new Weapon("wh-m1-weapon1") {
+                   {
+
+                       mirror = false;
+                       layerOffset = -0.001f;
+                       x = 5;
+                       y = 2.5f;
+                       shootY = 6;
+                       shootX = 0.3f;
+                       top = false;
+                       recoil = 0.5f;
+                       shake = 0.5f;
+                       reload = 30;
+                       shootSound = Sounds.shoot;
+                       bullet = new RailBulletType() {{
+                           length = 150f;
+                           damage = 60f;
+                           pointEffectSpace = 10f;
+                           hitColor = Color.valueOf("FF5D45FF");
+                           hitEffect = endEffect = Fx.hitBulletColor;
+                           pierceDamageFactor = 0.1f;
+
+                           smokeEffect = Fx.colorSpark;
+
+                           endEffect = new Effect(14f, e -> {
+                               color(e.color);
+                               Drawf.tri(e.x, e.y, e.fout() * 1.5f, 5f, e.rotation);
+                           });
+
+                           shootEffect = new Effect(10, e -> {
+                               color(e.color);
+                               float w = 1.2f + 7 * e.fout();
+
+                               Drawf.tri(e.x, e.y, w, 16f * e.fout(), e.rotation);
+                               color(e.color);
+
+                               for (int i : Mathf.signs) {
+                                   Drawf.tri(e.x, e.y, w * 0.9f, 12f * e.fout(), e.rotation + i * 90f);
+                               }
+
+                               Drawf.tri(e.x, e.y, w, 4f * e.fout(), e.rotation + 180f);
+                           });
+
+                           lineEffect = new Effect(20f, e -> {
+                               if (!(e.data instanceof Vec2 v)) return;
+
+                               color(e.color);
+                               stroke(e.fout() * 0.9f + 1.2f);
+
+                               Fx.rand.setSeed(e.id);
+                               for (int i = 0; i < (length / pointEffectSpace) - 1; i++) {
+                                   Fx.v.trns(e.rotation, Fx.rand.random(8f, v.dst(e.x, e.y) - 8f));
+                                   Lines.lineAngleCenter(e.x + Fx.v.x, e.y + Fx.v.y, e.rotation + e.finpow(), e.foutpowdown() * 20f * Fx.rand.random(0.5f, 1f) + 0.3f);
+                               }
+
+                               e.scaled(14f, b -> {
+                                   stroke(b.fout() * 0.9f);
+                                   color(e.color);
+                                   Lines.line(e.x, e.y, v.x, v.y);
+                               });
+                           });
+                       }};
+
+                   }
+               });
+           }
+       };
+
+
         M4 = new UnitType("m4") {
             {
                 constructor = MechUnit::create;
                 canDrown = false;
                 rotateSpeed = 1.1f;
                 mechStepParticles = true;
-                mechFrontSway = 1.3f;
-                mechSideSway = 1.1f;
+                mechSideSway = 0.54f; mechFrontSway = 0.1f;
                 mechLandShake = 0.1f;
                 speed = 1f;
                 weapons.add(new Weapon("wh-m4-weapon1") {
