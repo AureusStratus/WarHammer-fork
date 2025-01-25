@@ -5,6 +5,7 @@
 
 package wh.content;
 
+import arc.Core;
 import arc.graphics.Blending;
 import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
@@ -15,13 +16,13 @@ import arc.math.Angles;
 import arc.math.Interp;
 import arc.math.Mathf;
 import arc.math.geom.Vec2;
+import arc.struct.ObjectSet;
 import arc.util.Time;
 import arc.util.Tmp;
+import mindustry.Vars;
 import mindustry.content.Fx;
 import mindustry.content.StatusEffects;
-import mindustry.entities.Effect;
-import mindustry.entities.UnitSorts;
-import mindustry.entities.Units;
+import mindustry.entities.*;
 import mindustry.entities.abilities.Ability;
 import mindustry.entities.abilities.MoveEffectAbility;
 import mindustry.entities.bullet.*;
@@ -36,16 +37,19 @@ import mindustry.entities.units.WeaponMount;
 import mindustry.gen.*;
 import mindustry.graphics.Drawf;
 import mindustry.graphics.Layer;
+import mindustry.graphics.Pal;
 import mindustry.type.UnitType;
 import mindustry.type.Weapon;
 import mindustry.type.unit.TankUnitType;
 import mindustry.type.weapons.PointDefenseWeapon;
+import mindustry.world.meta.BlockFlag;
 import wh.entities.abilities.AdaptedHealAbility;
 import wh.entities.abilities.PcShieldArcAbility;
 import wh.entities.abilities.ShockWaveAbility;
 import wh.entities.bullet.*;
 import wh.gen.*;
 import wh.graphics.Drawn;
+import wh.graphics.PositionLightning;
 import wh.graphics.WHPal;
 import wh.type.unit.NucleoidUnitType;
 import wh.type.unit.PesterUnitType;
@@ -56,9 +60,12 @@ import static arc.graphics.g2d.Draw.color;
 import static arc.graphics.g2d.Lines.lineAngle;
 import static arc.graphics.g2d.Lines.stroke;
 import static arc.math.Angles.randLenVectors;
+import static mindustry.Vars.tilesize;
 import static mindustry.content.Fx.*;
 import static mindustry.content.Fx.none;
 import static mindustry.content.StatusEffects.blasted;
+import static mindustry.content.StatusEffects.overclock;
+import static mindustry.gen.Nulls.unit;
 import static mindustry.gen.Sounds.*;
 import static mindustry.gen.Sounds.explosion;
 import static mindustry.gen.Sounds.shootBig;
@@ -71,13 +78,14 @@ import static wh.content.WHStatusEffects.bless;
 public final class WHUnitTypes {
     public static UnitType
             //空军
-            cMoon, StarrySky, air5, air4,
+            cMoon, StarrySky, air6, air5, air4,
     //载具
-    tank2s, tank3S, tankAG, tankl,
-            tank2, tank3,
+    tankAG,
+            tank3s, tank2s, tank1s, tankl,
+            tank3, tank2, tank1,
             Mecha7, Mecha6, Mecha5, Mecha4, Mecha3, Mecha2,
     //陆军
-    M4, M5;
+    M5, M4, M1;
 
     private WHUnitTypes() {
     }
@@ -1504,7 +1512,7 @@ public final class WHUnitTypes {
                                 trailRotation = true;
                                 trailWidth = 8.0F;
                                 trailLength = 12;
-                                targetInterval = 0.3F;
+                                targetInterval = 0.6F;
                                 trailChance = 0.7F;
                                 trailEffect = new MultiEffect(new Effect(60.0F, (e) -> {
                                     Draw.color(e.color);
@@ -1898,44 +1906,6 @@ public final class WHUnitTypes {
         };
         tankl = new TankUnitType("tankl") {
 
-            class ProgressWeapon extends Weapon {
-                public float originalReload;
-                private float timeSinceLastShot = 0f;
-                private boolean firstShot;
-
-                public ProgressWeapon(String name) {
-                    super(name);
-                    originalReload = reload;
-                    firstShot = true;
-                }
-
-                @Override
-                public void update(Unit unit, WeaponMount mount) {
-                    super.update(unit, mount);
-
-                    if (mount.shoot) {
-                        if (firstShot) {
-                            firstShot = false;
-                            reload = originalReload * 0.9f;
-                        }
-                        timeSinceLastShot = 0f;
-                        float reloadFinal = 6f;
-                        if (reload > reloadFinal) {
-                            reload -= Mathf.lerpDelta(0, originalReload - reloadFinal, 0.005f);
-                        }
-                    } else {
-                        timeSinceLastShot += Time.delta;
-                    }
-
-                    if (timeSinceLastShot > 560f) {
-                        reload = originalReload;
-                    }
-                    if (reload < 4f) {
-                        reload = originalReload * 0.9f;
-                    }
-                }
-            }
-
             {
                 constructor = TankUnit::create;
                 weapons.add(new ProgressWeapon("wh-tankl-weapon1") {
@@ -2247,53 +2217,317 @@ public final class WHUnitTypes {
                         };
                     }
                 });
+                weapons.add(new Weapon("wh-tank1s-weapon2") {
+                    {
+                        x = 18f;
+                        y = 5f;
+                        rotate = true;
+                        rotateSpeed = 0.8f;
+                        rotationLimit = 270;
+                        mirror = true;
+                        recoil = 2;
+                        inaccuracy = 3;
+                        reload = 40;
+                        top = true;
+                        cooldownTime = 45;
+                        heatColor = WHPal.SkyBlue;
+                        shootCone = 15;
+                        shootSound = blaster;
+                        shoot = new ShootBarrel() {
+                            {
+                                shots = 2;
+                                shotDelay = 15;
+                                barrels = new float[]{-1.0F, 4.0F, 0.0F, 0.0F, 4.0F, 0.0F};
+                            }
+                        };
+                        bullet = new RailBulletType() {{
+                            length = 320f;
+                            damage = 100f;
+                            pointEffectSpace = 10f;
+                            hitColor = WHPal.SkyBlueF;
+                            hitEffect = endEffect = Fx.hitBulletColor;
+                            pierceDamageFactor = 0.95f;
+
+                            smokeEffect = Fx.colorSpark;
+
+                            endEffect = new Effect(14f, e -> {
+                                color(e.color);
+                                Drawf.tri(e.x, e.y, e.fout() * 1.5f, 5f, e.rotation);
+                            });
+
+                            shootEffect = new Effect(10, e -> {
+                                color(e.color);
+                                float w = 1.2f + 7 * e.fout();
+
+                                Drawf.tri(e.x, e.y, w, 30f * e.fout(), e.rotation);
+                                color(e.color);
+
+                                for (int i : Mathf.signs) {
+                                    Drawf.tri(e.x, e.y, w * 0.9f, 18f * e.fout(), e.rotation + i * 90f);
+                                }
+
+                                Drawf.tri(e.x, e.y, w, 4f * e.fout(), e.rotation + 180f);
+                            });
+
+                            lineEffect = new Effect(20f, e -> {
+                                if (!(e.data instanceof Vec2 v)) return;
+
+                                color(e.color);
+                                stroke(e.fout() * 0.9f + 1.2f);
+
+                                Fx.rand.setSeed(e.id);
+                                for (int i = 0; i < (length / pointEffectSpace) - 1; i++) {
+                                    Fx.v.trns(e.rotation, Fx.rand.random(8f, v.dst(e.x, e.y) - 8f));
+                                    Lines.lineAngleCenter(e.x + Fx.v.x, e.y + Fx.v.y, e.rotation + e.finpow(), e.foutpowdown() * 20f * Fx.rand.random(0.5f, 1f) + 0.3f);
+                                }
+
+                                e.scaled(14f, b -> {
+                                    stroke(b.fout() * 1.5f);
+                                    color(e.color);
+                                    Lines.line(e.x, e.y, v.x, v.y);
+                                });
+                            });
+                        }};
+
+                    }
+                });
+            }
+
+            class ProgressWeapon extends Weapon {
+                public float originalReload;
+                private float timeSinceLastShot = 0f;
+                private boolean firstShot;
+
+                public ProgressWeapon(String name) {
+                    super(name);
+                    originalReload = reload;
+                    firstShot = true;
+                }
+
+                @Override
+                public void update(Unit unit, WeaponMount mount) {
+                    super.update(unit, mount);
+
+                    if (mount.shoot) {
+                        if (firstShot) {
+                            firstShot = false;
+                            reload = originalReload * 0.9f;
+                        }
+                        timeSinceLastShot = 0f;
+                        float reloadFinal = 6f;
+                        if (reload > reloadFinal) {
+                            reload -= Mathf.lerpDelta(0, originalReload - reloadFinal, 0.005f);
+                        }
+                    } else {
+                        timeSinceLastShot += Time.delta;
+                    }
+
+                    if (timeSinceLastShot > 300f) {
+                        reload = originalReload;
+                    }
+                    if (reload < 4f) {
+                        reload = originalReload * 0.9f;
+                    }
+                }
             }
         };
-        tank3S = new UnitType("tank3s") {
+        tank1s = new UnitType("tank1s") {
             {
                 constructor = TankUnit::create;
-                weapons.add(new Weapon("wh-tank3s-weapon1") {
-
+                BasicBulletType onp = new BasicBulletType() {
                     {
-                        mirror = false;
-                        shake = 4;
-                        shootY = 40;
-                        rotate = true;
-                        rotateSpeed = 1.2f;
-                        x = 0;
-                        y = 0;
-                        reload = 260;
-                        shoot.firstShotDelay = 60;
-                        shootStatusDuration = 240;
-                        shootStatus = bless;
-                        chargeSound = lasercharge;
-                        shootSound = laserbig;
-                        continuous = true;
-                        cooldownTime = 200;
-                        heatColor = WHPal.Heat;
-                        bullet = new lightingContinuousLaserBullet() {
+                        sprite = "circle-bullet";
+                        height = 2;
+                        width = 2;
+                        frontColor = WHPal.pop2;
+                        backColor = WHPal.OR;
+                        shrinkX = 1;
+                        shrinkY = 1;
+                        lifetime = 15;
+                        speed = 0;
+                        collides = false;
+                        hittable = false;
+                        absorbable = false;
+                        scaledSplashDamage = true;
+                        splashDamageRadius = 40;
+                        splashDamage = 280;
+                        hitShake = 3;
+                        hitSound = plasmaboom;
+                        hitEffect = despawnEffect = new MultiEffect(WHFx.hitSpark(WHPal.OR, 30f, 20, 60f, 2f, 10f),
+                                WHFx.circleOut(WHPal.OR, 55f));
+                    }
+                };
+                weapons.add(new Weapon("wh-tank1s-weapon1") {
+                    {
+                        x = 3.75f;
+                        y = -6;
+                        layerOffset = 0.001f;
+                        shootY = 14;
+                        shoot = new ShootAlternate() {
                             {
-                                damage = 500;
-                                width = 7;
-                                length = 330;
-                                colors = new Color[]{Color.valueOf("DB7F4DFF"), Color.valueOf("DB7F4DFF"), Color.valueOf("FFAA69FF")};
-                                hitEffect = WHFx.shootCircleSmall(Color.valueOf("FFAA69FF"));
-                                lightningColor = WHPal.ORL;
-                                lifetime = 320;
-                                hitShake = 2;
-                                despawnEffect = smokeCloud;
-                                smokeEffect = none;
-                                shootEffect = none;
-                                incendChance = 0.1f;
-                                incendSpread = 8;
-                                incendAmount = 1;
+                                barrels = 2;
+                                spread = 7.5f;
+                                shots = 4;
+                                shotDelay = 6.0F;
+                            }
+                        };
+                        mirror = false;
+                        rotate = true;
+                        cooldownTime = 150;
+                        heatColor = WHPal.Heat;
+                        rotateSpeed = 1.5f;
+                        recoil = 3;
+                        reload = 200;
+                        inaccuracy = 3;
+                        velocityRnd = 0.1f;
+                        bullet = new BasicBulletType() {
+                            {
+                                damage = 330;
+                                lifetime = 22.5f;
+                                speed = 15;
+                                width = 18;
+                                height = 24;
+                                hitSize = 30;
+                                frontColor = WHPal.pop2;
+                                backColor = WHPal.OR;
+                                trailLength = 8;
+                                trailWidth = 3.6f;
+                                trailColor = WHPal.ORL;
+                                hitSound = lasercharge2;
+                                hitEffect = despawnEffect = new MultiEffect(new Effect(
+                                        15, e -> {
+                                    Draw.color(WHPal.OR);
+                                    Lines.stroke(e.fout() * 1.5f);
+                                    Lines.circle(e.x, e.y, e.fout(Interp.pow3In) * 55);
+                                }),
+                                        new WrapEffect(WHFx.square45_6_45, WHPal.OR));
+
+                                smokeEffect = smokeCloud;
                             }
 
+                            @Override
+                            public void createFrags(Bullet b, float x, float y) {
+                                super.createFrags(b, x, y);
+                                onp.create(b, b.x, b.y, b.rotation());
+                            }
                         };
+                    }
+                });
+                weapons.add(new Weapon("wh-tank1s-weapon2") {
+                    {
+                        x = -16;
+                        y = 4.25f;
+                        rotate = true;
+                        rotateSpeed = 1f;
+                        rotationLimit = 270;
+                        mirror = true;
+                        recoil = 2;
+                        inaccuracy = 3;
+                        reload = 40;
+                        top = true;
+                        cooldownTime = 45;
+                        heatColor = WHPal.SkyBlue;
+                        shootCone = 15;
+                        shootSound = blaster;
+                        shoot = new ShootBarrel() {
+                            {
+                                shots = 2;
+                                shotDelay = 15;
+                                barrels = new float[]{-1.0F, 4.0F, 0.0F, 0.0F, 4.0F, 0.0F};
+                            }
+                        };
+                        bullet = new RailBulletType() {{
+                            length = 320f;
+                            damage = 100f;
+                            pointEffectSpace = 10f;
+                            hitColor = WHPal.SkyBlueF;
+                            hitEffect = endEffect = Fx.hitBulletColor;
+                            pierceDamageFactor = 0.95f;
+
+                            smokeEffect = Fx.colorSpark;
+
+                            endEffect = new Effect(14f, e -> {
+                                color(e.color);
+                                Drawf.tri(e.x, e.y, e.fout() * 1.5f, 5f, e.rotation);
+                            });
+
+                            shootEffect = new Effect(10, e -> {
+                                color(e.color);
+                                float w = 1.2f + 7 * e.fout();
+
+                                Drawf.tri(e.x, e.y, w, 30f * e.fout(), e.rotation);
+                                color(e.color);
+
+                                for (int i : Mathf.signs) {
+                                    Drawf.tri(e.x, e.y, w * 0.9f, 18f * e.fout(), e.rotation + i * 90f);
+                                }
+
+                                Drawf.tri(e.x, e.y, w, 4f * e.fout(), e.rotation + 180f);
+                            });
+
+                            lineEffect = new Effect(20f, e -> {
+                                if (!(e.data instanceof Vec2 v)) return;
+
+                                color(e.color);
+                                stroke(e.fout() * 0.9f + 1.2f);
+
+                                Fx.rand.setSeed(e.id);
+                                for (int i = 0; i < (length / pointEffectSpace) - 1; i++) {
+                                    Fx.v.trns(e.rotation, Fx.rand.random(8f, v.dst(e.x, e.y) - 8f));
+                                    Lines.lineAngleCenter(e.x + Fx.v.x, e.y + Fx.v.y, e.rotation + e.finpow(), e.foutpowdown() * 20f * Fx.rand.random(0.5f, 1f) + 0.3f);
+                                }
+
+                                e.scaled(14f, b -> {
+                                    stroke(b.fout() * 1.5f);
+                                    color(e.color);
+                                    Lines.line(e.x, e.y, v.x, v.y);
+                                });
+                            });
+                        }};
+
+                    }
+                });
+                weapons.add(new Weapon("wh-tank1s-weapon3") {
+                    {
+                        reload = 10;
+                        velocityRnd = 0.15f;
+                        x = -5;
+                        y = 9;
+                        recoil = 0;
+                        shootY = 8;
+                        mirror = false;
+                        rotate = true;
+                        rotationLimit = 90;
+                        rotateSpeed = 1;
+                        inaccuracy = 2;
+                        shootSound = shootBig;
+                        shootCone = 25;
+                        bullet = new BasicBulletType() {{
+                            damage = 50;
+                            width = 10;
+                            height = 22;
+                            speed = 25;
+                            lifetime = 14f;
+                            shrinkY = 0;
+                            frontColor = WHPal.pop2;
+                            backColor = WHPal.OR;
+                            trailColor = WHPal.ORL;
+                            trailLength = 3;
+                            trailWidth = 2;
+                            smokeEffect = Fx.shootBig;
+                            hitEffect = despawnEffect = new MultiEffect(new Effect(30, e -> {
+                                Draw.color(WHPal.OR);
+                                Angles.randLenVectors(e.id, 1, e.finpow(), (x, y) -> {
+                                    Fill.square(e.x, e.y, e.fout() * 4f, 45);
+                                    Drawf.light(e.x + x, e.y + y, e.fout() * 8f, WHPal.OR, 0.7f);
+                                });
+                            }), WHFx.hitSpark(WHPal.OR, 20, 4, 25, 2, 8));
+                        }};
                     }
                 });
             }
         };
+
         tank2s = new UnitType("tank2s") {
             {
                 abilities.add(new PcShieldArcAbility() {{
@@ -2535,6 +2769,143 @@ public final class WHUnitTypes {
                                 speed = 2.5f;
                             }};
 
+                        }};
+                    }
+                });
+            }
+        };
+        tank3s = new UnitType("tank3s") {
+            {
+                constructor = TankUnit::create;
+                weapons.add(new Weapon("wh-tank3s-weapon1") {
+
+                    {
+                        mirror = false;
+                        shake = 4;
+                        shootY = 40;
+                        rotate = true;
+                        rotateSpeed = 1.2f;
+                        x = 0;
+                        y = 0;
+                        reload = 260;
+                        shoot.firstShotDelay = 60;
+                        shootStatusDuration = 240;
+                        shootStatus = bless;
+                        chargeSound = lasercharge;
+                        shootSound = laserbig;
+                        continuous = true;
+                        cooldownTime = 200;
+                        heatColor = WHPal.Heat;
+                        bullet = new lightingContinuousLaserBullet() {
+                            {
+                                damage = 500;
+                                width = 7;
+                                length = 330;
+                                colors = new Color[]{Color.valueOf("DB7F4DFF"), Color.valueOf("DB7F4DFF"), Color.valueOf("FFAA69FF")};
+                                hitEffect = WHFx.shootCircleSmall(Color.valueOf("FFAA69FF"));
+                                lightningColor = WHPal.ORL;
+                                lifetime = 320;
+                                hitShake = 2;
+                                despawnEffect = smokeCloud;
+                                smokeEffect = none;
+                                shootEffect = none;
+                                incendChance = 0.1f;
+                                incendSpread = 8;
+                                incendAmount = 1;
+                            }
+
+                        };
+                    }
+                });
+            }
+        };
+
+        tank1 = new UnitType("tank1") {
+
+            {
+                constructor = TankUnit::create;
+                weapons.add(new Weapon("wh-tank1-weapon1") {
+                    {
+                        x = 0;
+                        y = 0;
+                        layerOffset = 0.002f;
+                        rotate = true;
+                        rotateSpeed = 1.2f;
+                        cooldownTime = 100;
+                        heatColor = WHPal.Heat;
+                        mirror = false;
+                        inaccuracy = 0;
+                        reload = 120;
+                        shootCone = 11;
+                        shootSound = blaster;
+                        shoot = new ShootBarrel() {{
+                            shots = 2;
+                            barrels = new float[]
+                                    {
+                                            6.5f, 23.5f, 0,
+                                            -6.5f, 23.5f, 0,
+                                    };
+                        }};
+                        bullet = new CircleEndLaserType() {
+                            {
+                                damage = 650;
+                                shootSound = Sounds.laser;
+                                hitSound = WHSounds.dbz1;
+                                lifetime = 45;
+                                smokeEffect = smokeCloud;
+                                width = 17;
+                                length = 360;
+                                sideAngle = 0;
+                                sideWidth = 0;
+                                sideLength = 0;
+                                laserAbsorb = false;
+                                pierce = true;
+                                pierceCap = 1;
+                                lightning = 3;
+                                lightningLength = 8;
+                                lightningColor = WHPal.SkyBlue;
+                                colors = new Color[]{WHPal.SkyBlue, WHPal.SkyBlue, WHPal.SkyBlueF};
+                                hitEffect = new WrapEffect(Fx.hitLancer, WHPal.SkyBlue);
+                            }
+                        };
+                    }
+                });
+                weapons.add(new Weapon("wh-tank1-weapon2") {
+                    {
+                        reload = 10;
+                        velocityRnd = 0.15f;
+                        x = 16;
+                        y = 5.75f;
+                        recoil = 5;
+                        shootY = 8.5f;
+                        alternate = true;
+                        mirror = true;
+                        rotate = true;
+                        rotationLimit = 60;
+                        rotateSpeed = 1.2f;
+                        inaccuracy = 3;
+                        shootSound = shootBig;
+                        shootCone = 25;
+                        bullet = new BasicBulletType() {{
+                            damage = 50;
+                            width = 10;
+                            height = 22;
+                            speed = 25;
+                            lifetime = 14.4f;
+                            shrinkY = 0;
+                            frontColor = WHPal.pop2;
+                            backColor = WHPal.OR;
+                            trailColor = WHPal.ORL;
+                            trailLength = 7;
+                            trailWidth = 2;
+                            smokeEffect = Fx.shootBig;
+                            hitEffect = despawnEffect = new MultiEffect(new Effect(30, e -> {
+                                Draw.color(WHPal.OR);
+                                Angles.randLenVectors(e.id, 1, e.finpow(), (x, y) -> {
+                                    Fill.square(e.x, e.y, e.fout() * 4f, 45);
+                                    Drawf.light(e.x + x, e.y + y, e.fout() * 8f, WHPal.OR, 0.7f);
+                                });
+                            }), WHFx.hitSpark(WHPal.OR, 20, 4, 25, 2, 8));
                         }};
                     }
                 });
@@ -3433,6 +3804,7 @@ public final class WHUnitTypes {
                                         }
 
                                         for (int i = 0; i < 8; ++i) {
+                                            Draw.color(Color.white, WHPal.SkyBlue, e.fin() + 0.6F);
                                             Tmp.v1.set(1.0F, 0.0F).setToRandomDirection(rand).scl(circleRad);
                                             Drawn.tri(e.x + Tmp.v1.x, e.y + Tmp.v1.y, rand.random(circleRad / 8.0F, circleRad / 6.0F) * e.fout(), rand.random(circleRad / 2, circleRad / 1.3f) * (1.0F + e.fin()) / 2.0F, Tmp.v1.angle() - 180.0F);
                                         }
@@ -3527,12 +3899,12 @@ public final class WHUnitTypes {
                 abilities.add(new PcShieldArcAbility() {{
                     whenShooting = false;
                     y = -10;
-                    radius = 40;
+                    radius = 30;
                     max = 4000;
                     regen = 7;
                     cooldown = 1500;
                     angle = 140;
-                    width = 10f;
+                    width = 7f;
                 }});
                 constructor = MechUnit::create;
                 weapons.add(new Weapon("wh-mecha3-weapon1") {
@@ -3708,8 +4080,7 @@ public final class WHUnitTypes {
                                     })
                             );
                             shootEffect = Fx.shootTitan;
-                            // test git
-                            smokeEffect = new WrapEffect(Fx.shootSmokeTitan, WHPal.OR);
+                            smokeEffect = Fx.shootSmokeTitan;
                         }};
                     }
                 });
@@ -3768,8 +4139,551 @@ public final class WHUnitTypes {
                 });
             }
         };
+        air6 = new UnitType("air6") {
+            {
+                constructor = PayloadUnit::create;
+                weapons.add(new Weapon("wh-air6-weapon1") {
+                    {
+                        x = -21.5f;
+                        y = 26.5f;
+                        rotate = true;
+                        rotateSpeed = 1f;
+                        mirror = true;
+                        recoil = 2;
+                        inaccuracy = 3;
+                        reload = 60;
+                        top = true;
+                        layerOffset = -0.01f;
+                        cooldownTime = 45;
+                        heatColor = WHPal.Heat;
+                        shootCone = 15;
+                        shootSound = blaster;
+                        shoot = new ShootBarrel() {{
+                            shotDelay = 5f;
+                            shots = 10;
+                            barrels = new float[]
+                                    {
+                                            -1f, 4, 0,
+                                            1, 4, 0,
+                                    };
+                        }};
+                        bullet = new BasicBulletType() {{
+                            sprite = "wh-能量弹";
+                            pierceCap = 6;
+                            pierce = true;
+                            speed = 15;
+                            lifetime = 27;
+                            hitSize = 5;
+                            width = 8;
+                            height = 16;
+                            lightColor = WHPal.OR;
+                            frontColor = WHPal.ORL;
+                            backColor = WHPal.OR;
+                            trailColor = WHPal.OR;
+                            trailLength = 6;
+                            trailWidth = 2f;
+                            shootEffect = shootBig2;
+                            smokeEffect = Fx.shootSmallSmoke;
+                            damage = 95;
+                            lightningColor = WHPal.OR;
+                            despawnEffect = hitEffect = new MultiEffect(new Effect(30, e -> {
+                                Draw.color(WHPal.OR);
+                                Angles.randLenVectors(e.id, 1, e.finpow(), (x, y) -> {
+                                    Fill.square(e.x, e.y, e.fout() * 4f, 45);
+                                    Drawf.light(e.x + x, e.y + y, e.fout() * 8f, WHPal.OR, 0.7f);
+                                });
+                            }), WHFx.hitSpark(WHPal.OR, 20, 4, 25, 2, 8));
+                        }};
+                    }
+                });
+                weapons.add(new Weapon("wh-air6-weapon2") {
+                    {
+                        reload = 120;
+                        x = -32;
+                        y = -13;
+                        shoot.shots = 8;
+                        shoot.shotDelay = 6;
+                        shake = 3;
+                        recoil = 1;
+                        rotate = true;
+                        rotateSpeed = 0.4f;
+                        shootCone = 18;
+                        inaccuracy = 10;
+                        shootSound = plasmadrop;
+                        velocityRnd = 0.15f;
+                        layerOffset = -0.01f;
+                        bullet = new BasicBulletType() {
+                            {
+                                damage = 500;
+                                splashDamage = 500;
+                                splashDamageRadius = 50;
+                                hitShake = 8;
+                                hitSize = 10;
+                                hitSound = plasmaboom;
+                                shootEffect = WHFx.shootLineSmall(backColor);
+                                width = 16;
+                                height = 20;
+                                hitEffect = despawnEffect = new MultiEffect(WHFx.hitSpark(WHPal.OR, 20, 10, 60, 2, 12),
+                                        WHFx.blast(WHPal.OR, 60),
+                                        new WrapEffect(WHFx.square45_6_45, WHPal.OR));
+                                sprite = "missile-large";
+                                shrinkX = 0.1f;
+                                shrinkY = 0.2f;
+                                speed = 10;
+                                lifetime = 43;
+                                lightningColor = WHPal.OR;
+                                lightningDamage = 70;
+                                lightning = 3;
+                                lightningLength = 14;
+                                backColor = WHPal.ORL;
+                                frontColor = WHPal.pop2;
+                                trailLength = 9;
+                                trailWidth = 4;
+                                trailColor = WHPal.OR;
+                            }
+                        };
+                    }
+                });
+                weapons.add(new Weapon("wh-air6-weapon3") {
+                    {
+                        reload = 140;
+                        recoil = 0;
+                        recoilTime = 70;
+                        cooldownTime = 160;
+                        y = -21;
+                        x = 0;
+                        shootY = 25;
+                        rotate = true;
+                        rotateSpeed = 0.8f;
+                        shootCone = 8;
+                        mirror = false;
+                        inaccuracy = 3;
+                        shootSound = mediumCannon;
+                        alternate = false;
+                        shootWarmupSpeed = 0.2f;
+                        minWarmup = 0.5f;
+                        shake = 7;
+                        parts.add(new RegionPart("-barrel") {
+                            {
+                                under = true;
+                                mirror = false;
+                                suffix = "-管1";
+                                heatColor = WHPal.Heat;
+                                heatProgress = PartProgress.recoil;
+                                progress = PartProgress.recoil;
+                                moveY = -7f;
+                                moves.add(new PartMove(PartProgress.recoil, 0f, -9f, 0f, 0f, 0));
+                            }
+                        });
+                        velocityRnd = 0.06f;
+                        bullet = new ArtilleryBulletType() {
+                            {
+                                sprite = "wh-能量弹";
+                                damage = 1000;
+                                splashDamageRadius = 40;
+                                splashDamage = 800;
+                                speed = 12;
+                                lifetime = 35;
+                                hitShake = 8;
+                                width = 20;
+                                height = 30;
+                                frontColor = WHPal.SkyBlueF;
+                                backColor = WHPal.SkyBlue;
+                                trailLength = 25;
+                                trailWidth = 3;
+                                trailColor = WHPal.SkyBlue;
+                                trailInterval = 2;
+                                trailEffect = new Effect(30, e -> {
+                                    Draw.color(WHPal.SkyBlue);
+                                    Angles.randLenVectors(e.id, 1, -20 * e.finpow(), e.rotation, 80, (x, y) ->
+                                            Fill.poly(e.x + x, e.y + y, 6, 8 * e.foutpow(), Mathf.randomSeed(e.id, 360) + e.time)
+                                    );
+                                });
+                                shootEffect = new Effect(60f, e -> {
 
+                                    color(WHPal.SkyBlue);
 
+                                    for (int i : Mathf.signs) {
+                                        Drawf.tri(e.x, e.y, 13f * e.fout(), 50f, e.rotation + 90f * i);
+                                    }
+                                    Drawf.light(e.x, e.y, 60f, WHPal.SkyBlue, 0.9f * e.fout());
+                                    Draw.color(backColor);
+                                    Fill.circle(e.x, e.y, e.fout() * 20);
+                                    Draw.color(frontColor);
+                                    Fill.circle(e.x, e.y, e.fout() * 15);
+                                }).layer(115.001f);
+                                smokeEffect = new Effect(60, e -> {
+                                    Draw.color(WHPal.SkyBlue);
+                                    randLenVectors(e.id, 6, 2f + 40f * e.finpow(), e.rotation, 20, (x, y) -> Fill.circle(e.x + x, e.y + y, e.fout(Interp.pow2Out) * 4));
+                                }).layer(115.001f);
+                                hitSound = explosionbig;
+                                hitColor = WHPal.SkyBlue;
+                                hitEffect = despawnEffect = new MultiEffect(WHFx.hitSpark(WHPal.SkyBlue, 45, 12, 80, 2, 14),
+                                        WHFx.blast(WHPal.SkyBlue, 60),
+                                        new Effect(90, e -> {
+                                            Draw.color(WHPal.SkyBlue);
+                                            for (int i = 0; i < 4; i++) {
+                                                Drawf.tri(e.x, e.y, 8f, 80 * e.fout(Interp.pow2Out), i * 90);
+                                            }
+                                            color();
+                                            for (int i = 0; i < 4; i++) {
+                                                Drawf.tri(e.x, e.y, 5f, 50 * e.fout(Interp.pow2Out), i * 90);
+                                            }
+                                            Draw.color(backColor);
+                                            Fill.circle(e.x, e.y, e.fout(Interp.pow2Out) * 15);
+                                            Draw.color(frontColor);
+                                            Fill.circle(e.x, e.y, e.fout(Interp.pow2Out) * 10);
+                                            color(Color.white, WHPal.SkyBlue, e.fin());
+                                            stroke(e.fout() * 3f + 0.2f);
+                                            Lines.circle(e.x, e.y, e.fout(Interp.pow2Out) * 60f);
+                                            e.scaled(60, b -> {
+                                                Draw.color(WHPal.SkyBlue);
+                                                Angles.randLenVectors(b.id, 8, 30f + 30f * b.finpow(), (x, y) -> {
+                                                    Fill.poly(b.x + x, b.y + y, 6, b.fout(Interp.pow2Out) * 8f, 45);
+                                                    Drawf.light(b.x + x, b.y + y, b.fout(Interp.pow2Out) * 8f, b.color, 0.7f);
+                                                });
+                                            });
+                                        }));
+                            }
+
+                            @Override
+                            public void despawned(Bullet b) {
+                                super.despawned(b);
+                                PlasmaFire.createChance(b, splashDamageRadius / 2f, 1f);
+                            }
+                        };
+                    }
+                });
+            }
+        };
+        air5 = new UnitType("air5") {
+            {
+                constructor = UnitEntity::create;
+                weapons.add(new Weapon("wh-air4-weapon1") {
+                    {
+                        x = 16;
+                        y = -17.5f;
+                        reload = 80;
+                        rotate = true;
+                        rotateSpeed = 1.8f;
+                        shootCone = 18;
+                        inaccuracy = 1.2f;
+                        shootSound = WHSounds.jg1;
+                        shootY = 4;
+                        mirror = true;
+                        alternate = true;
+                        bullet = new TrailFadeBulletType() {
+                            {
+                                damage = 280;
+                                splashDamageRadius = 24;
+                                splashDamage = 180;
+                                width = 15;
+                                height = 35;
+                                speed = 9;
+                                lifetime = 44;
+                                pierceCap = 4;
+                                pierce = true;
+                                pierceBuilding = true;
+                                lightningDamage = 60;
+                                lightning = 2;
+                                lightningLength = 7;
+
+                                sprite = "wh-透彻";
+
+                                tracers = 1;
+                                tracerUpdateSpacing *= 2.25f;
+                                tracerRandX *= 0.75f;
+                                tracerSpacing = 10f;
+                                hitBlinkTrail = false;
+                                trailColor = lightColor = lightningColor = backColor = hitColor = WHPal.SkyBlue;
+
+                                weaveScale = 7f;
+                                weaveMag = 0.4f;
+                                reflectable = false;
+                                shrinkY = 0;
+                                frontColor = WHPal.pop2;
+                                trailLength = 16;
+                                trailWidth = 1.6f;
+
+                                shootEffect = new MultiEffect(WHFx.lineCircleOut(WHPal.SkyBlue, 20, 40, 2),
+                                        WHFx.shootLineSmall(WHPal.SkyBlue)).layer(115.001f);
+                                smokeEffect = WHFx.hugeSmoke;
+
+                                hitEffect = new MultiEffect(WHFx.hitSpark(WHPal.SkyBlue, 45, 6, 60, 2, 10),
+                                        new Effect(30, e -> {
+                                            Draw.color(WHPal.SkyBlue);
+                                            Angles.randLenVectors(e.id, 4, 30f + 30f * e.finpow(), (x, y) -> {
+                                                Fill.poly(e.x + x, e.y + y, 6, e.fout(Interp.pow2Out) * 8f, 45);
+                                                Drawf.light(e.x + x, e.y + y, e.fout(Interp.pow2Out) * 8f, e.color, 0.7f);
+                                            });
+                                        }));
+                                despawnEffect = new MultiEffect(WHFx.blast(WHPal.SkyBlue, 50),
+                                        WHFx.airAsh(51, splashDamageRadius * .4f, splashDamageRadius * .8f, splashDamageRadius / 10f, WHPal.SkyBlue, 2.7f, 30),
+                                        new Effect(60, e -> {
+                                            Draw.color(WHPal.SkyBlue);
+                                            for (int i = 0; i < 4; i++) {
+                                                Drawf.tri(e.x, e.y, 7f, 60 * e.fout(Interp.pow2Out), i * 90);
+                                            }
+                                            color();
+                                            for (int i = 0; i < 4; i++) {
+                                                Drawf.tri(e.x, e.y, 4f, 40 * e.fout(Interp.pow2Out), i * 90);
+                                            }
+                                            Draw.color(backColor);
+                                            Fill.circle(e.x, e.y, e.fout(Interp.pow2Out) * 12);
+                                            Draw.color(frontColor);
+                                            Fill.circle(e.x, e.y, e.fout(Interp.pow2Out) * 9);
+                                            color(Color.white, WHPal.SkyBlue, e.fin());
+                                            stroke(e.fout() * 3f + 0.2f);
+                                            Lines.circle(e.x, e.y, e.fout(Interp.pow2Out) * 60f);
+                                        }));
+                            }
+
+                            @Override
+                            public void hit(Bullet b, float x, float y) {
+                                super.hit(b, x, y);
+                                PlasmaFire.createChance(b, splashDamageRadius, 0.1f);
+                            }
+                        };
+                    }
+                });
+                weapons.add(new Weapon("wh-air5-weapon2") {
+                    {
+                        x = 25;
+                        y = -8;
+                        layerOffset = -0.01f;
+                        reload = 100;
+                        shootCone = 90;
+                        baseRotation = 9;
+                        xRand = 1;
+                        alternate = true;
+                        mirror = true;
+                        shoot.shots = 7;
+                        shoot.shotDelay = 6;
+                        inaccuracy = 8;
+                        shootSound = missile;
+                        velocityRnd = 0.12f;
+                        bullet = new MissileBulletType() {
+                            {
+                                trailEffect = new Effect(50, e -> {
+                                    Draw.color(WHPal.OR);
+                                    Angles.randLenVectors(e.id, 1, -20 * e.finpow(), e.rotation, 80, (x, y) ->
+                                            Fill.square(e.x + x, e.y + y, 5 * e.foutpow(), Mathf.randomSeed(e.id, 360) + e.time));
+                                });
+                                width = 40;
+                                height = 45;
+                                sprite = "wh-重型导弹";
+                                speed = 14;
+                                lifetime = 35;
+                                homingDelay = 15;
+                                homingPower = 0.2f;
+                                homingRange = 30;
+                                trailLength = 13;
+                                trailWidth = 3;
+                                trailColor = WHPal.OR;
+                                shrinkY = 0;
+                                shrinkX = 0;
+                                backColor = WHPal.ORL;
+                                frontColor = WHPal.pop2;
+                                hitEffect = despawnEffect = new MultiEffect(
+                                        WHFx.blast(WHPal.OR, 10),
+                                        new Effect(60f, e -> {
+                                            Fx.rand.setSeed(e.id);
+                                            Draw.color(WHPal.OR, WHPal.OR, e.finpow());
+                                            Lines.stroke(1.75f * e.fout());
+                                            Lines.spikes(e.x, e.y, Fx.rand.random(10, 20) * e.finpow(), Fx.rand.random(1, 5) * e.foutpowdown() + Fx.rand.random(5, 8) * e.fin(), 4, 45);
+                                            randLenVectors(e.id, 4, 4f + e.fin() * 8f, (x, y) -> {
+                                                color(WHPal.OR, WHPal.OR, e.finpow());
+                                                Fill.square(e.x + x, e.y + y, 0.5f + e.fout() * 6f, 45);
+                                            });
+                                        }));
+                                hitSound = plasmaboom;
+                                hitShake = 5;
+                                shootEffect = WHFx.shootLineSmall(backColor);
+                                smokeEffect = hugeSmoke;
+                                hittable = false;
+                                damage = 75;
+                                splashDamageRadius = 56;
+                                splashDamage = 85;
+                                lightningDamage = 40;
+                                lightning = 1;
+                                lightningLength = 10;
+                                lightningColor = WHPal.OR;
+                            }
+                        };
+                    }
+
+                });
+            }
+        };
+        air4 = new UnitType("air4") {
+            {
+                constructor = UnitEntity::create;
+                weapons.add(new Weapon("wh-air4-weapon1") {
+                    {
+                        x = -9;
+                        y = 0;
+                        reload = 5;
+                        rotate = false;
+
+                        shootCone = 18;
+                        inaccuracy = 1.2f;
+                        rotateSpeed = 16;
+                        shootSound = WHSounds.jg1;
+                        layerOffset = -0.01f;
+                        shootY = 4;
+                        top = false;
+                        mirror = true;
+                        alternate = true;
+                        bullet = new BasicBulletType() {{
+                            damage = 40;
+                            width = 7;
+                            height = 10;
+                            speed = 9;
+                            lifetime = 30;
+                            reflectable = false;
+                            shrinkY = 0;
+                            frontColor = WHPal.pop2;
+                            backColor = WHPal.ORL;
+                            trailLength = 3;
+                            trailWidth = 1.5f;
+                            trailColor = WHPal.OR;
+                            shootEffect = WHFx.lineCircleOut(WHPal.OR, 10, 5, 2);
+                            smokeEffect = none;
+                            despawnEffect = hitEffect = new MultiEffect(new Effect(30, e -> {
+                                Draw.color(WHPal.OR);
+                                Angles.randLenVectors(e.id, 1, e.finpow(), (x, y) -> {
+                                    Fill.square(e.x, e.y, e.fout() * 4f, 45);
+                                    Drawf.light(e.x + x, e.y + y, e.fout() * 8f, WHPal.OR, 0.7f);
+                                });
+                            }), WHFx.hitSpark(WHPal.OR, 20, 4, 25, 2, 8));
+                        }};
+                    }
+                });
+                weapons.add(new Weapon("wh-air4-weapon2") {
+                    {
+                        x = -5;
+                        y = 10;
+                        reload = 70;
+                        xRand = 1;
+                        shootCone = 30;
+                        shoot.shots = 4;
+                        shoot.shotDelay = 6;
+                        inaccuracy = 8;
+                        shootSound = missile;
+                        velocityRnd = 0.1f;
+                        bullet = new MissileBulletType() {
+                            {
+                                reflectable = false;
+                                trailLength = 5;
+                                trailWidth = 3;
+                                trailColor = WHPal.SkyBlue;
+                                sprite = "circle-bullet";
+                                shrinkY = 0;
+                                homingDelay = 15;
+                                frontColor = WHPal.SkyBlueF;
+                                backColor = WHPal.SkyBlue;
+                                shootEffect = none;
+                                smokeEffect = shootEffect = EffectWrapper.wrap(WHFx.shootLine(5, 10), backColor);
+                                damage = 55;
+                                splashDamageRadius = 35;
+                                splashDamage = 75;
+                                knockback = 0.3f;
+                                trailEffect = new Effect(30, e -> {
+                                    Draw.color(WHPal.SkyBlue);
+                                    Angles.randLenVectors(e.id, 1, -20 * e.finpow(), e.rotation, 80, (x, y) ->
+                                            Fill.poly(e.x + x, e.y + y, 6, 5 * e.foutpow(), Mathf.randomSeed(e.id, 360) + e.time)
+                                    );
+                                });
+                                hitEffect = despawnEffect = new MultiEffect(new Effect(45, e -> {
+                                    Draw.color(WHPal.SkyBlue);
+                                    Angles.randLenVectors(e.id, 2, 20f + 15f * e.finpow(), (x, y) -> {
+                                        Fill.poly(e.x + x, e.y + y, 6, e.fout() * 8f, 45);
+                                        Drawf.light(e.x + x, e.y + y, e.fout() * 8f, e.color, 0.7f);
+                                    });
+                                }),
+                                        WHFx.lineCircleOut(WHPal.SkyBlue, 15, 35, 2)
+                                );
+                                drag = -0.01f;
+                                width = 6;
+                                height = 6;
+                                speed = 8;
+                                lifetime = 28;
+                            }
+
+                            @Override
+                            public void hit(Bullet b, float x, float y) {
+                                super.hit(b, x, y);
+                                PlasmaFire.createChance(b, splashDamageRadius / 2, 0.15f);
+                            }
+                        };
+                    }
+                });
+                weapons.add(new Weapon("wh-air4-weapon3") {
+                    {
+                        x = -15;
+                        y = 0;
+                        reload = 125;
+                        xRand = 1;
+                        alternate = false;
+                        mirror = false;
+                        shoot = new ShootAlternate() {{
+                            barrels = 2;
+                            spread = 3f;
+                            shots = 4;
+                            shotDelay = 10;
+                        }};
+                        inaccuracy = 5;
+                        shootSound = Sounds.missileLaunch;
+                        velocityRnd = 0.1f;
+                        bullet = new MissileBulletType() {{
+
+                            width = 22;
+                            height = 30;
+                            sprite = "wh-重型导弹";
+                            speed = 6;
+                            lifetime = 45;
+                            homingDelay = 20;
+                            homingPower = 0.08f;
+                            homingRange = 180;
+                            trailLength = 13;
+                            trailWidth = 3;
+                            trailColor = WHPal.OR;
+                            shrinkY = 0;
+                            shrinkX = 0;
+                            backColor = WHPal.OR;
+                            frontColor = WHPal.pop2;
+                            hitEffect = despawnEffect = new Effect(60f, e -> {
+                                Fx.rand.setSeed(e.id);
+                                Draw.color(WHPal.OR, WHPal.OR, e.finpow());
+                                Lines.stroke(e.fout() * 2);
+                                Lines.circle(e.x, e.y, e.fin(Interp.pow3Out) * 20);
+                                Lines.stroke(1.75f * e.fout());
+                                Lines.spikes(e.x, e.y, Fx.rand.random(10, 20) * e.finpow(), Fx.rand.random(1, 5) * e.foutpowdown() + Fx.rand.random(5, 8) * e.fin(), 4, 45);
+                                randLenVectors(e.id, 4, 4f + e.fin() * 8f, (x, y) -> {
+                                    color(WHPal.OR, WHPal.OR, e.finpow());
+                                    Fill.square(e.x + x, e.y + y, 0.5f + e.fout() * 6f, 45);
+                                });
+                            });
+                            hitSound = plasmaboom;
+                            hitShake = 5;
+                            shootEffect = none;
+                            smokeEffect = Fx.shootSmokeTitan;
+                            damage = 70;
+                            splashDamage = 40;
+                            splashDamageRadius = 40;
+                        }};
+                    }
+                });
+            }
+        };
+     /*   M1 = new UnitType("m1") {
+            {
+                constructor = MechUnit::create;
+                canDrown = false;
+                rotateSpeed = 1.1f;
+                mechStepParticles = true;
+                mechFrontSway = 1.3f;
+                mechSideSway = 1.1f;*/
         M4 = new UnitType("m4") {
             {
                 constructor = MechUnit::create;
