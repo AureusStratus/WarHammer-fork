@@ -16,6 +16,7 @@ import arc.math.geom.Vec2;
 import arc.struct.ObjectFloatMap;
 import arc.struct.ObjectIntMap;
 import arc.struct.Seq;
+import arc.util.Log;
 import arc.util.Time;
 import arc.util.Tmp;
 import arc.util.io.Reads;
@@ -156,6 +157,7 @@ public class PesterUnit extends UnitEntity implements Pesterc {
     }
 
     public void update() {
+
          isBoss( hasEffect(StatusEffects.boss));
         super.update();
         UnitType var2 =  type;

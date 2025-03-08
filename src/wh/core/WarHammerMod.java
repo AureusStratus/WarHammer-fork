@@ -14,8 +14,10 @@ import mindustry.Vars;
 import mindustry.game.EventType;
 import mindustry.mod.Mod;
 import mindustry.ui.dialogs.ResearchDialog;
-import wh.content.WHContent;
+import wh.content.*;
+import wh.gen.EntityRegister;
 import wh.gen.WHSounds;
+import wh.gen.WorldRegister;
 import wh.graphics.MainRenderer;
 import wh.graphics.WHShaders;
 import wh.ui.dialogs.WHResearchDialog;
@@ -24,20 +26,14 @@ public class WarHammerMod extends Mod {
     public static String ModName = "WarHammerMod";
 
     public WarHammerMod() {
-        Log.info("will load WarHammerMod");
         WHClassMap.load();
-        Log.info("after load");
         Events.on(EventType.FileTreeInitEvent.class, (e) -> {
             if (!Vars.headless) {
-                Log.info("will load WHSounds");
                 WHSounds.load();
-                Log.info("will post");
                 Core.app.post(WHShaders::init);
-                Log.info("after post");
             }
 
         });
-        Log.info("after Events.on");
     }
 
     public static String name(String add) {
@@ -45,30 +41,33 @@ public class WarHammerMod extends Mod {
     }
 
     public void init() {
-        Log.info("init1");
         WHContent.loadPriority();
-        Log.info("init2");
         MainRenderer.init();
-        Log.info("init3");
         WHResearchDialog dialog = new WHResearchDialog();
-        Log.info("init4");
         ResearchDialog research = Vars.ui.research;
         research.shown(() -> {
-            Log.info("init5");
             dialog.show();
-            Log.info("init6");
             Objects.requireNonNull(research);
             Objects.requireNonNull(research);
             Time.runTask(1.0F, research::hide);
-            Log.info("init7");
         });
-        Log.info("init9");
     }
 
     @Override
     public void loadContent() {
-        Log.info("will loadContent");
         super.loadContent();
-        Log.info("after loadContent");
+        WHOverride.load();
+
+
+      /* WorldRegister.load();
+        EntityRegister.load();
+        WHStatusEffects.load();
+        WHItems.load();
+        WHLiquids.load();
+        WHBullets.load();
+        WHUnitTypes.load();
+        WHBlocks.load();
+        WHPlanets.load();
+        WHTechTree.load();*/
     }
 }

@@ -7,17 +7,28 @@ import mindustry.ctype.*;
 import mindustry.game.Objectives.*;
 import mindustry.type.*;
 
-import static mindustry.content.Blocks.*;
-import static wh.content.WHBlocks.*;
+import static mindustry.content.TechTree.*;
 
-@SuppressWarnings("unused")
 public final class WHTechTree {
     public static TechNode context = null;
 
     private WHTechTree() {}
 
-    public static void load() {}
+    public static void load() {
+        TechNode root = nodeRoot("[yellow]IMPERIUM", WHPlanets.kellex, () -> {
+            nodeProduce(WHItems.imperium, () -> {
+                nodeProduce(WHItems.titaniumSteel, () -> {
+                    nodeProduce(WHItems.ceramite, () -> {
+                        nodeProduce(WHItems.refineCeramite, () -> {
+                            nodeProduce(WHItems.vibranium, () -> {
 
+                            });
+                        });
+                    });
+                });
+            });
+        });
+    }
     public static void vanillaNode(UnlockableContent content, Runnable children) {
         context = TechTree.all.find(t -> t.content == content);
         children.run();

@@ -11,13 +11,10 @@ import arc.graphics.g2d.Draw;
 import arc.graphics.g2d.Fill;
 import arc.graphics.g2d.TextureRegion;
 import arc.math.Angles;
+import arc.math.Interp;
 import arc.math.Mathf;
 import arc.math.Rand;
-import arc.math.geom.Geometry;
-import arc.math.geom.Intersector;
-import arc.math.geom.Point2;
-import arc.math.geom.Rect;
-import arc.math.geom.Vec2;
+import arc.math.geom.*;
 import arc.struct.IntSeq;
 import arc.struct.IntSet;
 import arc.struct.Seq;
@@ -33,13 +30,15 @@ import mindustry.gen.*;
 import mindustry.type.Liquid;
 import mindustry.world.Tile;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
 import static arc.Core.atlas;
 import static mindustry.Vars.*;
+import static wh.graphics.Drawn.cycle_100;
 
-    public final class WHUtils {
+public final class WHUtils {
         public static final Rand rand = new Rand(0);
 
         private static Tile tileParma;
@@ -249,6 +248,23 @@ import static mindustry.Vars.*;
             }
         }
 
+        @Contract(value = "_, _ -> new", pure = true)
+        public static @NotNull Position pos(float x, float y){
+            return new Position() {
+                @Override
+                public float getX() {
+                    return x;
+                }
+
+                @Override
+                public float getY() {
+                    return y;
+                }
+            };
+        }
+
+        public static float rotator_90(){return 90 * Interp.pow5.apply(Mathf.curve(cycle_100(), 0.15f, 0.85f));}
+
         public static class EffectWrapper extends Effect{
             public Effect effect = Fx.none;
             public Color color = Color.white.cpy();
@@ -257,8 +273,6 @@ import static mindustry.Vars.*;
 
             public EffectWrapper(){
             }
-
-
             public EffectWrapper(Effect effect, Color color){
                 this.effect = effect;
                 this.color = color;
@@ -269,8 +283,6 @@ import static mindustry.Vars.*;
                 this.color = color;
                 this.rot = rot;
             }
-
-
 
             public static EffectWrapper wrap(Effect effect, Color color){
                 return new EffectWrapper(effect, color);
@@ -329,6 +341,10 @@ import static mindustry.Vars.*;
                 return unitCons.get(unit, dst);
             }, effectHandler, true);
         }
+
+
+
+
 
         /** @author EyeOfDarkness */
         public static void collideLineRawEnemy(Team team, float x, float y, float x2, float y2, float width, boolean hitTiles, boolean hitUnits, boolean stopSort, HitHandler handler){

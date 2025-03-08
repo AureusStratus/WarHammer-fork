@@ -147,7 +147,6 @@ public class SlowLaserBulletType extends BulletType {
             }
         }
 
-        // 如果达到计时器时间
         if (timer) {
             boolean p = pierceCap > 0;
             // 计算临时向量

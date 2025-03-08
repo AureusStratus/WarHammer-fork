@@ -247,7 +247,7 @@ public abstract class CommandableBlock extends Block {
             Groups.draw.add(this);
             added = true;
         }
-        @Override public boolean isNull(){ return false; }
+         public boolean isNull(){ return false; }
         @Override
         public boolean isLocal() {
             return this instanceof Unitc u && u.controller() == player;

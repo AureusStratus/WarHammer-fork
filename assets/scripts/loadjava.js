@@ -1,5 +1,5 @@
 WorldRegister.load();
-EntityRegister.load();
+//EntityRegister.load();
 
 WHStatusEffects.load();
 WHItems.load();

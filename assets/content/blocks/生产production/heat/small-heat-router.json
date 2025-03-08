@@ -1,3 +1,4 @@
+/*
 {
 	"type": "HeatConductor",
 	"category": "crafting",
@@ -37,4 +38,4 @@
 		"parent": "heat-dust"
 	},
 	"researchCostMultiplier": 1
-}
+}*/

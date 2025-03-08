@@ -1,3 +1,4 @@
+/*
 {
 	"type": "HeatProducer",
 	"category": "crafting",
@@ -36,4 +37,4 @@
 		"parent": "small-heat-router"
 	},
 	"researchCostMultiplier": 0.6
-}
+}*/

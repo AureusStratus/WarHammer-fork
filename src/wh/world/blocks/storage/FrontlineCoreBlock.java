@@ -10,7 +10,7 @@ import mindustry.world.blocks.storage.*;
 import static mindustry.Vars.*;
 
 public class FrontlineCoreBlock extends CoreBlock {
-    public int max = 7;
+    public int max = 8;
     public boolean killed = false;
 
     public String showStr = "oh no";

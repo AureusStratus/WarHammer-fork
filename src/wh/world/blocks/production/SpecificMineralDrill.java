@@ -1,29 +1,57 @@
+
 package wh.world.blocks.production;
 
+import arc.Core;
 import arc.math.Mathf;
-import mindustry.content.Items;
-import mindustry.entities.Effect;
+import arc.scene.ui.Image;
+import arc.util.Strings;
+import mindustry.graphics.Pal;
 import mindustry.type.Item;
-import mindustry.world.blocks.production.BurstDrill;
+import mindustry.ui.Bar;
+import mindustry.world.blocks.production.Drill;
+import mindustry.world.meta.Stat;
+import mindustry.world.meta.StatUnit;
 
-public class SpecificMineralDrill extends BurstDrill {
-    private final Item targetThuriom;
-    private final Item targetTungsten;
+import java.util.Arrays;
+
+
+public class SpecificMineralDrill extends Drill {
+    public Item[] targetItems = new Item[]{};
 
     public SpecificMineralDrill(String name) {
         super(name);
-        this.targetThuriom = Items.thorium;
-        this.targetTungsten = Items.tungsten;
+    }
+
+    @Override
+    public void setStats() {
+        stats.add(Stat.output, table -> {
+            table.row();
+            table.add(Core.bundle.format("stat-designated-minerals")).left().top();
+            for (Item item : targetItems) {
+                table.add(item.localizedName).color(item.color).padLeft(5).padRight(5);
+                Image itemImage = new Image(item.fullIcon);
+                table.add(itemImage).size(32);
+                table.draw();
+
+            }
+        });
+        float finaldrillSpeed = Math.round(60f / drillTime * Math.pow(size, 4));
+        stats.add(Stat.drillSpeed, finaldrillSpeed, StatUnit.itemsSecond);
+        super.setStats();
+    }
+
+    @Override
+    public void setBars() {
+        super.setBars();
+        addBar("drillspeed", (DrillBuild e) ->
+                new Bar(() -> Core.bundle.format("bar.drillspeed", Strings.fixed(e.lastDrillSpeed * 60 * e.dominantItems * e.timeScale(), 2)), () -> Pal.ammo, () -> e.warmup));
     }
 
     public class SpecificMineralDrillBuild extends DrillBuild {
-        public float digAmount;
-        public float reFindTimer;
-        public float smoothProgress = 0f;
-        public float invertTime = 0f;
 
         @Override
         public void updateTile() {
+
             if (dominantItem == null) {
                 return;
             }
@@ -31,58 +59,39 @@ public class SpecificMineralDrill extends BurstDrill {
             timeDrilled += warmup * delta();
 
             float delay = getDrillTime(dominantItem);
-
-            if (dominantItem == targetThuriom || dominantItem == targetTungsten) {
-                if (items.total() < itemCapacity && dominantItems > 0 && efficiency > 0) {
-                    float speed = Mathf.lerp(1f, liquidBoostIntensity, optionalEfficiency) * efficiency;
-
-                    lastDrillSpeed = (speed * dominantItems * warmup) / delay;
-                    warmup = Mathf.approachDelta(warmup, speed, warmupSpeed);
-                    digAmount += delta() * dominantItems * speed * warmup;
-                    reFindTimer += delta();
-
-                    if (invertTime > 0f) invertTime -= delta() / invertedTime;
-
-                    if (timer(timerDump, dumpTime)) {
-                        dump(items.has(dominantItem) ? dominantItem : null);
-                    }
-
-                    float drillTime = getDrillTime(dominantItem);
-
-                    smoothProgress = Mathf.lerpDelta(smoothProgress, progress / (drillTime - 20f), 0.1f);
-
-                    if (items.total() <= itemCapacity - dominantItems && dominantItems > 0 && efficiency > 0) {
-                        warmup = Mathf.approachDelta(warmup, progress / drillTime, 0.01f);
-
-                        timeDrilled += speedCurve.apply(progress / drillTime) * speed;
-
-                        lastDrillSpeed = 1f / drillTime * speed * dominantItems;
-                        progress += delta() * speed;
-                    } else {
-                        warmup = Mathf.approachDelta(warmup, 0f, 0.01f);
-                        lastDrillSpeed = 0f;
-                        return;
-                    }
-
-                    if (dominantItems > 0 && progress >= drillTime && items.total() < itemCapacity) {
-                        for (int i = 0; i < dominantItems; i++) {
-                            offload(dominantItem);
-                        }
-
-                        invertTime = 1f;
-                        progress %= drillTime;
-
-                        if (wasVisible) {
-                            Effect.shake(shake, shake, this);
-                            drillSound.at(x, y, 1f + Mathf.range(drillSoundPitchRand), drillSoundVolume);
-                            drillEffect.at(x + Mathf.range(drillEffectRnd), y + Mathf.range(drillEffectRnd), dominantItem.color);
-                        } else {
-                            warmup = Mathf.approachDelta(warmup, 0f, warmupSpeed);
-                        }
-                    }
-                }
-            } else {
-                warmup = Mathf.approachDelta(warmup, 0f, 0.01f);
-                lastDrillSpeed = 0f;
+            if (!Arrays.asList(targetItems).contains(dominantItem)) {
+                return;
             }
-        }}}
+            if (items.total() < itemCapacity && dominantItems > 0 && efficiency > 0) {
+                float speed = efficiency;
+                lastDrillSpeed = 1f / drillTime * speed * dominantItems;
+                warmup = Mathf.approachDelta(warmup, speed, warmupSpeed);
+                progress += delta() * dominantItems * speed * warmup;
+
+                if (Mathf.chanceDelta(updateEffectChance * warmup))
+                    updateEffect.at(x + Mathf.range(size * 2f), y + Mathf.range(size * 2f));
+            } else {
+                lastDrillSpeed = 0f;
+                warmup = Mathf.approachDelta(warmup, 0f, warmupSpeed);
+                return;
+            }
+
+            if (dominantItems > 0 && progress >= delay && items.total() < itemCapacity) {
+                for (int i = 0; i < dominantItems; i++) {
+                    offload(dominantItem);
+                }
+
+                progress %= delay;
+
+                if (wasVisible && Mathf.chanceDelta(drillEffectChance * warmup))
+                    drillEffect.at(x + Mathf.range(drillEffectRnd), y + Mathf.range(drillEffectRnd), dominantItem.color);
+            }
+
+        }
+
+        @Override
+        public float progress() {
+            return dominantItem == null ? 0f : Mathf.clamp(progress / getDrillTime(dominantItem));
+        }
+    }
+}

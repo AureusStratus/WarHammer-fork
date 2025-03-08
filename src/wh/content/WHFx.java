@@ -53,11 +53,13 @@ import wh.graphics.WHPal;
 import wh.struct.Vec2Seq;
 import wh.util.WHUtils;
 
+import javax.swing.*;
+
 import static arc.graphics.g2d.Draw.color;
 import static arc.graphics.g2d.Lines.*;
 import static arc.math.Angles.randLenVectors;
-import static mindustry.Vars.headless;
-import static mindustry.Vars.state;
+import static mindustry.Vars.*;
+import static mindustry.Vars.tilesize;
 import static mindustry.content.Fx.rand;
 import static mindustry.content.Fx.v;
 
@@ -131,12 +133,17 @@ public final class WHFx {
     public static Effect triSpark2;
     public static Effect tank3sMissileTrailSmoke;
     public static Effect tank3sExplosionSmoke;
+
     private WHFx() {
     }
+
+
     public interface EffectParam {
         void draw(long var1, float var3, float var4, float var5, float var6);
     }
-
+    public static float fslope(float fin){
+        return (0.5f - Math.abs(fin - 0.5f)) * 2f;
+    }
     public static class ateData implements Pool.Poolable {
         public float width;
         public int length;
@@ -159,7 +166,9 @@ public final class WHFx {
             this.out = false;
         }
     }
-    public static Effect boolSelector = new Effect(0, 0, e -> {});
+
+    public static Effect boolSelector = new Effect(0, 0, e -> {
+    });
     public static Effect hitSpark = new Effect(45.0F, (e) -> {
         Draw.color(e.color, Color.white, e.fout() * 0.3F);
         Lines.stroke(e.fout() * 1.6F);
@@ -188,9 +197,11 @@ public final class WHFx {
             Lines.lineAngle(e.x + x, e.y + y, ang, e.fout() * (float) rand.random(6, 9) + 3.0F);
         });
     });
+
     public static float fout(float fin, float margin) {
         return fin >= 1.0F - margin ? 1.0F - (fin - (1.0F - margin)) / margin : 1.0F;
     }
+
     public static Effect polyTrail(Color fromColor, Color toColor, float size, float lifetime) {
         return new Effect(lifetime, size * 2.0F, (e) -> {
             Draw.color(fromColor, toColor, e.fin());
@@ -477,25 +488,133 @@ public final class WHFx {
         });
     }
 
-    public static Effect subEffect(float lifetime, float radius, int num, float childLifetime, Interp spreadOutInterp, EffectParam effect) {
-        return new Effect(lifetime, radius * 2.0F, (e) -> {
+    public static Effect subEffect(float lifetime, float radius, int num, float childLifetime, Interp spreadOutInterp, EffectParam drawer) {
+        return new Effect(lifetime, radius * 2f, e -> {
             rand.setSeed(e.id);
             float finT = e.lifetime * e.fin(spreadOutInterp);
 
-            for (int s = 0; s < num; ++s) {
+            for (int s = 0; s < num; s++) {
                 float sBegin = rand.random(e.lifetime - childLifetime);
-                float fin = (finT - sBegin) / childLifetime;
-                if (!(fin < 0.0F) && !(fin > 1.0F)) {
-                    float fout = 1.0F - fin;
-                    rand2.setSeed(e.id + s);
-                    float theta = rand2.random(0.0F, 6.2831855F);
-                    v9.set(Mathf.cos(theta), Mathf.sin(theta)).scl(radius * sBegin / (e.lifetime - childLifetime));
-                    Tmp.c1.set(e.color).lerp(Color.white, fout * 0.7F);
-                    Draw.color(Tmp.c1);
-                    effect.draw((e.id + s) + 9999L, e.x + v9.x, e.y + v9.y, 57.295776F * theta, fin);
-                }
-            }
+                float
+                        fin = (finT - sBegin) / childLifetime;
 
+                if (fin < 0 || fin > 1) continue;
+
+                float
+                        fout = 1 - fin;
+
+                rand2.setSeed(e.id + s);
+                float theta = rand2.random(0f, Mathf.PI2);
+                v.set(Mathf.cos(theta), Mathf.sin(theta)).scl(radius * sBegin / (e.lifetime - childLifetime));
+
+                Tmp.c1.set(e.color).lerp(Color.white, fout * 0.7f);
+                Draw.color(Tmp.c1);
+                drawer.draw(e.id + s + 9999, e.x + v.x, e.y + v.y, Mathf.radiansToDegrees * theta, fin);
+            }
+        });
+    }
+
+    public static Effect multipRings(Color color, float radius, float amount, float baseLifetime) {
+        return new MultiEffect(new Effect(baseLifetime, radius * 2f, e -> {
+
+
+            Draw.color(color, color, e.fout(Interp.pow10Out));
+            Lines.stroke(2f);
+            float height = 150f;
+            for (int i = 0; i < amount; i++) {
+                float yOffset = height * e.fin(Interp.pow10In);
+                Angles.randLenVectors(e.id + 9999, 1, height - yOffset, 90, 0, (x, y) -> {
+                    Lines.circle(x + e.x, y + e.y, radius);
+                });
+            }
+        }),
+                new Effect(240, radius * 2f, e -> {
+                    Draw.color(color, color, e.fout(Interp.pow10Out));
+                    float height = 150f;
+                    rand.setSeed(e.id);
+                    float childLifetime = 60f;
+                    float finT = e.lifetime * e.fin(Interp.pow3Out);
+                    float num = 10;
+                    for (int s = 0; s < num; s++) {
+                        float sBegin = rand.random(e.lifetime - childLifetime);
+                        float
+                                fin = (finT - sBegin) / childLifetime;
+
+                        if (fin < 0 || fin > 1) continue;
+
+
+                        rand2.setSeed(e.id + s);
+                        float theta = rand2.random(0f, Mathf.PI2);
+                        v.set(Mathf.cos(theta), Mathf.sin(theta)).scl(radius * sBegin / (e.lifetime - childLifetime));
+
+
+                        int finalS = s;
+                        float timeOffset = s * childLifetime / num;
+                        e.scaled(childLifetime, (ix) -> {
+
+                            float progress = (ix.time - timeOffset) / childLifetime;
+                            if (progress < 0 || progress > 1) return;
+
+                            Tmp.v1.trns(90, height * progress);
+                            Angles.randLenVectors(ix.id + finalS, 1, radius * e.finpow(), (x, y) -> {
+                                Lines.stroke(2f);
+                                Lines.lineAngle(ix.x + x + v.x, Tmp.v1.y + ix.y + y, 90, 25 * ix.fout(Interp.pow10Out) * Mathf.randomSeed(e.id, 2.5f));
+                            });
+                            Tmp.v2.trns(90, height * (1 - progress));
+                            Angles.randLenVectors(ix.id + finalS, 2, radius * e.finpow(), (x, y) -> {
+                                Lines.stroke(2f);
+                                Lines.lineAngle(ix.x + x + v.x, Tmp.v2.y + ix.y + y, 90, 12 * ix.fout(Interp.pow2Out) * Mathf.randomSeed(e.id, 2.5f));
+                            });
+                        });
+                    }
+                }
+                ));
+    }
+
+    public static Effect arcSmelt(Color color, float radius, float amount, float Lifetime) {
+        return new Effect(Lifetime, radius * 2f, e -> {
+            float flameRadiusScl = 3f, flameRadiusMag = 0.3f, circleStroke = 1.5f;
+            Draw.blend(Blending.additive);
+            Draw.color(color, color, e.fin());
+
+            Lines.stroke(circleStroke * e.fout(Interp.pow2Out));
+            Lines.circle(e.x, e.y, radius / 3);
+            Draw.color(color);
+            float si = Mathf.absin(flameRadiusScl, flameRadiusMag);
+            Fill.circle(e.x, e.y, 1.8f * e.finpow() + si);
+
+            Draw.blend();
+            Draw.reset();
+            rand2.setSeed(e.id);
+            float childLifetime=Lifetime;
+            e.scaled(childLifetime , (e2) -> {
+                for (int s = 0; s < amount; s++) {
+                    float timeOffset = s * Lifetime*2 / amount;
+                    float progress = (e2.time - timeOffset) / Lifetime;
+                    if (progress < 0 || progress > 1) return;
+
+                    Angles.randLenVectors(e2.id+s, 1, radius * e.foutpow(), (x, y) -> {
+                        Tmp.v1.trns(Mathf.angle(x, y), 1-progress);
+                        Draw.color(color);
+                        Lines.stroke(e2.fout(Interp.pow2Out) * 1.5f);
+                        Lines.lineAngle(e2.x + Tmp.v1.x + x, e2.y + Tmp.v1.y + y, Mathf.angle(x, y), 5 * e2.fout(Interp.pow2Out) * Mathf.randomSeed(e2.id, 1.5f));
+
+                    });
+                }
+            });
+
+        });
+    }
+
+    public static Effect hexagonSpread(Color color, float sizeMin, float sizeMax){
+        return new Effect(20f, sizeMax * 2f, e -> {
+            Draw.color(Color.white, color, e.fin() + 0.15f);
+            if(e.id % 2 == 0){
+                Lines.stroke(1.5f * e.fout(Interp.pow3Out));
+                Lines.poly(e.x, e.y, 6,Mathf.randomSeed(e.id, sizeMin, sizeMax) * e.fin(Interp.pow2Out) + 3, 60);
+            }else{
+                Fill.square(e.x, e.y,Mathf.randomSeed(e.id, sizeMin * 0.5f, sizeMin * 0.8f) * e.fout(Interp.pow2Out), 45);
+            }
         });
     }
 
@@ -584,7 +703,8 @@ public final class WHFx {
         });
     }
 
-    public static Effect spreadOutSpark(float lifetime, float radius, int sparks, int sparkSpikes, float sparkLifetime, float sparkSize, float sparkLength, Interp spreadOutInterp) {
+    public static Effect spreadOutSpark(float lifetime, float radius, int sparks, int sparkSpikes,
+                                        float sparkLifetime, float sparkSize, float sparkLength, Interp spreadOutInterp) {
         return new Effect(lifetime, radius * 2.0F, (e) -> {
             rand.setSeed(e.id);
             float finT = e.lifetime * e.fin(spreadOutInterp);
@@ -600,7 +720,7 @@ public final class WHFx {
                     Tmp.c1.set(e.color).lerp(Color.white, fout * 0.7F);
                     Draw.color(Tmp.c1);
                     Lines.stroke(1.2F * Mathf.curve(fout, 0.0F, 0.22F));
-                    Angles.randLenVectors(e.id + s + 1, sparkSpikes, sparkSize * fin, (x, y) -> {
+                    Angles.randLenVectors(e.id + s + 1, sparkSpikes, sparkSize * fin, 360, (x, y) -> {
                         Lines.lineAngle(e.x + x + v.x, e.y + y + v.y, Mathf.angle(x, y), fslope * sparkLength + 2.0F);
                         Drawf.light(e.x + x + v.x, e.y + y + v.y, fin * sparkLength * fslope * 1.3F, Tmp.c1, 0.7F);
                     });
@@ -609,6 +729,7 @@ public final class WHFx {
 
         });
     }
+
     public static Effect shootLine(float size, float angleRange) {
         int num = Mathf.clamp((int) size / 6, 6, 20);
         float thick = Mathf.clamp(0.75f, 2f, size / 22f);
@@ -623,7 +744,8 @@ public final class WHFx {
             });
         });
     }
-    public static Effect genericCharge(Color color, float size, float range, float lifetime){
+
+    public static Effect genericCharge(Color color, float size, float range, float lifetime) {
         return new Effect(lifetime, e -> {
             color(color);
             Lines.stroke(size / 7f * e.fin());
@@ -636,15 +758,16 @@ public final class WHFx {
 
         });
     }
+
     public static Effect arcShieldBreak = new Effect(40, e -> {
         Lines.stroke(3 * e.fout(), e.color);
-        if(e.data instanceof Unit u){
+        if (e.data instanceof Unit u) {
             PcShieldArcAbility ab = (PcShieldArcAbility) Structs.find(u.abilities, a -> a instanceof PcShieldArcAbility);
-            if(ab != null){
+            if (ab != null) {
                 Vec2 pos = Tmp.v1.set(ab.x, ab.y).rotate(u.rotation - 90f).add(u);
-                Lines.arc(pos.x, pos.y, ab.radius + ab.width/2, ab.angle / 360f, u.rotation + ab.angleOffset - ab.angle / 2f);
-                Lines.arc(pos.x, pos.y, ab.radius - ab.width/2, ab.angle / 360f, u.rotation + ab.angleOffset - ab.angle / 2f);
-                for(int i : Mathf.signs){
+                Lines.arc(pos.x, pos.y, ab.radius + ab.width / 2, ab.angle / 360f, u.rotation + ab.angleOffset - ab.angle / 2f);
+                Lines.arc(pos.x, pos.y, ab.radius - ab.width / 2, ab.angle / 360f, u.rotation + ab.angleOffset - ab.angle / 2f);
+                for (int i : Mathf.signs) {
                     float
                             px = pos.x + Angles.trnsx(u.rotation + ab.angleOffset - ab.angle / 2f * i, ab.radius + ab.width / 2),
                             py = pos.y + Angles.trnsy(u.rotation + ab.angleOffset - ab.angle / 2f * i, ab.radius + ab.width / 2),
@@ -655,21 +778,24 @@ public final class WHFx {
             }
         }
     });
-    public static Effect ExplosionSlash(Color color,float size, float range, float lifetime) {
-        return new Effect(lifetime, range*2, e -> {
+
+    public static Effect ExplosionSlash(Color color, float size, float range, float lifetime) {
+        return new Effect(lifetime, range * 2, e -> {
             Draw.color(color);
-            Angles.randLenVectors(e.id, (int) Mathf.clamp(range / 8.0F, 4.0F, 18.0F), range / 8.0F, e.rotation,360, (x, y) -> {
+            Angles.randLenVectors(e.id, (int) Mathf.clamp(range / 8.0F, 4.0F, 18.0F), range / 8.0F, e.rotation, 360, (x, y) -> {
                 for (int s : Mathf.signs) {
-                    Drawf.tri(e.x+x, e.y+y, e.fout() * size/2, e.foutpow() * size * 2.5f + 6f, Mathf.angle(x, y) + s * 90f);
+                    Drawf.tri(e.x + x, e.y + y, e.fout() * size / 2, e.foutpow() * size * 2.5f + 6f, Mathf.angle(x, y) + s * 90f);
                 }
             });
         });
     }
-    public static Effect airAsh(float lifetime, float range, float start, float pin, Color color, float width, int amount) {
+
+    public static Effect airAsh(float lifetime, float range, float start, float pin, Color color, float width,
+                                int amount) {
         return new MultiEffect(
                 new Effect(lifetime, e -> {
-                    float fee = e.time < e.lifetime/2 ? e.fin() * 2 : e.fout() * 2;
-                    for(int a : Mathf.signs) {
+                    float fee = e.time < e.lifetime / 2 ? e.fin() * 2 : e.fout() * 2;
+                    for (int a : Mathf.signs) {
                         for (int i = 0; i < amount; i++) {
                             float dx = dx(e.x, range * e.fin() + start, (e.time * 8 + i) * a + Mathf.randomSeed(e.id, -10, 10)),
                                     dy = dy(e.y, range * e.fin() + start, (e.time * 8 + i) * a + Mathf.randomSeed(e.id, -10, 10));
@@ -679,8 +805,8 @@ public final class WHFx {
                     }
                 }),
                 new Effect(lifetime, e -> {
-                    float fee = e.time < e.lifetime/2 ? e.fin() * 2 : e.fout() * 2;
-                    for(int a : Mathf.signs) {
+                    float fee = e.time < e.lifetime / 2 ? e.fin() * 2 : e.fout() * 2;
+                    for (int a : Mathf.signs) {
                         for (int i = 0; i < amount; i++) {
                             float dx = dx(e.x, (range - pin) * e.fin() + start, (e.time * 8 + i) * a + Mathf.randomSeed(e.id, -10, 10) + 120),
                                     dy = dy(e.y, (range - pin) * e.fin() + start, (e.time * 8 + i) * a + Mathf.randomSeed(e.id, -10, 10) + 120);
@@ -690,8 +816,8 @@ public final class WHFx {
                     }
                 }),
                 new Effect(lifetime, e -> {
-                    float fee = e.time < e.lifetime/2 ? e.fin() * 2 : e.fout() * 2;
-                    for(int a : Mathf.signs) {
+                    float fee = e.time < e.lifetime / 2 ? e.fin() * 2 : e.fout() * 2;
+                    for (int a : Mathf.signs) {
                         for (int i = 0; i < amount; i++) {
                             float dx = dx(e.x, (range - pin * 2) * e.fin() + start, (e.time * 8 + i) * a + Mathf.randomSeed(e.id, -10, 10) + 240),
                                     dy = dy(e.y, (range - pin * 2) * e.fin() + start, (e.time * 8 + i) * a + Mathf.randomSeed(e.id, -10, 10) + 240);
@@ -702,12 +828,28 @@ public final class WHFx {
                 })
         );
     }
+
     //参数方程
-    public static float dx(float px, float r, float angle){
-        return px + r * (float) Math.cos(angle * Math.PI/180);
+    public static float dx(float px, float r, float angle) {
+        return px + r * (float) Math.cos(angle * Math.PI / 180);
     }
-    public static float dy(float py, float r, float angle){
-        return py + r * (float) Math.sin(angle * Math.PI/180);
+
+    public static float dy(float py, float r, float angle) {
+        return py + r * (float) Math.sin(angle * Math.PI / 180);
+    }
+
+    public static Effect hexagonSmoke(Color color, float lifetime, float stroke, float size, float range) {
+        {
+            return new Effect(lifetime, e -> {
+                rand.setSeed(e.id);
+                randLenVectors(e.id, 5, range + e.fin() * 18f, (x, y) -> {
+                    color(color, e.fout());
+                    Lines.stroke(stroke);
+                    Lines.poly(e.x + x, e.y + y, 6, size * e.fout(Interp.pow2Out), 60);
+                    Draw.color();
+                });
+            });
+        }
     }
 
     static {
@@ -1255,7 +1397,7 @@ public final class WHFx {
 
             rand.setSeed(e.id);
 
-            float fin = Mathf.curve(e.fin(), 0, lightningAlign);
+            float fin = Mathf.curve(e.fin(), 0, lightningAlign) ;
             int i;
             float nx = e.x, ny = e.y;
             for (i = 0; i < (int) (links * fin); i++) {
@@ -1503,8 +1645,8 @@ public final class WHFx {
 
             }
         });
-             AccretionDiskEffect = new Effect(60, e -> {
-            if(headless || !(e.data instanceof ateData data) || data.owner == null) return;
+        AccretionDiskEffect = new Effect(60, e -> {
+            if (headless || !(e.data instanceof ateData data) || data.owner == null) return;
 
             float fin = data.out ? e.finpow() : e.foutpow();
             float fout = data.out ? e.foutpow() : e.finpow();
@@ -1518,12 +1660,12 @@ public final class WHFx {
             float dx = dx(b.x, ioRad, start - rad),
                     dy = dy(b.y, ioRad, start - rad);
 
-            if(data.trail == null) data.trail = new Trail(data.length);
-            float dzin = data.out && e.time > e.lifetime - 10 ? Interp.pow2Out.apply((e.lifetime - e.time)/10) : fin;
+            if (data.trail == null) data.trail = new Trail(data.length);
+            float dzin = data.out && e.time > e.lifetime - 10 ? Interp.pow2Out.apply((e.lifetime - e.time) / 10) : fin;
             data.trail.length = data.length;
             //data.trail.length = (int) (data.length * dzin);
 
-            if(!state.isPaused()) data.trail.update(dx, dy, 1);
+            if (!state.isPaused()) data.trail.update(dx, dy, 1);
 
             float z = Draw.z();
             Draw.z(Layer.effect - 19 * fout);
@@ -1576,27 +1718,27 @@ public final class WHFx {
         tank3sMissileTrailSmoke = new Effect(180f, 300f, b -> {
             float intensity = 2f;
             color(b.color, 0.4f);
-                rand.setSeed(b.id);
-                float lenScl = rand.random(0.5f, 1f);
-                b.scaled(b.lifetime * lenScl, e -> {
-                    randLenVectors(e.id , e.fin(Interp.pow10Out), (int)(intensity*2), 10f * intensity, (x, y, in, out) -> {
-                        float fout = e.fout(Interp.pow5Out) * rand.random(0.5f, 1f);
-                        float rad = 4*intensity*fout;
-                        Fill.circle(e.x + x, e.y + y, rad);
-                        Drawf.light(e.x + x, e.y + y, rad * 2.5f, b.color, 0.5f);
-                    });
+            rand.setSeed(b.id);
+            float lenScl = rand.random(0.5f, 1f);
+            b.scaled(b.lifetime * lenScl, e -> {
+                randLenVectors(e.id, e.fin(Interp.pow10Out), (int) (intensity * 2), 10f * intensity, (x, y, in, out) -> {
+                    float fout = e.fout(Interp.pow5Out) * rand.random(0.5f, 1f);
+                    float rad = 4 * intensity * fout;
+                    Fill.circle(e.x + x, e.y + y, rad);
+                    Drawf.light(e.x + x, e.y + y, rad * 2.5f, b.color, 0.5f);
                 });
+            });
         }).layer(Layer.bullet - 0.5f);
 
         tank3sExplosionSmoke = new Effect(180f, 300f, b -> {
             float intensity = 2f;
             color(b.color, 0.7f);
-            for(int i = 0; i < 4; i++){
-                rand.setSeed(b.id*2 + i);
+            for (int i = 0; i < 4; i++) {
+                rand.setSeed(b.id * 2 + i);
                 float lenScl = rand.random(0.5f, 1f);
                 int fi = i;
                 b.scaled(b.lifetime * lenScl, e -> {
-                    randLenVectors(e.id + fi - 1, e.fin(Interp.pow10Out), (int)( intensity), 15f * intensity, (x, y, in, out) -> {
+                    randLenVectors(e.id + fi - 1, e.fin(Interp.pow10Out), (int) (intensity), 15f * intensity, (x, y, in, out) -> {
                         float fout = e.fout(Interp.pow5Out) * rand.random(0.5f, 1f);
                         float rad = fout * ((2f + intensity) * 2.35f);
 

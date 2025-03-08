@@ -1,3 +1,4 @@
+/*
 {
 	"type": "PointDefenseTurret",
 	"name": "偏转",
@@ -24,4 +25,4 @@
 		"parent": "Flash"
 	},
 	"researchCostMultiplier": 0.5
-}
+}*/

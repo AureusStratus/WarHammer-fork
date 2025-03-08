@@ -17,7 +17,7 @@ public final class EntityRegister {
         return get(type.getCanonicalName());
     }
 
-    @SuppressWarnings("unchecked")
+
     public static <T extends Entityc> Prov<T> get(String name) {
         return (Prov<T>) map.get(name);
     }
@@ -46,5 +46,7 @@ public final class EntityRegister {
         r("EnergyUnit", EnergyUnit.class, EnergyUnit::new);
         r("PesterUnit", PesterUnit.class, PesterUnit::new);
         r("NucleoidUnit", NucleoidUnit.class, NucleoidUnit::new);
+        r("wh-scepter", StarrySkyEntity.class, StarrySkyEntity::new);
+        r("wh--Starry-sky", StarrySkyEntity.class, StarrySkyEntity::new);
     }
 }

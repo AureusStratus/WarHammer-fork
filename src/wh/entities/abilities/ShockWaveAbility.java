@@ -104,47 +104,43 @@ public class ShockWaveAbility extends Ability {
     }
 
     public void update(Unit unit) {
-        if (!unit.disarmed) {
-            this.timer += Time.delta * unit.reloadMultiplier;
-            if (this.maxSpeed > 0.0F && unit.vel().len2() > this.maxSpeed) {
-                this.timer = 0.0F;
-            } else if (this.timer > this.reload) {
+            if(unit.disarmed)return;
+
+            timer += Time.delta * unit.reloadMultiplier;
+
+            if(maxSpeed > 0 && unit.vel().len2() > maxSpeed){
+                timer = 0;
+            }else if(timer > reload){
                 all.clear();
-                Tmp.v1.trns(unit.rotation - 90.0F, this.x, this.y).add(unit.x, unit.y);
-                float rx = Tmp.v1.x;
-                float ry = Tmp.v1.y;
-                Units.nearby((Team)null, rx, ry, this.range, (other) -> {
-                    if (other.team != unit.team && other.checkTarget(this.targetAir, this.targetGround) && other.targetable(unit.team)) {
+
+                Tmp.v1.trns(unit.rotation - 90, x, y).add(unit.x, unit.y);
+                float rx = Tmp.v1.x, ry = Tmp.v1.y;
+
+                Units.nearby(null, rx, ry, range, other -> {
+                    if(other.team != unit.team && other.checkTarget(targetAir, targetGround) && other.targetable(unit.team)){
                         all.add(other);
                     }
-
                 });
-                if (all.any()) {
-                    this.timer = 0.0F;
-                    this.shootSound.at(rx, ry, 1.0F + Mathf.range(0.15F), 3.0F);
-                    this.shootEffect.at(rx, ry, this.range, this.hitColor);
-                    Iterator var4 = all.iterator();
 
-                    while(var4.hasNext()) {
-                        Unit u = (Unit)var4.next();
-                        ObjectFloatMap.Entries var6 = this.status.entries().iterator();
+                if(all.any()){
+                    timer = 0;
+                    shootSound.at(rx, ry, 1 + Mathf.range(0.15f), 3);
 
-                        while(var6.hasNext()) {
-                            ObjectFloatMap.Entry<StatusEffect> s = (ObjectFloatMap.Entry)var6.next();
-                            u.apply((StatusEffect)s.key, s.value);
+                    shootEffect.at(rx, ry, range, hitColor);
+                    for(Unit u : all){
+                        for(ObjectFloatMap.Entry<StatusEffect> s : status.entries()){
+                            u.apply(s.key, s.value);
                         }
 
-                        Tmp.v3.set(unit).sub(Tmp.v1).nor().scl(this.knockback * 80.0F);
+                        Tmp.v3.set(unit).sub(Tmp.v1).nor().scl(knockback * 80f);
                         u.impulse(Tmp.v3);
-                        u.damage(this.damage);
-                        this.hitEffect.at(u.x, u.y, this.hitColor);
-                        this.effect.get(Tmp.v1, u);
+                        u.damage(damage);
+                        hitEffect.at(u.x, u.y, hitColor);
+                        effect.get(Tmp.v1, u);
                     }
                 }
             }
-
         }
-    }
 
     public void draw(Unit unit) {
         super.draw(unit);

@@ -1,3 +1,4 @@
+/*
 {
 	"type": "HeatProducer",
 	"name": "钷素制热机",
@@ -41,4 +42,4 @@
 		"parent": "decay-heater"
 	},
 	"researchCostMultiplier": 0.8
-}
+}*/

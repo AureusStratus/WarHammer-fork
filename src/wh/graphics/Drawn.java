@@ -106,37 +106,36 @@ public final class Drawn {
     }
 
     public static void circlePercent(float x, float y, float rad, float percent, float angle) {
+//        Lines.swirl(x, y, rad, 360 * percent, angle);
         float p = Mathf.clamp(percent);
+
         int sides = Lines.circleVertices(rad);
+
         float space = 360.0F / (float)sides;
-        float len = 2.0F * rad * Mathf.sinDeg(space / 2.0F);
+        float len = 2 * rad * Mathf.sinDeg(space / 2);
         float hstep = Lines.getStroke() / 2.0F / Mathf.cosDeg(space / 2.0F);
         float r1 = rad - hstep;
         float r2 = rad + hstep;
 
         int i;
-        float a;
-        float cos;
-        float sin;
-        float cos2;
-        float sin2;
-        for(i = 0; (float)i < (float)sides * p - 1.0F; ++i) {
-            a = space * (float)i + angle;
-            cos = Mathf.cosDeg(a);
-            sin = Mathf.sinDeg(a);
-            cos2 = Mathf.cosDeg(a + space);
-            sin2 = Mathf.sinDeg(a + space);
+
+        for(i = 0; i < sides * p - 1; ++i){
+            float a = space * (float)i + angle;
+            float cos = Mathf.cosDeg(a);
+            float sin = Mathf.sinDeg(a);
+            float cos2 = Mathf.cosDeg(a + space);
+            float sin2 = Mathf.sinDeg(a + space);
             Fill.quad(x + r1 * cos, y + r1 * sin, x + r1 * cos2, y + r1 * sin2, x + r2 * cos2, y + r2 * sin2, x + r2 * cos, y + r2 * sin);
         }
 
-        a = space * (float)i + angle;
-        cos = Mathf.cosDeg(a);
-        sin = Mathf.sinDeg(a);
-        cos2 = Mathf.cosDeg(a + space);
-        sin2 = Mathf.sinDeg(a + space);
-        float f = (float)sides * p - (float)i;
-        v6.trns(a, 0.0F, len * (f - 1.0F));
-        Fill.quad(x + r1 * cos, y + r1 * sin, x + r1 * cos2 + v6.x, y + r1 * sin2 + v6.y, x + r2 * cos2 + v6.x, y + r2 * sin2 + v6.y, x + r2 * cos, y + r2 * sin);
+        float a = space * i + angle;
+        float cos = Mathf.cosDeg(a);
+        float sin = Mathf.sinDeg(a);
+        float cos2 = Mathf.cosDeg(a + space);
+        float sin2 = Mathf.sinDeg(a + space);
+        float f = sides * p - i;
+        v1.trns(a, 0, len * (f - 1));
+        Fill.quad(x + r1 * cos, y + r1 * sin, x + r1 * cos2 + v1.x, y + r1 * sin2 + v1.y, x + r2 * cos2 + v1.x, y + r2 * sin2 + v1.y, x + r2 * cos, y + r2 * sin);
     }
 
     public static void posSquareLink(Color color, float stroke, float size, boolean drawBottom, float x, float y, float x2, float y2) {

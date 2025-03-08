@@ -1,3 +1,4 @@
+/*
 {
 	"type": "HeatProducer",
 	"category": "crafting",
@@ -37,4 +38,4 @@
 		"parent": "combustion-heater"
 	},
 	"researchCostMultiplier": 0.7
-}
+}*/

@@ -5,7 +5,6 @@ import arc.scene.ui.layout.*;
 import mindustry.gen.*;
 import mindustry.type.*;
 import mindustry.ui.*;
-import mindustry.ui.ItemImage;
 import mindustry.world.consumers.*;
 import mindustry.world.meta.*;
 import wh.ui.*;

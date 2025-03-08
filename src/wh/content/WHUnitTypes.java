@@ -15,9 +15,11 @@ import arc.math.Angles;
 import arc.math.Interp;
 import arc.math.Mathf;
 import arc.math.geom.Vec2;
+import arc.util.Log;
 import arc.util.Time;
 import arc.util.Tmp;
 import mindustry.content.Fx;
+import mindustry.content.Items;
 import mindustry.content.StatusEffects;
 import mindustry.entities.*;
 import mindustry.entities.abilities.Ability;
@@ -37,32 +39,32 @@ import mindustry.graphics.Layer;
 import mindustry.graphics.Pal;
 import mindustry.type.UnitType;
 import mindustry.type.Weapon;
+import mindustry.type.ammo.ItemAmmoType;
+import mindustry.type.ammo.PowerAmmoType;
 import mindustry.type.unit.TankUnitType;
 import mindustry.type.weapons.PointDefenseWeapon;
-import mindustry.world.meta.BlockFlag;
 import wh.entities.abilities.AdaptedHealAbility;
 import wh.entities.abilities.PcShieldArcAbility;
 import wh.entities.abilities.ShockWaveAbility;
 import wh.entities.bullet.*;
 import wh.gen.*;
 import wh.graphics.Drawn;
-import wh.graphics.PositionLightning;
 import wh.graphics.WHPal;
+import wh.type.unit.AncientUnitType;
 import wh.type.unit.NucleoidUnitType;
 import wh.type.unit.PesterUnitType;
+import wh.gen.StarrySkyEntity;
 import wh.util.WHUtils;
 import wh.util.WHUtils.EffectWrapper;
+import wh.world.drawer.WHUnitEngine;
 
 import static arc.graphics.g2d.Draw.color;
 import static arc.graphics.g2d.Lines.lineAngle;
 import static arc.graphics.g2d.Lines.stroke;
 import static arc.math.Angles.randLenVectors;
-import static mindustry.Vars.tilesize;
 import static mindustry.content.Fx.*;
 import static mindustry.content.Fx.none;
 import static mindustry.content.StatusEffects.blasted;
-import static mindustry.content.StatusEffects.overclock;
-import static mindustry.gen.Nulls.unit;
 import static mindustry.gen.Sounds.*;
 import static mindustry.gen.Sounds.explosion;
 import static mindustry.gen.Sounds.shootBig;
@@ -75,16 +77,20 @@ import static wh.content.WHStatusEffects.bless;
 public final class WHUnitTypes {
     public static UnitType
             //空军
-            cMoon, StarrySky, air6, air5, air4,air3, air2, air1,
+            cMoon, StarrySky, air6, air5, air4, air3, air2, air1,
     //载具
     tankAG,
             tank3s, tank2s, tank1s, tankl,
             tank3, tank2, tank1,
             Mecha7, Mecha6, Mecha5, Mecha4, Mecha3, Mecha2,
     //陆军
-    M5, M4, M1;
+    M5, M4, M3, M2, M1, test,corvus;
 
     private WHUnitTypes() {
+    }
+static {
+    EntityMapping.nameMap.put("wh-scepter", StarrySkyEntity::new);
+    EntityMapping.nameMap.put("wh-Starry-sky", StarrySkyEntity::new);
     }
 
     public static void load() {
@@ -736,9 +742,8 @@ public final class WHUnitTypes {
             }
         };
 
-        StarrySky = new PesterUnitType("Starry-sky") {
+        StarrySky = new AncientUnitType("Starry-sky") {
             {
-                constructor = PesterUnit::create;
                 addEngine(-7, -107F, 0.0F, 4.0F, true);
                 addEngine(-1, -107F, 0.0F, 4.0F, true);
                 addEngine(-26, -83.25F, 0.0F, 5.0F, false);
@@ -4514,7 +4519,28 @@ public final class WHUnitTypes {
         };
         air4 = new UnitType("air4") {
             {
+
                 constructor = UnitEntity::create;
+                autoFindTarget = true;
+                speed = 1.9f;
+                drag = 0.01f;
+                accel = 0.02f;
+                rotateSpeed = 2f;
+                immunities.add(StatusEffects.electrified);
+                immunities.add(StatusEffects.slow);
+                ammoType = new PowerAmmoType(6600);
+                ammoCapacity = 300;
+                hitSize = 35;
+                flying = true;
+                health = 7080;
+                armor = 10;
+                itemCapacity = 80;
+                outlineRadius = 3;
+                outlineColor = Color.valueOf("36363CFF");
+                engines.add(new WHUnitEngine(0, 0, 40, 90, 2.5f) {{
+                    line = true;
+                }});
+                engineLayer = 110;
                 weapons.add(new Weapon("wh-air4-weapon1") {
                     {
                         x = -9;
@@ -4673,81 +4699,81 @@ public final class WHUnitTypes {
                 });
             }
         };
-       M1 = new UnitType("m1") {
-           {
-               constructor = MechUnit::create;
-               canDrown = false;
-               rotateSpeed = 1.1f;
-               mechStepParticles = true;
-               mechSideSway = 0.54f;
-               mechFrontSway = 0.1f;
-               weapons.add(new Weapon("wh-m1-weapon1") {
-                   {
+        M1 = new UnitType("m1") {
+            {
+                constructor = MechUnit::create;
+                canDrown = false;
+                rotateSpeed = 1.1f;
+                mechStepParticles = true;
+                mechSideSway = 0.54f;
+                mechFrontSway = 0.1f;
+                weapons.add(new Weapon("wh-m1-weapon1") {
+                    {
 
-                       mirror = false;
-                       layerOffset = -0.001f;
-                       x = 5;
-                       y = 2.5f;
-                       shootY = 6;
-                       shootX = 0.3f;
-                       top = false;
-                       recoil = 0.5f;
-                       shake = 0.5f;
-                       reload = 30;
-                       shootSound = Sounds.shoot;
-                       bullet = new RailBulletType() {{
-                           length = 150f;
-                           damage = 60f;
-                           pointEffectSpace = 10f;
-                           hitColor = Color.valueOf("FF5D45FF");
-                           hitEffect = endEffect = Fx.hitBulletColor;
-                           pierceDamageFactor = 0.1f;
+                        mirror = false;
+                        layerOffset = -0.001f;
+                        x = 5;
+                        y = 2.5f;
+                        shootY = 6;
+                        shootX = 0.3f;
+                        top = false;
+                        recoil = 0.5f;
+                        shake = 0.5f;
+                        reload = 30;
+                        shootSound = Sounds.shoot;
+                        bullet = new RailBulletType() {{
+                            length = 150f;
+                            damage = 60f;
+                            pointEffectSpace = 10f;
+                            hitColor = Color.valueOf("FF5D45FF");
+                            hitEffect = endEffect = Fx.hitBulletColor;
+                            pierceDamageFactor = 0.1f;
 
-                           smokeEffect = Fx.colorSpark;
+                            smokeEffect = Fx.colorSpark;
 
-                           endEffect = new Effect(14f, e -> {
-                               color(e.color);
-                               Drawf.tri(e.x, e.y, e.fout() * 1.5f, 5f, e.rotation);
-                           });
+                            endEffect = new Effect(14f, e -> {
+                                color(e.color);
+                                Drawf.tri(e.x, e.y, e.fout() * 1.5f, 5f, e.rotation);
+                            });
 
-                           shootEffect = new Effect(10, e -> {
-                               color(e.color);
-                               float w = 1.2f + 7 * e.fout();
+                            shootEffect = new Effect(10, e -> {
+                                color(e.color);
+                                float w = 1.2f + 7 * e.fout();
 
-                               Drawf.tri(e.x, e.y, w, 16f * e.fout(), e.rotation);
-                               color(e.color);
+                                Drawf.tri(e.x, e.y, w, 16f * e.fout(), e.rotation);
+                                color(e.color);
 
-                               for (int i : Mathf.signs) {
-                                   Drawf.tri(e.x, e.y, w * 0.9f, 12f * e.fout(), e.rotation + i * 90f);
-                               }
+                                for (int i : Mathf.signs) {
+                                    Drawf.tri(e.x, e.y, w * 0.9f, 12f * e.fout(), e.rotation + i * 90f);
+                                }
 
-                               Drawf.tri(e.x, e.y, w, 4f * e.fout(), e.rotation + 180f);
-                           });
+                                Drawf.tri(e.x, e.y, w, 4f * e.fout(), e.rotation + 180f);
+                            });
 
-                           lineEffect = new Effect(20f, e -> {
-                               if (!(e.data instanceof Vec2 v)) return;
+                            lineEffect = new Effect(20f, e -> {
+                                if (!(e.data instanceof Vec2 v)) return;
 
-                               color(e.color);
-                               stroke(e.fout() * 0.9f + 1.2f);
+                                color(e.color);
+                                stroke(e.fout() * 0.9f + 1.2f);
 
-                               Fx.rand.setSeed(e.id);
-                               for (int i = 0; i < (length / pointEffectSpace) - 1; i++) {
-                                   Fx.v.trns(e.rotation, Fx.rand.random(8f, v.dst(e.x, e.y) - 8f));
-                                   Lines.lineAngleCenter(e.x + Fx.v.x, e.y + Fx.v.y, e.rotation + e.finpow(), e.foutpowdown() * 20f * Fx.rand.random(0.5f, 1f) + 0.3f);
-                               }
+                                Fx.rand.setSeed(e.id);
+                                for (int i = 0; i < (length / pointEffectSpace) - 1; i++) {
+                                    Fx.v.trns(e.rotation, Fx.rand.random(8f, v.dst(e.x, e.y) - 8f));
+                                    Lines.lineAngleCenter(e.x + Fx.v.x, e.y + Fx.v.y, e.rotation + e.finpow(), e.foutpowdown() * 20f * Fx.rand.random(0.5f, 1f) + 0.3f);
+                                }
 
-                               e.scaled(14f, b -> {
-                                   stroke(b.fout() * 0.9f);
-                                   color(e.color);
-                                   Lines.line(e.x, e.y, v.x, v.y);
-                               });
-                           });
-                       }};
+                                e.scaled(14f, b -> {
+                                    stroke(b.fout() * 0.9f);
+                                    color(e.color);
+                                    Lines.line(e.x, e.y, v.x, v.y);
+                                });
+                            });
+                        }};
 
-                   }
-               });
-           }
-       };
+                    }
+                });
+            }
+        };
 
 
         M4 = new UnitType("m4") {
@@ -4756,7 +4782,8 @@ public final class WHUnitTypes {
                 canDrown = false;
                 rotateSpeed = 1.1f;
                 mechStepParticles = true;
-                mechSideSway = 0.54f; mechFrontSway = 0.1f;
+                mechSideSway = 0.54f;
+                mechFrontSway = 0.1f;
                 mechLandShake = 0.1f;
                 speed = 1f;
                 weapons.add(new Weapon("wh-m4-weapon1") {
@@ -4864,8 +4891,148 @@ public final class WHUnitTypes {
                     }
                 });
             }
+
         };
-    }
-}
+
+        test = new UnitType("scepter") {{
+            Log.info("正在注册单位");
+            speed = 3.6f;
+            hitSize = 22f;
+            rotateSpeed = 2.1f;
+            health = 500000;
+            armor = 10f;
+            mechFrontSway = 1f;
+            ammoType = new ItemAmmoType(Items.thorium);
+
+            mechStepParticles = true;
+            stepShake = 0.15f;
+            singleTarget = true;
+            drownTimeMultiplier = 4f;
+
+
+            BulletType smallBullet = new BasicBulletType(3f, 10) {{
+                width = 7f;
+                height = 9f;
+                lifetime = 50f;
+            }};
+
+            weapons.add(
+                    new Weapon("scepter-weapon") {{
+                        top = false;
+                        y = 1f;
+                        x = 16f;
+                        shootY = 8f;
+                        reload = 45f;
+                        recoil = 5f;
+                        shake = 2f;
+                        ejectEffect = Fx.casing3;
+                        shootSound = Sounds.bang;
+                        inaccuracy = 3f;
+
+                        shoot.shots = 3;
+                        shoot.shotDelay = 4f;
+
+                        bullet = new BasicBulletType(8f, 80) {{
+                            width = 11f;
+                            height = 20f;
+                            lifetime = 27f;
+                            shootEffect = Fx.shootBig;
+                            lightning = 2;
+                            lightningLength = 6;
+                            lightningColor = Pal.surge;
+                            //standard bullet damage is far too much for lightning
+                            lightningDamage = 20;
+                        }};
+                    }},
+
+                    new Weapon("mount-weapon") {{
+                        reload = 13f;
+                        x = 8.5f;
+                        y = 6f;
+                        rotate = true;
+                        ejectEffect = Fx.casing1;
+                        bullet = smallBullet;
+                    }},
+                    new Weapon("mount-weapon") {{
+                        reload = 16f;
+                        x = 8.5f;
+                        y = -7f;
+                        rotate = true;
+                        ejectEffect = Fx.casing1;
+                        bullet = smallBullet;
+                    }}
+            );
+        }};
+
+    corvus = new UnitType("corvus"){{
+            constructor = StarrySkyEntity::new;
+        hitSize = 29f;
+        health = 1800000f;
+        armor = 9f;
+        stepShake = 1.5f;
+        rotateSpeed = 1.5f;
+        drownTimeMultiplier = 6f;
+
+        legCount = 4;
+        legLength = 14f;
+        legBaseOffset = 11f;
+        legMoveSpace = 1.5f;
+        legForwardScl = 0.58f;
+        hovering = true;
+        shadowElevation = 0.2f;
+        ammoType = new PowerAmmoType(4000);
+        groundLayer = Layer.legUnit;
+
+        speed = 3f;
+        drawShields = false;
+
+        weapons.add(new Weapon("corvus-weapon"){{
+            shootSound = Sounds.laserblast;
+            chargeSound = Sounds.lasercharge;
+            soundPitchMin = 1f;
+            top = false;
+            mirror = false;
+            shake = 14f;
+            shootY = 5f;
+            x = y = 0;
+            reload = 350f;
+            recoil = 0f;
+
+            cooldownTime = 350f;
+
+            shootStatusDuration = 60f * 2f;
+            shootStatus = StatusEffects.unmoving;
+            shoot.firstShotDelay = Fx.greenLaserCharge.lifetime;
+            parentizeEffects = true;
+
+            bullet = new LaserBulletType(){{
+                length = 800f;
+                damage = 560f;
+                width = 75f;
+
+                lifetime = 80f;
+
+                lightningSpacing = 35f;
+                lightningLength = 5;
+                lightningDelay = 1.1f;
+                lightningLengthRand = 15;
+                lightningDamage = 50;
+                lightningAngleRand = 40f;
+                largeHit = true;
+                lightColor = lightningColor = Pal.heal;
+
+                chargeEffect = Fx.greenLaserCharge;
+
+                healPercent = 25f;
+                collidesTeam = true;
+
+                sideAngle = 15f;
+                sideWidth = 0f;
+                sideLength = 0f;
+                colors = new Color[]{Pal.heal.cpy().a(0.4f), Pal.heal, Color.white};
+            }};
+        }});
+    }};
+}}
 
 

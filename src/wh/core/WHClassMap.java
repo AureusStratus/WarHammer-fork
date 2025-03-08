@@ -32,8 +32,6 @@ import wh.world.blocks.distribution.BeltConveyor;
 import wh.world.blocks.distribution.CoveredConveyor;
 import wh.world.blocks.distribution.DirectionalUnloaderF;
 import wh.world.blocks.distribution.TubeConveyor;
-import wh.world.blocks.production.MultiCrafterD;
-import wh.world.blocks.production.MultiCrafterE;
 import wh.world.blocks.storage.FrontlineCoreBlock;
 import wh.world.blocks.storage.UnloaderF;
 
@@ -77,11 +75,7 @@ final class WHClassMap {
         ClassMap.classes.put("TubeConveyorBuild", TubeConveyor.TubeConveyorBuild.class);
         ClassMap.classes.put("UnloaderF", UnloaderF.class);
         ClassMap.classes.put("UnloaderBuildF", UnloaderF.UnloaderBuildF.class);
-        ClassMap.classes.put("MultiCrafterE", MultiCrafterE.class);
-        ClassMap.classes.put("MultiCrafterBuildE", MultiCrafterE.MultiCrafterBuildE.class);
-        ClassMap.classes.put("Formula", MultiCrafterE.Formula.class);
-        ClassMap.classes.put("MultiCrafterD", MultiCrafterD.class);
-        ClassMap.classes.put("MultiCrafterBuildD", MultiCrafterD.MultiCrafterBuildD.class);
+
         ClassMap.classes.put("DirectionalUnloaderF", DirectionalUnloaderF.class);
         ClassMap.classes.put("DirectionalUnloaderBuildF", DirectionalUnloaderF.DirectionalUnloaderBuildF.class);
         ClassMap.classes.put("FrontlineCoreBlock", FrontlineCoreBlock.class);

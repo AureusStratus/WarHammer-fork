@@ -27,6 +27,11 @@ public final class WHPal {
     public static Color Heat;
     public static Color SkyBlue;
     public static Color SkyBlueF;
+    public static Color TiSteelColor;
+    public static Color CeramiteColor;
+    public static Color RefineCeramiteColor;
+    public static Color RefinePromethiumColor;
+    public static Color OrePromethiumColor;
 
     private WHPal() {
     }
@@ -41,6 +46,7 @@ public final class WHPal {
         thurmixRedDark = thurmixRed.cpy().lerp(Color.black, 0.9F);
         rim = Color.valueOf("fffbbde1");
         rim3 = Color.valueOf("dbeffe");
+
         pop = Color.valueOf("FFFBBDE1");
         pop2 = Color.valueOf("FFFFFF");
         OR = Color.valueOf("FFC397FF");
@@ -48,5 +54,10 @@ public final class WHPal {
         Heat=Color.valueOf("FF4040");
         SkyBlue=Color.valueOf("579ED4FF");
         SkyBlueF=Color.valueOf("DBFFFDFF");
+        TiSteelColor=Color.valueOf("80D2F3FF");
+        CeramiteColor=Color.valueOf("A3BF65FF");
+        RefineCeramiteColor=Color.valueOf("EAE28AFF");
+        RefinePromethiumColor= Color.valueOf("999CA8FF");
+        OrePromethiumColor=Color.valueOf("676870FF");
     }
 }

@@ -1,3 +1,4 @@
+/*
 {
 	"type": "GenericCrafter",
 	"name": "精金铸造厂",
@@ -50,4 +51,4 @@
 		"parent": "ceramite-refinery"
 	},
 	"researchCostMultiplier": 0.6
-}
+}*/

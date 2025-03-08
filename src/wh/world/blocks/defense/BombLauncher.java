@@ -230,6 +230,10 @@ public class BombLauncher extends CommandableAttackerBlock {
 			Groups.all.remove(this);
 			added = false;
 		}
+
+		@Override
+		public void afterAllRead() {
+		}
 		
 		@Override public float damage(){return damage; }
 		@Override public void damage(float damage){this.damage = damage; }

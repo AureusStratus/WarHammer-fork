@@ -1,3 +1,4 @@
+/*
 {
 	"type": "GenericCrafter",
 	"name": "大型冷冻机",
@@ -50,4 +51,4 @@
 		"parent": "heavy-extractor"
 	},
 	"researchCostMultiplier": 0.45
-}
+}*/

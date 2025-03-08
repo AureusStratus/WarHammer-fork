@@ -1,3 +1,4 @@
+/*
 {
 	"name": "高能钻井",
 	"type": "BurstDrill",
@@ -52,4 +53,4 @@
 		"parent": "slag-extractor"
 	},
 	"researchCostMultiplier": 0.25
-}
+}*/

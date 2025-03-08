@@ -33,6 +33,7 @@ import static mindustry.Vars.*;
 /**
  * @author guiY
  */
+
 public class MultiCrafterE extends Block {
     /** Formula table {@link Formula}. */
     public Seq<Formula> products = new Seq<>();
@@ -782,7 +783,7 @@ public class MultiCrafterE extends Block {
             consume(new ConsumeItems(new ItemStack[]{new ItemStack(item, amount)}));
         }
 
-        public void consumeItems(ItemStack... items) {
+        public void consumeItems(Item copper, int i, ItemStack... items) {
             for (ItemStack s : items) setApply(s.item);
             consume(new ConsumeItems(items));
         }
