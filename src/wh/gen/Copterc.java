@@ -1,7 +1,7 @@
 package wh.gen;
 
 import mindustry.gen.*;
-import wh.type.unit.CopterUnitType.*;
+import wh.world.unit.CopterUnitType.*;
 
 public interface Copterc extends Unitc {
     RotorMount[] rotors();

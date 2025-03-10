@@ -16,7 +16,6 @@ import arc.math.geom.Vec2;
 import arc.struct.ObjectFloatMap;
 import arc.struct.ObjectIntMap;
 import arc.struct.Seq;
-import arc.util.Log;
 import arc.util.Time;
 import arc.util.Tmp;
 import arc.util.io.Reads;
@@ -49,7 +48,7 @@ import wh.content.WHFx;
 import wh.entities.WHUnitSorts;
 import wh.graphics.Drawn;
 import wh.math.WHInterp;
-import wh.type.unit.PesterUnitType;
+import wh.world.unit.PesterUnitType;
 import wh.util.WHUtils;
 
 public class PesterUnit extends UnitEntity implements Pesterc {

@@ -15,7 +15,6 @@ import arc.math.Angles;
 import arc.math.Interp;
 import arc.math.Mathf;
 import arc.math.geom.Vec2;
-import arc.util.Log;
 import arc.util.Time;
 import arc.util.Tmp;
 import mindustry.content.Fx;
@@ -25,10 +24,7 @@ import mindustry.entities.*;
 import mindustry.entities.abilities.Ability;
 import mindustry.entities.abilities.MoveEffectAbility;
 import mindustry.entities.bullet.*;
-import mindustry.entities.effect.MultiEffect;
-import mindustry.entities.effect.ParticleEffect;
-import mindustry.entities.effect.WaveEffect;
-import mindustry.entities.effect.WrapEffect;
+import mindustry.entities.effect.*;
 import mindustry.entities.part.RegionPart;
 import mindustry.entities.part.ShapePart;
 import mindustry.entities.pattern.*;
@@ -50,13 +46,13 @@ import wh.entities.bullet.*;
 import wh.gen.*;
 import wh.graphics.Drawn;
 import wh.graphics.WHPal;
-import wh.type.unit.AncientUnitType;
-import wh.type.unit.NucleoidUnitType;
-import wh.type.unit.PesterUnitType;
-import wh.gen.StarrySkyEntity;
+import wh.world.unit.AncientUnitType;
+import wh.world.unit.NucleoidUnitType;
 import wh.util.WHUtils;
 import wh.util.WHUtils.EffectWrapper;
+import wh.world.blocks.defense.turrets.MarkWeapon;
 import wh.world.drawer.WHUnitEngine;
+import wh.world.unit.StarrySkyEntity;
 
 import static arc.graphics.g2d.Draw.color;
 import static arc.graphics.g2d.Lines.lineAngle;
@@ -84,13 +80,14 @@ public final class WHUnitTypes {
             tank3, tank2, tank1,
             Mecha7, Mecha6, Mecha5, Mecha4, Mecha3, Mecha2,
     //陆军
-    M5, M4, M3, M2, M1, test,corvus;
+    M5, M4, M3, M2, M1, test, corvus;
 
     private WHUnitTypes() {
     }
-static {
-    EntityMapping.nameMap.put("wh-scepter", StarrySkyEntity::new);
-    EntityMapping.nameMap.put("wh-Starry-sky", StarrySkyEntity::new);
+
+    static {
+        EntityMapping.nameMap.put("wh-scepter", StarrySkyEntity::new);
+        EntityMapping.nameMap.put("wh-Starry-sky", StarrySkyEntity::new);
     }
 
     public static void load() {
@@ -4895,7 +4892,6 @@ static {
         };
 
         test = new UnitType("scepter") {{
-            Log.info("正在注册单位");
             speed = 3.6f;
             hitSize = 22f;
             rotateSpeed = 2.1f;
@@ -4908,8 +4904,6 @@ static {
             stepShake = 0.15f;
             singleTarget = true;
             drownTimeMultiplier = 4f;
-
-
             BulletType smallBullet = new BasicBulletType(3f, 10) {{
                 width = 7f;
                 height = 9f;
@@ -4917,122 +4911,200 @@ static {
             }};
 
             weapons.add(
-                    new Weapon("scepter-weapon") {{
+                    new MarkWeapon("reign-weapon"){{
                         top = false;
                         y = 1f;
-                        x = 16f;
-                        shootY = 8f;
-                        reload = 45f;
+                        x = 21.5f;
+                        shootY = 11f;
+                        reload = 9f;
                         recoil = 5f;
                         shake = 2f;
-                        ejectEffect = Fx.casing3;
+                        ejectEffect = Fx.casing4;
                         shootSound = Sounds.bang;
-                        inaccuracy = 3f;
+                        rotate = true;
+                        rotateSpeed = 1f;
+                        rotationLimit = 30f;
+                        shootCone = 10f;
 
-                        shoot.shots = 3;
-                        shoot.shotDelay = 4f;
-
-                        bullet = new BasicBulletType(8f, 80) {{
-                            width = 11f;
-                            height = 20f;
-                            lifetime = 27f;
-                            shootEffect = Fx.shootBig;
-                            lightning = 2;
-                            lightningLength = 6;
-                            lightningColor = Pal.surge;
-                            //standard bullet damage is far too much for lightning
-                            lightningDamage = 20;
+                        shoot = new ShootAlternate() {{
+                            shots = 3;
+                            shotDelay = 3f;
+                            barrels=3;
                         }};
-                    }},
+                        bullet = new BasicBulletType(13f, 80){{
+                            pierce = true;
+                            pierceCap = 10;
+                            width = 14f;
+                            height = 33f;
+                            lifetime = 15f;
+                            shootEffect = Fx.shootBig;
+                            fragVelocityMin = 0.4f;
 
-                    new Weapon("mount-weapon") {{
-                        reload = 13f;
-                        x = 8.5f;
-                        y = 6f;
-                        rotate = true;
-                        ejectEffect = Fx.casing1;
-                        bullet = smallBullet;
-                    }},
-                    new Weapon("mount-weapon") {{
-                        reload = 16f;
-                        x = 8.5f;
-                        y = -7f;
-                        rotate = true;
-                        ejectEffect = Fx.casing1;
-                        bullet = smallBullet;
-                    }}
-            );
+                            hitEffect = Fx.blastExplosion;
+                            splashDamage = 18f;
+                            splashDamageRadius = 13f;
+
+                            fragBullets = 3;
+                            fragLifeMin = 0f;
+                            fragRandomSpread = 30f;
+
+                            fragBullet = new BasicBulletType(9f, 20){{
+                                width = 10f;
+                                height = 10f;
+                                pierce = true;
+                                pierceBuilding = true;
+                                pierceCap = 3;
+
+                                lifetime = 20f;
+                                hitEffect = Fx.flakExplosion;
+                                splashDamage = 15f;
+                                splashDamageRadius = 10f;
+                            }};
+                        }};
+                        markShoot = new ShootAlternate() {{
+                            shots = 4;
+                            barrels=4;
+                            spread = 15f;
+                            shotDelay = 20f;
+                        }};
+                        markBullet = new MissileBulletType(4.2f, 60) {{
+
+                            homingPower = 0.2f;
+                            weaveMag = 4;
+                            weaveScale = 4;
+                            lifetime = 55f;
+                            shootEffect =none;
+                            smokeEffect = none;
+                            splashDamage = 70f;
+                            splashDamageRadius = 30f;
+                            frontColor = Color.white;
+                            hitSound = Sounds.none;
+                            width = height = 10f;
+
+                            lightColor = trailColor = backColor = Pal.techBlue;
+                            lightRadius = 40f;
+                            lightOpacity = 0.7f;
+
+                            trailWidth = 2.8f;
+                            trailLength = 20;
+                            trailChance = -1f;
+                            despawnSound = Sounds.dullExplosion;
+
+                            despawnEffect = Fx.none;
+                            hitEffect = new ExplosionEffect() {{
+                                lifetime = 20f;
+                                waveStroke = 2f;
+                                waveColor = sparkColor = trailColor;
+                                waveRad = 12f;
+                                smokeSize = 0f;
+                                smokeSizeBase = 0f;
+                                sparks = 10;
+                                sparkRad = 35f;
+                                sparkLen = 4f;
+                                sparkStroke = 1.5f;
+                            }};
+                        }};
+                    }});
+
+            weapons.add(new MarkWeapon("mount-weapon") {{
+                reload = 20f;
+                x = 8.5f;
+                y = 6f;
+                rotate = true;
+                ejectEffect = Fx.casing1;
+                bullet = smallBullet;
+                markShoot = new ShootAlternate() {{
+                    shots = 4;
+                    shotDelay = 3f;
+                }};
+                markBullet = new MissileBulletType(4.2f, 60) {{
+                    homingPower = 0.2f;
+                    weaveMag = 4;
+                    weaveScale = 4;
+                    lifetime = 55f;
+                    shootEffect =none;
+                    smokeEffect = none;
+                    splashDamage = 70f;
+                    splashDamageRadius = 30f;
+                    frontColor = Color.white;
+                    hitSound = Sounds.none;
+                    width = height = 10f;
+
+                    lightColor = trailColor = backColor = Pal.techBlue;
+                    lightRadius = 40f;
+                    lightOpacity = 0.7f;
+
+                    trailWidth = 2.8f;
+                    trailLength = 20;
+                    trailChance = -1f;
+                    despawnSound = Sounds.dullExplosion;
+
+                    despawnEffect = Fx.none;
+                    hitEffect = new ExplosionEffect() {{
+                        lifetime = 20f;
+                        waveStroke = 2f;
+                        waveColor = sparkColor = trailColor;
+                        waveRad = 12f;
+                        smokeSize = 0f;
+                        smokeSizeBase = 0f;
+                        sparks = 10;
+                        sparkRad = 35f;
+                        sparkLen = 4f;
+                        sparkStroke = 1.5f;
+                    }};
+                }};
+            }});
+            weapons.add(new MarkWeapon("mount-weapon") {{
+                reload = 60f;
+                x = 8.5f;
+                y = -7f;
+                rotate = true;
+                ejectEffect = Fx.casing1;
+                bullet = smallBullet;
+                markShoot = new ShootAlternate() {{
+                    shots = 4;
+                    shotDelay = 3f;
+                }};
+                markBullet  = new MissileBulletType(4.2f, 60) {{
+
+                    homingPower = 0.2f;
+                    weaveMag = 4;
+                    weaveScale = 4;
+                    lifetime = 55f;
+                    shootEffect = none;
+                    smokeEffect =none;
+                    splashDamage = 70f;
+                    splashDamageRadius = 30f;
+                    frontColor = Color.white;
+                    hitSound = Sounds.none;
+                    width = height = 10f;
+
+                    lightColor = trailColor = backColor = Pal.techBlue;
+                    lightRadius = 40f;
+                    lightOpacity = 0.7f;
+
+                    trailWidth = 2.8f;
+                    trailLength = 20;
+                    trailChance = -1f;
+                    despawnSound = Sounds.dullExplosion;
+
+                    despawnEffect = Fx.none;
+                    hitEffect = new ExplosionEffect() {{
+                        lifetime = 20f;
+                        waveStroke = 2f;
+                        waveColor = sparkColor = trailColor;
+                        waveRad = 12f;
+                        smokeSize = 0f;
+                        smokeSizeBase = 0f;
+                        sparks = 10;
+                        sparkRad = 35f;
+                        sparkLen = 4f;
+                        sparkStroke = 1.5f;
+                    }};
+                }};
+            }});
         }};
-
-    corvus = new UnitType("corvus"){{
-            constructor = StarrySkyEntity::new;
-        hitSize = 29f;
-        health = 1800000f;
-        armor = 9f;
-        stepShake = 1.5f;
-        rotateSpeed = 1.5f;
-        drownTimeMultiplier = 6f;
-
-        legCount = 4;
-        legLength = 14f;
-        legBaseOffset = 11f;
-        legMoveSpace = 1.5f;
-        legForwardScl = 0.58f;
-        hovering = true;
-        shadowElevation = 0.2f;
-        ammoType = new PowerAmmoType(4000);
-        groundLayer = Layer.legUnit;
-
-        speed = 3f;
-        drawShields = false;
-
-        weapons.add(new Weapon("corvus-weapon"){{
-            shootSound = Sounds.laserblast;
-            chargeSound = Sounds.lasercharge;
-            soundPitchMin = 1f;
-            top = false;
-            mirror = false;
-            shake = 14f;
-            shootY = 5f;
-            x = y = 0;
-            reload = 350f;
-            recoil = 0f;
-
-            cooldownTime = 350f;
-
-            shootStatusDuration = 60f * 2f;
-            shootStatus = StatusEffects.unmoving;
-            shoot.firstShotDelay = Fx.greenLaserCharge.lifetime;
-            parentizeEffects = true;
-
-            bullet = new LaserBulletType(){{
-                length = 800f;
-                damage = 560f;
-                width = 75f;
-
-                lifetime = 80f;
-
-                lightningSpacing = 35f;
-                lightningLength = 5;
-                lightningDelay = 1.1f;
-                lightningLengthRand = 15;
-                lightningDamage = 50;
-                lightningAngleRand = 40f;
-                largeHit = true;
-                lightColor = lightningColor = Pal.heal;
-
-                chargeEffect = Fx.greenLaserCharge;
-
-                healPercent = 25f;
-                collidesTeam = true;
-
-                sideAngle = 15f;
-                sideWidth = 0f;
-                sideLength = 0f;
-                colors = new Color[]{Pal.heal.cpy().a(0.4f), Pal.heal, Color.white};
-            }};
-        }});
-    }};
-}}
+    }
+}
 
 

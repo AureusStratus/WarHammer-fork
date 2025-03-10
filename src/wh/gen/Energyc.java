@@ -4,7 +4,7 @@ import arc.math.geom.*;
 import arc.util.*;
 import mindustry.gen.*;
 import mindustry.graphics.*;
-import wh.type.unit.*;
+import wh.world.unit.*;
 
 public interface Energyc extends Unitc {
     boolean teleportValid(EnergyUnitType eType);

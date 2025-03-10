@@ -4,6 +4,7 @@ import arc.func.*;
 import arc.struct.*;
 import arc.util.*;
 import mindustry.gen.*;
+import wh.world.unit.StarrySkyEntity;
 
 public final class EntityRegister {
     private static final ObjectIntMap<Class<? extends Entityc>> ids = new ObjectIntMap<>();

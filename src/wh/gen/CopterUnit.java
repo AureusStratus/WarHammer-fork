@@ -3,8 +3,8 @@ package wh.gen;
 import arc.math.*;
 import arc.util.*;
 import mindustry.gen.*;
-import wh.type.unit.*;
-import wh.type.unit.CopterUnitType.*;
+import wh.world.unit.*;
+import wh.world.unit.CopterUnitType.*;
 
 import static mindustry.Vars.*;
 

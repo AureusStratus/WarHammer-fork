@@ -11,7 +11,7 @@ import wh.maps.*;
 import wh.maps.ColorPass.*;
 import wh.maps.HeightPass.*;
 import wh.maps.planets.*;
-import wh.type.*;
+import wh.world.type.*;
 
 import static mindustry.content.Planets.*;
 

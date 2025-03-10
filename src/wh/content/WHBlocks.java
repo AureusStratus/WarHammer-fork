@@ -1033,31 +1033,18 @@ public final class WHBlocks {
                         consumePower(17f);
                     }
                 };
-        Deflection = new BulletDefenseTurret("Deflection"){{
+        Deflection = new BulletDefenseTurret("Deflection") {{
 
             requirements(Category.turret, with(WHItems.titaniumSteel, 500, Items.carbide, 200, WHItems.ceramite, 200, WHItems.refineCeramite, 100, WHItems.sealedPromethium, 50));
 
-            size=4;
-            health=5300;
-            shootY=13f;
-            outlineColor= Color.valueOf("36363CFF");
-            outlineRadius=3;
-            shootWarmupSpeed = 0.03f;
-            minWarmup = 1f;
-            warmupMaintainTime = 30f;
-            float aimLength = 96f;
-            clipSize = aimLength * 2f;
-            drawer = new DrawTurret(){{new AimLaserPart(){{
-                    alpha = PartProgress.warmup.mul(0.5f).add(0.5f);
-                    blending = Blending.additive;
-                    length = aimLength;
-                    y = 21f/4f;
-                    x= 31/4f;
-                }};
-
-                researchCostMultiplier = 0.6f;
+            size = 4;
+            health = 5300;
+            outlineColor = Color.valueOf("36363CFF");
+            outlineRadius = 3;
+            shootWarmupSpeed = 0.1f;
+            minWarmup = 0.8f;
+            warmupMaintainTime = 120f;
+            researchCostMultiplier = 0.6f;
             }};
         }};
-    }
 
-}

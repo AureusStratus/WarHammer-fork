@@ -14,7 +14,7 @@ import arc.math.geom.Mat3D;
 import arc.util.Tmp;
 import mindustry.Vars;
 import wh.WHVars;
-import wh.type.BetterPlanet;
+import wh.world.type.BetterPlanet;
 
 public class WHShaders {
     public static DepthShader depth;
