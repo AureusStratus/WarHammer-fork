@@ -39,6 +39,7 @@ public final class Drawn {
     public static final float sinScl = 1.0F;
     public static final float[] v = new float[6];
     public static final Rand rand = new Rand(0L);
+    public static final Color bottomColor = Pal.gray;
     static final Vec3[] tmpV = new Vec3[4];
     static final Mat3D matT = new Mat3D();
     static final Vec3 tAxis = new Vec3();
@@ -146,48 +147,32 @@ public final class Drawn {
         posSquareLinkArr(color, stroke, size, drawBottom, false, from, to);
     }
 
-    public static void posSquareLinkArr(Color color, float stroke, float size, boolean drawBottom, boolean linkLine, Position... pos) {
-        if (pos.length >= 2 && (linkLine || pos[0] != null)) {
-            int[] var6 = drawBottom ? Mathf.signs : oneArr;
-            int var7 = var6.length;
+    public static void posSquareLinkArr(Color color, float stroke, float size, boolean drawBottom, boolean linkLine, Position... pos){
+        if(pos.length < 2 || (!linkLine && pos[0] == null))return;
 
-            for(int var8 = 0; var8 < var7; ++var8) {
-                int c = var6[var8];
-
-                for(int i = 1; i < pos.length; ++i) {
-                    if (pos[i] != null) {
-                        Position p1 = pos[i - 1];
-                        Position p2 = pos[i];
-                        Lines.stroke(stroke + 1.0F - (float)c, c == 1 ? color : Pal.gray);
-                        if (linkLine) {
-                            if (p1 == null) {
-                                continue;
-                            }
-
-                            Lines.line(p2.getX(), p2.getY(), p1.getX(), p1.getY());
-                        } else {
-                            Lines.line(p2.getX(), p2.getY(), pos[0].getX(), pos[0].getY());
-                        }
-
-                        Draw.reset();
-                    }
+        for (int c : drawBottom ? Mathf.signs : oneArr) {
+            for (int i = 1; i < pos.length; i++) {
+                if (pos[i] == null)continue;
+                Position p1 = pos[i - 1], p2 = pos[i];
+                Lines.stroke(stroke + 1 - c, c == 1 ? color : bottomColor);
+                if(linkLine) {
+                    if(p1 == null)continue;
+                    Lines.line(p2.getX(), p2.getY(), p1.getX(), p1.getY());
+                }else{
+                    Lines.line(p2.getX(), p2.getY(), pos[0].getX(), pos[0].getY());
                 }
-
-                Position[] var14 = pos;
-                int var15 = pos.length;
-
-                for(int var16 = 0; var16 < var15; ++var16) {
-                    Position p = var14[var16];
-                    if (p != null) {
-                        Draw.color(c == 1 ? color : Pal.gray);
-                        Fill.square(p.getX(), p.getY(), size + 1.0F - (float)c / 1.5F, 45.0F);
-                        Draw.reset();
-                    }
-                }
+                Draw.reset();
             }
 
+            for (Position p : pos) {
+                if (p == null)continue;
+                Draw.color(c == 1 ? color : bottomColor);
+                Fill.square(p.getX(), p.getY(), size + 1 -c / 1.5f, 45);
+                Draw.reset();
+            }
         }
     }
+
 
     public static void randFadeLightningEffect(float x, float y, float range, float lightningPieceLength, Color color, boolean in) {
         randFadeLightningEffectScl(x, y, range, 0.55F, 1.1F, lightningPieceLength, color, in);
@@ -263,17 +248,19 @@ public final class Drawn {
         overlayText(Fonts.outline, text, x, y, offset, 1.0F, 0.25F, color, underline, false);
     }
 
-    public static void overlayText(Font font, String text, float x, float y, float offset, float offsetScl, float size, Color color, boolean underline, boolean align) {
-        GlyphLayout layout = (GlyphLayout)Pools.obtain(GlyphLayout.class, GlyphLayout::new);
+    public static void overlayText(Font font, String text, float x, float y, float offset, float offsetScl, float size, Color color, boolean underline, boolean align){
+        GlyphLayout layout = Pools.obtain(GlyphLayout.class, GlyphLayout::new);
         boolean ints = font.usesIntegerPositions();
         font.setUseIntegerPositions(false);
-        font.getData().setScale(size / Scl.scl(1.0F));
+        font.getData().setScale(size / Scl.scl(1.0f));
         layout.setText(font, text);
         font.setColor(color);
+
         float dy = offset + 3.0F;
-        font.draw(text, x, y + layout.height / (float)(align ? 2 : 1) + (dy + 1.0F) * offsetScl, 1);
+        font.draw(text, x, y + layout.height / (align ? 2 : 1) + (dy + 1.0F) * offsetScl, 1);
         --dy;
-        if (underline) {
+
+        if(underline){
             Lines.stroke(2.0F, Color.darkGray);
             Lines.line(x - layout.width / 2.0F - 2.0F, dy + y, x + layout.width / 2.0F + 1.5F, dy + y);
             Lines.stroke(1.0F, color);

@@ -71,6 +71,12 @@ import static wh.content.WHStatusEffects.assault;
 import static wh.content.WHStatusEffects.bless;
 
 public final class WHUnitTypes {
+
+    public static final byte
+            ANCIENT_GROUND = 10, ANCIENT_AIR = 11,
+            OTHERS = Byte.MIN_VALUE,
+            GROUND_LINE_1 = 0, AIR_LINE_1 = 1, AIR_LINE_2 = 2, ENERGY_LINE_1 = 3, NAVY_LINE_1 = 6;
+
     public static UnitType
             //空军
             cMoon, StarrySky, air6, air5, air4, air3, air2, air1,

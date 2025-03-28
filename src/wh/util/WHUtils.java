@@ -17,7 +17,10 @@ import arc.math.Rand;
 import arc.math.geom.*;
 import arc.struct.IntSeq;
 import arc.struct.IntSet;
+import arc.struct.ObjectMap;
 import arc.struct.Seq;
+import arc.util.Log;
+import arc.util.Time;
 import arc.util.Tmp;
 import arc.util.pooling.Pool;
 import arc.util.pooling.Pools;
@@ -25,17 +28,23 @@ import mindustry.content.Fx;
 import mindustry.core.World;
 import mindustry.entities.Effect;
 import mindustry.entities.Units;
+import mindustry.entities.bullet.BulletType;
 import mindustry.game.Team;
 import mindustry.gen.*;
+import mindustry.type.Item;
 import mindustry.type.Liquid;
+import mindustry.type.UnitType;
 import mindustry.world.Tile;
+import mindustry.world.blocks.defense.turrets.ItemTurret;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import wh.entities.Spawner;
 
 import java.util.Arrays;
 
 import static arc.Core.atlas;
 import static mindustry.Vars.*;
+import static mindustry.core.World.toTile;
 import static wh.graphics.Drawn.cycle_100;
 
 public final class WHUtils {
@@ -247,21 +256,148 @@ public final class WHUtils {
                 items[ii] = temp;
             }
         }
+    public static Seq<Tile> getAcceptableTiles(int x, int y, int range, Boolf<Tile> bool){
+        Seq<Tile> tiles = new Seq<>(true, (int)(Mathf.pow(range, 2) * Mathf.pi), Tile.class);
+        Geometry.circle(x, y, range, (x1, y1) -> {
+            if((tileParma = world.tile(x1, y1)) != null && bool.get(tileParma)){
+                tiles.add(world.tile(x1, y1));
+            }
+        });
+        return tiles;
+    }
 
-        @Contract(value = "_, _ -> new", pure = true)
-        public static @NotNull Position pos(float x, float y){
-            return new Position() {
-                @Override
-                public float getX() {
-                    return x;
-                }
+    private static void clearTmp(){
+        tileParma = null;
+        collidedBlocks.clear();
+        tiles.clear();
+    }
 
-                @Override
-                public float getY() {
-                    return y;
-                }
-            };
+    public static Color getColor(Color defaultColor, Team team){
+        return defaultColor == null ? team.color : defaultColor;
+    }
+
+    public static void limitRangeWithoutNew(ItemTurret turret, float margin){
+        for(ObjectMap.Entry<Item, BulletType> entry : turret.ammoTypes.entries()){
+            entry.value.lifetime = (turret.range + margin) / entry.value.speed;
         }
+    }
+
+    //not support server
+    public static void spawnSingleUnit(UnitType type, Team team, int spawnNum, float x, float y){
+        for(int spawned = 0; spawned < spawnNum; spawned++){
+            Time.run(spawned * Time.delta, () -> {
+                Unit unit = type.create(team);
+                if(unit != null){
+                    unit.set(x, y);
+                    unit.add();
+                }else Log.info("Unit == null");
+            });
+        }
+    }
+
+    public static float regSize(UnitType type){
+        return type.hitSize / tilesize / tilesize / 3.25f;
+    }
+
+    /**[0]For flying, [1] for navy, [2] for ground */
+    public static Seq<Boolf<Tile>> formats(){
+        Seq<Boolf<Tile>> seq = new Seq<>(3);
+
+        seq.add(
+                tile -> world.getQuadBounds(Tmp.r1).contains(tile.getBounds(Tmp.r2)),
+                tile -> tile.floor().isLiquid && !tile.cblock().solid && !tile.floor().solid && !tile.overlay().solid && !tile.block().solidifes,
+                tile -> !tile.floor().isDeep() && !tile.cblock().solid && !tile.floor().solid && !tile.overlay().solid && !tile.block().solidifes
+        );
+
+        return seq;
+    }
+
+    public static Boolf<Tile> ableToSpawn(UnitType type){
+        Boolf<Tile> boolf;
+
+        Seq<Boolf<Tile>> boolves = formats();
+
+        if(type.flying){
+            boolf = boolves.get(0);
+        }else if(WaterMovec.class.isAssignableFrom(type.constructor.get().getClass())){
+            boolf = boolves.get(1);
+        }else{
+            boolf = boolves.get(2);
+        }
+
+        return boolf;
+    }
+
+    public static Seq<Tile> ableToSpawn(UnitType type, float x, float y, float range){
+        Seq<Tile> tSeq = new Seq<>(Tile.class);
+
+        Boolf<Tile> boolf = ableToSpawn(type);
+
+        return tSeq.addAll(getAcceptableTiles(toTile(x), toTile(y), toTile(range), boolf));
+    }
+
+    public static boolean ableToSpawnPoints(
+            Seq<Vec2> spawnPoints, // 输出参数：用于存储生成的坐标
+            UnitType type,         // 要生成的单位类型
+            float x, float y,      // 生成中心坐标 (世界坐标)
+            float range,           // 生成半径 (世界单位)
+            int num,               // 需要生成的单位数量
+            long seed              // 随机种子 (保证客户端与服务端一致性)
+    ){
+        // 步骤 1：获取所有符合条件的可生成区域
+        Seq<Tile> tSeq = ableToSpawn(type, x, y, range);
+
+        // 步骤 2：初始化随机数生成器
+        rand.setSeed(seed);
+
+        // 步骤 3：尝试生成指定数量的有效位置
+        for(int i = 0; i < num; i++){
+            // 将 Tile 序列转换为数组并清空原序列
+            Tile[] positions = tSeq.shrink();
+
+            // 检查可用位置是否足够
+            if(positions.length < num)return false;
+
+            // 随机选择一个位置并转换为世界坐标
+            spawnPoints.add(new Vec2().set(positions[rand.nextInt(positions.length)]));
+        }
+
+        return true;
+    }
+
+
+    public static boolean spawnUnit(Team team, float x, float y, float angle, float spawnRange, float spawnReloadTime, float spawnDelay, UnitType type, int spawnNum, Cons<Spawner> modifier){
+        if(type == null)return false;
+
+        // 2. 清理临时数据
+        clearTmp();
+
+        // 3. 创建生成点容器
+        Seq<Vec2> vectorSeq = new Seq<>();
+
+        // 4. 获取有效生成位置（核心逻辑）
+        if(!ableToSpawnPoints(vectorSeq, type, x, y, spawnRange, spawnNum, rand.nextLong()))return false;
+
+        // 5. 遍历所有生成点
+        int i = 0;
+        for (Vec2 s : vectorSeq) {
+            // 6. 从对象池获取生成器
+            Spawner spawner = Pools.obtain(Spawner.class, Spawner::new);
+
+            // 7. 初始化生成参数
+            spawner.init(
+                    type,             // 要生成的单位类型
+                    team,             // 所属队伍
+                    s,                // 生成位置坐标
+                    angle,            // 初始朝向角度
+                    spawnReloadTime + i * spawnDelay // 生成延迟时间（基础时间 + 递增延迟）
+            );
+            modifier.get(spawner);
+            if(!net.client())spawner.add();
+            i++;
+        }
+        return true;
+}
 
         public static float rotator_90(){return 90 * Interp.pow5.apply(Mathf.curve(cycle_100(), 0.15f, 0.85f));}
 

@@ -40,6 +40,7 @@ import wh.world.blocks.distribution.HeatDirectionBridge;
 import wh.world.blocks.production.FlammabilityHeatProducer;
 import wh.world.blocks.production.MultiCrafter;
 import wh.world.blocks.production.SpecificMineralDrill;
+import wh.world.blocks.unit.UnitCallBlock;
 import wh.world.drawer.*;
 
 
@@ -1033,6 +1034,31 @@ public final class WHBlocks {
                         consumePower(17f);
                     }
                 };
+
+        UnitCallBlock airDrop = new UnitCallBlock("air-drop-unit"){
+            {
+                addSets(
+                        new UnitSet(UnitTypes.poly, new byte[]{WHUnitTypes.OTHERS, 2}, 45 * 60f,
+                                with(Items.lead, 30, Items.copper, 60, Items.graphite, 45, Items.silicon, 30)
+                        ),
+                        new UnitSet(WHUnitTypes.tank1, new byte[]{WHUnitTypes.AIR_LINE_2, 1}, 15 * 60f,
+                                with(Items.silicon, 16, Items.copper, 30)
+                        ),
+                        new UnitSet(WHUnitTypes.tank1s, new byte[]{WHUnitTypes.AIR_LINE_1, 1}, 15 * 60f,
+                                with(Items.titanium, 30, Items.silicon, 15)
+                        ),
+                        new UnitSet(WHUnitTypes.air4, new byte[]{WHUnitTypes.AIR_LINE_1, 2}, 30 * 60f,
+                                with(Items.titanium, 60, Items.silicon, 45, Items.graphite, 30)
+                        ),
+                        new UnitSet(WHUnitTypes.air5, new byte[]{WHUnitTypes.GROUND_LINE_1, 1}, 20 * 60f,
+                                with(Items.lead, 15, Items.silicon, 10, Items.copper, 10)
+                        ),
+                        new UnitSet(UnitTypes.antumbra, new byte[]{WHUnitTypes.GROUND_LINE_1, 2}, 35 * 60f,
+                                with(Items.lead, 30, Items.titanium, 60, Items.graphite, 45, Items.silicon, 30)
+                        ));
+            }};
+                    
+
         Deflection = new BulletDefenseTurret("Deflection") {{
 
             requirements(Category.turret, with(WHItems.titaniumSteel, 500, Items.carbide, 200, WHItems.ceramite, 200, WHItems.refineCeramite, 100, WHItems.sealedPromethium, 50));

@@ -10,7 +10,7 @@ import arc.graphics.g2d.TextureRegion;
 
 public class WHContent {
     public static TextureRegion arrowRegion;
-
+    public static TextureRegion pointerRegion;
     public WHContent() {
     }
 
@@ -20,5 +20,6 @@ public class WHContent {
 
     public void load() {
         arrowRegion = Core.atlas.find("wh-jump-gate-arrow");
+        pointerRegion = Core.atlas.find("jump-gate-pointer");
     }
 }
