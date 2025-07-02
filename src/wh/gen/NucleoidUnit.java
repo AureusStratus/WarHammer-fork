@@ -20,13 +20,13 @@ import mindustry.content.Fx;
 import mindustry.gen.UnitEntity;
 import mindustry.type.UnitType;
 import wh.graphics.Drawn;
-import wh.world.unit.NucleoidUnitType;
+import wh.entities.world.unit.NucleoidUnitType;
 
 public class NucleoidUnit extends UnitEntity implements Nucleoidc {
     public float recentDamage = 0.0F;
     public float reinforcementsReload = 0.0F;
 
-    protected NucleoidUnit() {
+    public NucleoidUnit() {
     }
 
     public int classId() {

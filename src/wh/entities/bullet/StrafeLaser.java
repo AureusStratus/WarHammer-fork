@@ -23,7 +23,7 @@ import static arc.graphics.g2d.Draw.color;
 import static arc.graphics.g2d.Lines.lineAngle;
 import static arc.graphics.g2d.Lines.stroke;
 import static arc.math.Angles.randLenVectors;
-
+//remove this
 public class StrafeLaser extends BulletType{
 	public float strafeAngle = 70;
 	public float width = 18f;

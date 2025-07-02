@@ -15,16 +15,22 @@ import arc.math.Angles;
 import arc.math.Interp;
 import arc.math.Mathf;
 import arc.math.geom.Vec2;
+import arc.util.Log;
 import arc.util.Time;
 import arc.util.Tmp;
+import mindustry.ai.types.*;
 import mindustry.content.Fx;
 import mindustry.content.Items;
 import mindustry.content.StatusEffects;
 import mindustry.entities.*;
 import mindustry.entities.abilities.Ability;
+import mindustry.entities.abilities.ForceFieldAbility;
 import mindustry.entities.abilities.MoveEffectAbility;
+import mindustry.entities.abilities.ShieldRegenFieldAbility;
 import mindustry.entities.bullet.*;
 import mindustry.entities.effect.*;
+import mindustry.entities.part.DrawPart;
+import mindustry.entities.part.HoverPart;
 import mindustry.entities.part.RegionPart;
 import mindustry.entities.part.ShapePart;
 import mindustry.entities.pattern.*;
@@ -39,20 +45,20 @@ import mindustry.type.ammo.ItemAmmoType;
 import mindustry.type.ammo.PowerAmmoType;
 import mindustry.type.unit.TankUnitType;
 import mindustry.type.weapons.PointDefenseWeapon;
-import wh.entities.abilities.AdaptedHealAbility;
-import wh.entities.abilities.PcShieldArcAbility;
-import wh.entities.abilities.ShockWaveAbility;
+import mindustry.world.meta.BlockFlag;
+import wh.entities.abilities.*;
 import wh.entities.bullet.*;
+import wh.entities.world.blocks.defense.*;
+import wh.entities.world.unit.*;
+import wh.entities.world.unit.AirRaiderAI.*;
+import wh.entities.world.unit.AirRaiderUnitType.*;
 import wh.gen.*;
 import wh.graphics.Drawn;
 import wh.graphics.WHPal;
-import wh.world.unit.AncientUnitType;
-import wh.world.unit.NucleoidUnitType;
 import wh.util.WHUtils;
 import wh.util.WHUtils.EffectWrapper;
-import wh.world.blocks.defense.turrets.MarkWeapon;
-import wh.world.drawer.WHUnitEngine;
-import wh.world.unit.StarrySkyEntity;
+import wh.entities.world.blocks.defense.turrets.MarkWeapon;
+import wh.entities.world.drawer.WHUnitEngine;
 
 import static arc.graphics.g2d.Draw.color;
 import static arc.graphics.g2d.Lines.lineAngle;
@@ -71,6 +77,7 @@ import static wh.content.WHStatusEffects.assault;
 import static wh.content.WHStatusEffects.bless;
 
 public final class WHUnitTypes {
+    public static int CMoonId;
 
     public static final byte
             ANCIENT_GROUND = 10, ANCIENT_AIR = 11,
@@ -80,6 +87,7 @@ public final class WHUnitTypes {
     public static UnitType
             //空军
             cMoon, StarrySky, air6, air5, air4, air3, air2, air1,
+            airRaiderS,airRaiderM,airRaiderB,
     //载具
     tankAG,
             tank3s, tank2s, tank1s, tankl,
@@ -92,7 +100,7 @@ public final class WHUnitTypes {
     }
 
     static {
-        EntityMapping.nameMap.put("wh-scepter", StarrySkyEntity::new);
+        EntityMapping.nameMap.put("wh-c-moon", NucleoidUnit::new);
         EntityMapping.nameMap.put("wh-Starry-sky", StarrySkyEntity::new);
     }
 
@@ -101,12 +109,32 @@ public final class WHUnitTypes {
 
         cMoon = new NucleoidUnitType("c-moon") {
             {
-                constructor = NucleoidUnit::create;
+                outlineRadius = 3;
+                outlineColor = Color.valueOf("36363CFF");
+                speed = 0.5F;
+                accel = 0.036F;
+                drag = 0.032F;
+                fogRadius = 90;
+                lightRadius = 600;
+                lowAltitude = true;
+                healColor = Color.valueOf("FFFBBD80");
+                range = 1000;
+                flying = true;
+                engineSize = 0;
+                hitSize = 180;
+                health = 900000;
+                armor = 100;
+                targetFlags = new BlockFlag[]{BlockFlag.turret, null};
+                rotateSpeed = 0.25F;
+                ammoCapacity = 100000;
+                deathExplosionEffect = none;
+                createWreck = false;
                 addEngine(-58.0F, -175.0F, 0.0F, 5.0F, true);
                 addEngine(-53.0F, -175.0F, 0.0F, 5.0F, true);
                 addEngine(-8.0F, -151.0F, 0.0F, 5.0F, true);
                 addEngine(-4.0F, -151.0F, 0.0F, 5.0F, true);
                 addEngine(-1.0F, -151.0F, 0.0F, 5.0F, true);
+
                 abilities.add(new Ability() {
                     {
                         display = false;
@@ -747,6 +775,22 @@ public final class WHUnitTypes {
 
         StarrySky = new AncientUnitType("Starry-sky") {
             {
+                speed = 0.7f;
+                accel = 0.036f;
+                drag = 0.032f;
+                range = 800.0f;
+                rotateSpeed = 0.25f;
+                ammoCapacity = 100000;
+                health = 400000;
+                armor = 50;
+                hitSize = 130;
+                healColor = Color.valueOf("FFFBBD80");
+                fogRadius = 90;
+                lightRadius = 600;
+                flying = true;
+                engineSize = 0;
+                targetFlags = new BlockFlag[]{BlockFlag.turret, null};
+
                 addEngine(-7, -107F, 0.0F, 4.0F, true);
                 addEngine(-1, -107F, 0.0F, 4.0F, true);
                 addEngine(-26, -83.25F, 0.0F, 5.0F, false);
@@ -758,6 +802,7 @@ public final class WHUnitTypes {
                 addEngine(50, -113.25F, 0.0F, 4.0F, false);
                 engineOffset = 45.25f;
                 engineSize = -1;
+                constructor = StarrySkyEntity::new;
                 abilities.add(new AdaptedHealAbility(2000, 900, hitSize * 2f, healColor).modify(a -> {
                     a.selfHealReloadTime = 480;
                     a.selfHealAmount /= 8;
@@ -1462,9 +1507,60 @@ public final class WHUnitTypes {
                 });
             }
         };
-        tankAG = new UnitType("tankAG") {
+
+        tankAG = new AncientUnitType("tankAG") {
             {
                 constructor = ElevationMoveUnit::create;
+                health = 200000;
+                speed = 1;
+                drag = 0.04F;
+                accel = 0.05F;
+                hitSize = 100;
+                armor = 40;
+                itemCapacity = 10000;
+                flying = false;
+                rotateSpeed = 1.2F;
+                engineOffset = 18;
+                engineSize = 7;
+                lowAltitude = true;
+                hovering = true;
+                outlineRadius = 4;
+                outlineColor = Color.valueOf("36363CFF");
+
+                abilities.add(new ForceFieldAbility(220, 100, 60000, 60 * 60));
+                abilities.add(new ShieldRegenFieldAbility(1000, 15000, 120, 220));
+                abilities.add(new AdaptedHealAbility(1000, 180, 220, WHPal.ORL));
+                for (float f : new float[]{0, 1}) {
+                    abilities.add(new MoveEffectAbility() {{
+                        minVelocity = f;
+                        interval = 10;
+                        effect = new MultiEffect(
+                                new Effect(50, e -> {
+                                    rand.setSeed(e.id);
+                                    Draw.z(Layer.groundUnit - 0.01f);
+                                    Draw.color(WHPal.OR, Color.gray, e.fin() * 0.6f);
+                                    Angles.randLenVectors(e.id, 10, 60.0F * rand.random(0.5f, 1.5f) * e.fout() + 30, (x, y) -> {
+                                        Fill.circle(e.x + x, e.y + y, e.fout() * 8.0F * rand.random(0.5f, 1.5f));
+                                    });
+
+                                })
+                        );
+                    }});
+                }
+                for (float x1 : new float[]{-37.5f, -55.5f}) {
+                    for (float y1 : new float[]{-56.25f, -45f}) {
+                        parts.addAll(new HoverPart() {{
+                            layerOffset = -0.1f;
+                            mirror = true;
+                            x = x1;
+                            y = y1;
+                            radius = 35.0F;
+                            color = WHPal.OR;
+                            phase = 100.0F;
+                            stroke = 8;
+                        }});
+                    }
+                }
                 weapons.add(new Weapon("tankAG-weapon7") {
                     final float rangeWeapon = 650.0F;
 
@@ -2301,38 +2397,33 @@ public final class WHUnitTypes {
             class ProgressWeapon extends Weapon {
                 public float originalReload;
                 private float timeSinceLastShot = 0f;
-                private boolean firstShot;
+                private float speedBoost = 0f;
+                private static final float MAX_BOOST = 0.8f;//MAX=(1 - MAX_BOOST)
+                private static final float BOOST_RATE = 0.5f / 60f;
+                private static final float DECAY_RATE = 0.08f;
+                private static final float COOLDOWN_TIME = 300f;
 
                 public ProgressWeapon(String name) {
                     super(name);
                     originalReload = reload;
-                    firstShot = true;
                 }
 
                 @Override
                 public void update(Unit unit, WeaponMount mount) {
+                    float prevReload = reload;
+                    reload = originalReload * (1 - speedBoost);
+
                     super.update(unit, mount);
 
                     if (mount.shoot) {
-                        if (firstShot) {
-                            firstShot = false;
-                            reload = originalReload * 0.9f;
-                        }
+                        speedBoost = Math.min(speedBoost + BOOST_RATE * Time.delta, MAX_BOOST);
                         timeSinceLastShot = 0f;
-                        float reloadFinal = 6f;
-                        if (reload > reloadFinal) {
-                            reload -= Mathf.lerpDelta(0, originalReload - reloadFinal, 0.005f);
-                        }
                     } else {
                         timeSinceLastShot += Time.delta;
+                        speedBoost = Math.max(speedBoost - DECAY_RATE * Time.delta * (timeSinceLastShot / COOLDOWN_TIME), 0f);
                     }
 
-                    if (timeSinceLastShot > 300f) {
-                        reload = originalReload;
-                    }
-                    if (reload < 4f) {
-                        reload = originalReload * 0.9f;
-                    }
+                    reload = prevReload;
                 }
             }
         };
@@ -3094,6 +3185,7 @@ public final class WHUnitTypes {
         tank3 = new TankUnitType("tank3") {
             {
                 constructor = TankUnit::create;
+                abilities.add(new ReflectiveShieldAbility(5,2000,60*8,1.1f));
                 weapons.add(new Weapon("wh-tank3-weapon1") {
                     {
                         reload = 300;
@@ -4898,6 +4990,7 @@ public final class WHUnitTypes {
         };
 
         test = new UnitType("scepter") {{
+            constructor = MechUnit::create;
             speed = 3.6f;
             hitSize = 22f;
             rotateSpeed = 2.1f;
@@ -4905,7 +4998,7 @@ public final class WHUnitTypes {
             armor = 10f;
             mechFrontSway = 1f;
             ammoType = new ItemAmmoType(Items.thorium);
-
+            abilities.add(new EllipseForceFieldAbility(70, 40, 4, 2000f, 60f * 3,0.2f));
             mechStepParticles = true;
             stepShake = 0.15f;
             singleTarget = true;
@@ -4915,9 +5008,8 @@ public final class WHUnitTypes {
                 height = 9f;
                 lifetime = 50f;
             }};
-
             weapons.add(
-                    new MarkWeapon("reign-weapon"){{
+                    new MarkWeapon("reign-weapon") {{
                         top = false;
                         y = 1f;
                         x = 21.5f;
@@ -4935,9 +5027,9 @@ public final class WHUnitTypes {
                         shoot = new ShootAlternate() {{
                             shots = 3;
                             shotDelay = 3f;
-                            barrels=3;
+                            barrels = 3;
                         }};
-                        bullet = new BasicBulletType(13f, 80){{
+                        bullet = new BasicBulletType(13f, 80) {{
                             pierce = true;
                             pierceCap = 10;
                             width = 14f;
@@ -4954,7 +5046,7 @@ public final class WHUnitTypes {
                             fragLifeMin = 0f;
                             fragRandomSpread = 30f;
 
-                            fragBullet = new BasicBulletType(9f, 20){{
+                            fragBullet = new BasicBulletType(9f, 20) {{
                                 width = 10f;
                                 height = 10f;
                                 pierce = true;
@@ -4969,7 +5061,7 @@ public final class WHUnitTypes {
                         }};
                         markShoot = new ShootAlternate() {{
                             shots = 4;
-                            barrels=4;
+                            barrels = 4;
                             spread = 15f;
                             shotDelay = 20f;
                         }};
@@ -4979,7 +5071,7 @@ public final class WHUnitTypes {
                             weaveMag = 4;
                             weaveScale = 4;
                             lifetime = 55f;
-                            shootEffect =none;
+                            shootEffect = none;
                             smokeEffect = none;
                             splashDamage = 70f;
                             splashDamageRadius = 30f;
@@ -5028,7 +5120,7 @@ public final class WHUnitTypes {
                     weaveMag = 4;
                     weaveScale = 4;
                     lifetime = 55f;
-                    shootEffect =none;
+                    shootEffect = none;
                     smokeEffect = none;
                     splashDamage = 70f;
                     splashDamageRadius = 30f;
@@ -5071,14 +5163,14 @@ public final class WHUnitTypes {
                     shots = 4;
                     shotDelay = 3f;
                 }};
-                markBullet  = new MissileBulletType(4.2f, 60) {{
+                markBullet = new MissileBulletType(4.2f, 60) {{
 
                     homingPower = 0.2f;
                     weaveMag = 4;
                     weaveScale = 4;
                     lifetime = 55f;
                     shootEffect = none;
-                    smokeEffect =none;
+                    smokeEffect = none;
                     splashDamage = 70f;
                     splashDamageRadius = 30f;
                     frontColor = Color.white;
@@ -5110,7 +5202,83 @@ public final class WHUnitTypes {
                 }};
             }});
         }};
+
+
+        airRaiderS=new UnitType("air-raider-s"){
+            {
+                constructor = AirRaiderUnitType::new;
+                controller = u -> new AirRaiderAI(Mode.strafe);
+
+                lifetime= 1500f ;
+                speed=2.8f;
+                drag=0.06f;
+                accel=0.08f;
+                rotateSpeed = 1f;
+                immunities.add(StatusEffects.unmoving);
+                ammoType=new PowerAmmoType(3000);
+                hitSize=20f;
+                flying=true;
+                outlineColor=Color.valueOf("383848");
+                engineLayer=110;
+                health=1800;
+                armor=6;
+                engineOffset=7;
+                engineSize=4;
+                trailLength=15;
+                faceTarget=true;
+
+                hidden = true;
+                useUnitCap = false;
+                logicControllable = false;
+                playerControllable = false;
+                allowedInPayloads = false;
+                createWreck = false;
+                createScorch=false;
+                deathSound=Sounds.none;
+                physics = false;
+                bounded = false;
+
+                weapons.add(new ARWeapon("wh-air4-weapon1"){
+                    {
+                        x = -14;
+                        y = 5;
+                        reload = 3.5f;
+                        rotate = true;
+                        rotationLimit = 12;
+                        shootCone = 30;
+                        inaccuracy = 1.5f;
+                        rotateSpeed = 0.7f;
+                        shootSound = WHSounds.jg1;
+                        layerOffset = -0.01f;
+                        top = false;
+                        bullet = new BasicBulletType(45, 10){
+
+                            {
+                                shrinkY = 0;
+                                frontColor = Color.white;
+                                backColor =WHPal.ORL;
+                                shootEffect=WHFx.lineCircleOut(WHPal.ORL, 6, 8, 3);
+                                smokeEffect = Fx.none;
+                                hitEffect =despawnEffect=new MultiEffect(
+                                WHFx.blast(WHPal.ORL,12)
+                                );
+                                trailLength = 5;
+                                trailWidth = 1.5f;
+                                trailColor = WHPal.ORL;
+                                damage = 200;
+                                width = 6;
+                                height = 12;
+                                speed = 10;
+                                lifetime = 22;
+                                buildingDamageMultiplier=0.3f;
+                            }
+                        };
+                    }
+                });
+            }
+        };
     }
 }
+
 
 

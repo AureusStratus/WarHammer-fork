@@ -1,3 +1,4 @@
+/*
 {
 	"type": "ItemBridge",
 	"name": "重钢带桥",
@@ -21,4 +22,4 @@
 		"parent": "steel-bridge-conveyor"
 	},
 	"researchCostMultiplier": 1
-}
+}*/

@@ -1,3 +1,4 @@
+/*
 {
 	"type": "ThermalGenerator",
 	"name": "重型地热发电机",
@@ -32,4 +33,4 @@
 		"parent": "promethium-reactor"
 	},
 	"researchCostMultiplier": 0.8
-}
+}*/

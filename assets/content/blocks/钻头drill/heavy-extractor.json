@@ -1,3 +1,4 @@
+/*
 {
 	"name": "重型抽水机",
 	"type": "SolidPump",
@@ -22,4 +23,4 @@
 	"category": "production",
 	"researchCostMultiplier": 0.5,
 	"research": "imperium"
-}
+}*/

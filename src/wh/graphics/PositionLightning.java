@@ -186,7 +186,7 @@ public final class PositionLightning {
     public static Position findInterceptedPoint(Position from, Position target, Team fromTeam) {
         furthest = null;
         return (Position)(Geometry.raycast(World.toTile(from.getX()), World.toTile(from.getY()), World.toTile(target.getX()), World.toTile(target.getY()), (x, y) -> {
-            return (furthest = Vars.world.build(x, y)) != null && furthest.team() != fromTeam && furthest.block().insulated;
+            return (furthest = Vars.world.build(x, y)) != null && furthest.team() != fromTeam && furthest.block.insulated;
         }) && furthest != null ? furthest : target);
     }
 

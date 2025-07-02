@@ -10,7 +10,7 @@ import arc.Events;
 import arc.struct.Seq;
 import mindustry.core.GameState.State;
 import mindustry.game.EventType;
-import wh.world.blocks.defense.CommandableBlock;
+import wh.entities.world.blocks.defense.CommandableBlock;
 
 public final class WorldRegister {
     public static final Seq<Runnable> afterLoad = new Seq();

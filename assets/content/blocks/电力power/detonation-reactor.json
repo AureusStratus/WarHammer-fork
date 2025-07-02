@@ -1,3 +1,4 @@
+/*
 {
 	"type": "ImpactReactor",
 	"name": "爆破放射反应堆",
@@ -184,4 +185,4 @@
 		"parent": "promethium-reactor"
 	},
 	"researchCostMultiplier": 0.8
-}
+}*/

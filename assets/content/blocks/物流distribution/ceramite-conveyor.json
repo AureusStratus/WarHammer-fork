@@ -1,3 +1,4 @@
+/*
 {
 	"type": "StackConveyor",
 	"name": "陶钢打包带",
@@ -15,4 +16,4 @@
 		"parent": "titanium-convenyor"
 	},
 	"researchCostMultiplier": 1
-}
+}*/

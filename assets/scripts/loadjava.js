@@ -1,3 +1,4 @@
+/*
 WorldRegister.load();
 //EntityRegister.load();
 
@@ -8,4 +9,4 @@ WHBullets.load();
 WHUnitTypes.load();
 WHBlocks.load();
 WHPlanets.load();
-WHTechTree.load();
+WHTechTree.load();*/

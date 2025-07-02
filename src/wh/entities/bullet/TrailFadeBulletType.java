@@ -36,31 +36,31 @@ public class TrailFadeBulletType extends AccelBulletType {
     public boolean despawnBlinkTrail;
 
     public TrailFadeBulletType() {
-        this.tracers = 2;
-        this.tracerFadeOffset = 10;
-        this.tracerStrokeOffset = 15;
-        this.tracerStroke = 3.0F;
-        this.tracerSpacing = 8.0F;
-        this.tracerRandX = 6.0F;
-        this.tracerUpdateSpacing = 0.3F;
-        this.addBeginPoint = false;
-        this.hitBlinkTrail = true;
-        this.despawnBlinkTrail = false;
+         tracers = 2;
+         tracerFadeOffset = 10;
+         tracerStrokeOffset = 15;
+         tracerStroke = 3.0F;
+         tracerSpacing = 8.0F;
+         tracerRandX = 6.0F;
+         tracerUpdateSpacing = 0.3F;
+         addBeginPoint = false;
+         hitBlinkTrail = true;
+         despawnBlinkTrail = false;
     }
 
     public TrailFadeBulletType(float speed, float damage, String bulletSprite) {
         super(speed, damage, bulletSprite);
-        this.tracers = 2;
-        this.tracerFadeOffset = 10;
-        this.tracerStrokeOffset = 15;
-        this.tracerStroke = 3.0F;
-        this.tracerSpacing = 8.0F;
-        this.tracerRandX = 6.0F;
-        this.tracerUpdateSpacing = 0.3F;
-        this.addBeginPoint = false;
-        this.hitBlinkTrail = true;
-        this.despawnBlinkTrail = false;
-        this.impact = true;
+         tracers = 2;
+         tracerFadeOffset = 10;
+         tracerStrokeOffset = 15;
+         tracerStroke = 3.0F;
+         tracerSpacing = 8.0F;
+         tracerRandX = 6.0F;
+         tracerUpdateSpacing = 0.3F;
+         addBeginPoint = false;
+         hitBlinkTrail = true;
+         despawnBlinkTrail = false;
+         impact = true;
     }
 
     public TrailFadeBulletType(float speed, float damage) {
@@ -101,7 +101,6 @@ public class TrailFadeBulletType extends AccelBulletType {
         super.hit(b);
 
         if(Vars.headless || !(b.data instanceof Vec2Seq[]))return;
-        // 将b的数据转换为Vec2Seq[]类型
         Vec2Seq[] pointsArr = (Vec2Seq[])b.data();
         for(Vec2Seq points : pointsArr){
             points.add(b.x, b.y);
@@ -130,6 +129,8 @@ public class TrailFadeBulletType extends AccelBulletType {
         }
         b.data = points;
     }
+
+
 
     @Override
     public void update(Bullet b){

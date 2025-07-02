@@ -1,3 +1,4 @@
+/*
 {
 	"name": "钷提取机",
 	"type": "SolidPump",
@@ -26,4 +27,4 @@
 		"parent": "strengthen-oil-extractor"
 	},
 	"researchCostMultiplier": 0.36
-}
+}*/

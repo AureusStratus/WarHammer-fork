@@ -1,3 +1,4 @@
+/*
 {
 	"type": "battery",
 	"category": "power",
@@ -32,4 +33,4 @@
 		"parent": "titanium-steel-node"
 	},
 	"researchCostMultiplier": 0.8
-}
+}*/

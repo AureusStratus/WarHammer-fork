@@ -37,6 +37,9 @@ import mindustry.gen.Unit;
 import mindustry.type.StatusEffect;
 import mindustry.world.Tile;
 
+import static mindustry.Vars.tilesize;
+import static mindustry.Vars.world;
+
 public final class WHDamage {
     private static final EventType.UnitDamageEvent bulletDamageEvent = new EventType.UnitDamageEvent();
     private static final Rect rect = new Rect();
@@ -52,6 +55,7 @@ public final class WHDamage {
     private static final Pool<Damage.Collided> collidePool = Pools.get(Damage.Collided.class, Damage.Collided::new);
     private static final FloatSeq distances = new FloatSeq();
     private static Tile furthest;
+
     private static Building tmpBuilding;
     private static Unit tmpUnit;
     private static float tmpFloat;
@@ -152,94 +156,89 @@ public final class WHDamage {
         return tmpBuilding;
     }
 
-    public static boolean collideLine(float damage, Team team, Effect effect, StatusEffect status, float statusDuration, float x, float y, float angle, float length, boolean ground, boolean air) {
-        return collideLine(damage, team, effect, status, statusDuration, x, y, angle, length, ground, air, false);
-    }
+    public static void collideLine(Bullet hitter, Team team, Effect effect, float x, float y, float angle, float length, boolean large, boolean laser){
+        if(laser) length = findLaserLength(hitter, angle, length);
 
-    public static boolean collideLine(float damage, Team team, Effect effect, StatusEffect status, float statusDuration, float x, float y, float angle, float length, boolean ground, boolean air, boolean buildings) {
+        collidedBlocks.clear();
         tr.trnsExact(angle, length);
-        rect.setPosition(x, y).setSize(tr.x, tr.y);
-        float x2 = x + tr.x;
-        float y2 = y + tr.y;
-        Rect var10000;
-        if (rect.width < 0.0F) {
-            var10000 = rect;
-            var10000.x += rect.width;
-            var10000 = rect;
-            var10000.width *= -1.0F;
-        }
 
-        if (rect.height < 0.0F) {
-            var10000 = rect;
-            var10000.y += rect.height;
-            var10000 = rect;
-            var10000.height *= -1.0F;
-        }
+        Intc2 collider = (cx, cy) -> {
+            Building tile = world.build(cx, cy);
+            boolean collide = tile != null && collidedBlocks.add(tile.pos());
 
-        float expand = 3.0F;
-        var10000 = rect;
-        var10000.y -= expand;
-        var10000 = rect;
-        var10000.x -= expand;
-        var10000 = rect;
-        var10000.width += expand * 2.0F;
-        var10000 = rect;
-        var10000.height += expand * 2.0F;
-        check = false;
-        Cons<Unit> cons = (e) -> {
-            e.hitbox(hitrect);
-            Vec2 vec = Geometry.raycastRect(x, y, x2, y2, hitrect.grow(expand * 2.0F));
-            if (vec != null && damage > 0.0F) {
-                effect.at(vec.x, vec.y, angle, team.color);
-                e.damage(damage);
-                e.apply(status, statusDuration);
-                check = true;
-            }
+            if(hitter.damage > 0){
+                float health = !collide ? 0 : tile.health;
 
-        };
-        units.clear();
-        Units.nearbyEnemies(team, rect, (u) -> {
-            if (u.checkTarget(air, ground)) {
-                units.add(u);
-            }
-
-        });
-        units.sort((u) -> {
-            return u.dst2(x, y);
-        });
-        units.each(cons);
-        if (buildings) {
-            collidedBlocks.clear();
-            Intc2 collider = (cx, cy) -> {
-                Building tile = Vars.world.build(cx, cy);
-                boolean collide = tile != null && collidedBlocks.add(tile.pos());
-                if (collide && damage > 0.0F && tile.team != team) {
-                    effect.at(tile.x, tile.y, angle, team.color);
-                    tile.damage(damage);
-                    check = true;
+                if(collide && tile.team != team && tile.collide(hitter)){
+                    tile.collision(hitter);
+                    hitter.type.hit(hitter, tile.x, tile.y);
                 }
 
-            };
+                //try to heal the tile
+                if(collide && hitter.type.testCollision(hitter, tile)){
+                    hitter.type.hitTile(hitter, tile, cx * tilesize, cy * tilesize, health, false);
+                }
+            }
+        };
+
+        if(hitter.type.collidesGround){
             seg1.set(x, y);
             seg2.set(seg1).add(tr);
             World.raycastEachWorld(x, y, seg2.x, seg2.y, (cx, cy) -> {
                 collider.get(cx, cy);
-                Point2[] var3 = Geometry.d4;
-                int var4 = var3.length;
 
-                for(int var5 = 0; var5 < var4; ++var5) {
-                    Point2 p = var3[var5];
-                    Tile other = Vars.world.tile(p.x + cx, p.y + cy);
-                    if (other != null && Intersector.intersectSegmentRectangle(seg1, seg2, other.getBounds(Tmp.r1))) {
+                for(Point2 p : Geometry.d4){
+                    Tile other = world.tile(p.x + cx, p.y + cy);
+                    if(other != null && (large || Intersector.intersectSegmentRectangle(seg1, seg2, other.getBounds(Tmp.r1)))){
                         collider.get(cx + p.x, cy + p.y);
                     }
                 }
-
                 return false;
             });
         }
 
-        return check;
+        rect.setPosition(x, y).setSize(tr.x, tr.y);
+        float x2 = tr.x + x, y2 = tr.y + y;
+
+        if(rect.width < 0){
+            rect.x += rect.width;
+            rect.width *= -1;
+        }
+
+        if(rect.height < 0){
+            rect.y += rect.height;
+            rect.height *= -1;
+        }
+
+        float expand = 3f;
+
+        rect.y -= expand;
+        rect.x -= expand;
+        rect.width += expand * 2;
+        rect.height += expand * 2;
+
+        Cons<Unit> cons = e -> {
+            e.hitbox(hitrect);
+
+            Vec2 vec = Geometry.raycastRect(x, y, x2, y2, hitrect.grow(expand * 2));
+
+            if(vec != null && hitter.damage > 0){
+                effect.at(vec.x, vec.y);
+                e.collision(hitter, vec.x, vec.y);
+                hitter.collision(e, vec.x, vec.y);
+            }
+        };
+
+        units.clear();
+
+        Units.nearbyEnemies(team, rect, u -> {
+            if(u.checkTarget(hitter.type.collidesAir, hitter.type.collidesGround)){
+                units.add(u);
+            }
+        });
+
+        units.sort(u -> u.dst2(hitter));
+        units.each(cons);
     }
 
     public static void missileCollideLine(Bullet hitter, Team team, Effect effect, float x, float y, float angle, float length, boolean large, boolean laser, int pierceCap) {
@@ -260,7 +259,7 @@ public final class WHDamage {
                 u.hitbox(hitrect);
                 Vec2 vec = Geometry.raycastRect(x, y, x2, y2, hitrect.grow(expand * 2.0F));
                 if (vec != null) {
-                    collided.add(((Damage.Collided)collidePool.obtain()).set(vec.x, vec.y, u));
+                    collided.add((collidePool.obtain()).set(vec.x, vec.y, u));
                 }
             }
 
@@ -271,13 +270,13 @@ public final class WHDamage {
         });
         collided.each((c) -> {
             if (hitter.damage > 0.0F && (pierceCap <= 0 || collideCount[0] < pierceCap)) {
-                Teamc patt10696$temp = c.target;
-                if (patt10696$temp instanceof Unit) {
-                    Unit u = (Unit)patt10696$temp;
+                Teamc target = c.target;
+                if (target instanceof Unit) {
+                    Unit u = (Unit)target;
                     effect.at(c.x, c.y);
                     u.collision(hitter, c.x, c.y);
                     hitter.collision(u, c.x, c.y);
-                    int var10002 = collideCount[0]++;
+                    collideCount[0]++;
                 }
             }
 
@@ -293,6 +292,17 @@ public final class WHDamage {
             return (furthest = Vars.world.tile(tx, ty)) != null && furthest.team() != team && furthest.block().absorbLasers;
         });
         return found && furthest != null ? Math.max(6.0F, Mathf.dst(x, y, furthest.worldx(), furthest.worldy())) : length;
+    }
+
+    public static float findLaserLength(Bullet b, float angle, float length){
+        Tmp.v1.trnsExact(angle, length);
+
+        furthest = null;
+
+        boolean found = World.raycast(b.tileX(), b.tileY(), World.toTile(b.x + Tmp.v1.x), World.toTile(b.y + Tmp.v1.y),
+                (x, y) -> (furthest = world.tile(x, y)) != null && furthest.team() != b.team && furthest.block().absorbLasers);
+
+        return found && furthest != null ? Math.max(6f, b.dst(furthest.worldx(), furthest.worldy())) : length;
     }
 
     public static float findPierceLength(Bullet b, int pierceCap, float length) {

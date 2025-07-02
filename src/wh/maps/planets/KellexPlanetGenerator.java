@@ -3,12 +3,16 @@ package wh.maps.planets;
 import arc.graphics.*;
 import arc.math.geom.*;
 import arc.struct.*;
+import mindustry.content.Blocks;
 import mindustry.maps.planet.*;
+import mindustry.type.Sector;
+import mindustry.world.Block;
 import wh.maps.*;
 
 public class KellexPlanetGenerator extends SerpuloPlanetGenerator {
     public Seq<HeightPass> heights = new Seq<>();
     public Seq<ColorPass> colors = new Seq<>();
+
     public float baseHeight = 1;
     public Color baseColor = Color.white;
 
@@ -21,16 +25,19 @@ public class KellexPlanetGenerator extends SerpuloPlanetGenerator {
     }
 
     @Override
+    public void generateSector(Sector sector) {}
+
+    @Override
     public float getHeight(Vec3 position) {
         return rawHeight(position);
     }
 
-    @Override
+  /*  @Override
     public Color getColor(Vec3 position) {
         Color color = baseColor;
         for (ColorPass c : colors) {
             if (c.color(position, rawHeight(position)) != null) color = c.color(position, rawHeight(position));
         }
         return color;
-    }
+    }*/
 }

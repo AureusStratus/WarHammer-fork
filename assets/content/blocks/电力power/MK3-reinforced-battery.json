@@ -1,3 +1,4 @@
+/*
 {
 	"size": 4,
 	"type": "ShieldWall",
@@ -109,4 +110,4 @@
 		"parent": "detonation-reactor"
 	},
 	"researchCostMultiplier": 0.8
-}
+}*/

@@ -29,6 +29,7 @@
 	"research": "air1",
 	"requirements": {
 		"block": "additive-reconstructor",
+
 		"previous": "air1"
 	},
 	"weapons": [

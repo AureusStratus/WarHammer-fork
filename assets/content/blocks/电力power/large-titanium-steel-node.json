@@ -1,3 +1,4 @@
+/*
 {
 	"type": "PowerNode",
 	"name": "装甲电力塔",
@@ -36,4 +37,4 @@
 		"parent": "promethium-reactor"
 	},
 	"researchCostMultiplier": 0.8
-}
+}*/

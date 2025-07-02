@@ -1,3 +1,4 @@
+/*
 {
 	"type": "ConsumeGenerator",
 	"name": "通用发电机",
@@ -59,4 +60,4 @@
 		"parent": "titanium-steel-node"
 	},
 	"researchCostMultiplier": 0.8
-}
+}*/

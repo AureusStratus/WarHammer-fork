@@ -366,7 +366,7 @@ public final class WHUtils {
     }
 
 
-    public static boolean spawnUnit(Team team, float x, float y, float angle, float spawnRange, float spawnReloadTime, float spawnDelay, UnitType type, int spawnNum, Cons<Spawner> modifier){
+    public static boolean spawnUnit(Team team, float x, float y, float angle, float spawnRange, float spawnReloadTime, float spawnDelay, UnitType type, int spawnNum,boolean airdrop, Cons<Spawner> modifier){
         if(type == null)return false;
 
         // 2. 清理临时数据
@@ -390,7 +390,8 @@ public final class WHUtils {
                     team,             // 所属队伍
                     s,                // 生成位置坐标
                     angle,            // 初始朝向角度
-                    spawnReloadTime + i * spawnDelay // 生成延迟时间（基础时间 + 递增延迟）
+                    spawnReloadTime + i * spawnDelay,// 生成延迟时间（基础时间 + 递增延迟）
+                    airdrop
             );
             modifier.get(spawner);
             if(!net.client())spawner.add();
@@ -478,10 +479,6 @@ public final class WHUtils {
             }, effectHandler, true);
         }
 
-
-
-
-
         /** @author EyeOfDarkness */
         public static void collideLineRawEnemy(Team team, float x, float y, float x2, float y2, float width, boolean hitTiles, boolean hitUnits, boolean stopSort, HitHandler handler){
             collideLineRaw(x, y, x2, y2, width, width, b -> b.team != team, u -> u.team != team, hitTiles, hitUnits, h -> h.dst2(x, y), handler, stopSort);
@@ -556,10 +553,6 @@ public final class WHUtils {
                     }, stopSort
             );
         }
-        public void clear(){
-            Arrays.fill(array, false);
-        }
-        boolean[] array;
 
         /** @author EyeOfDarkness */
         public static void collideLineRaw(float x, float y, float x2, float y2, float unitWidth, float tileWidth, Boolf<Building> buildingFilter, Boolf<Unit> unitFilter, boolean hitTile, boolean hitUnit, Floatf<Healthc> sort, HitHandler hitHandler, boolean stopSort){
@@ -573,9 +566,9 @@ public final class WHUtils {
                 collideLineCollided.clear();
                 Runnable cast = () -> {
                     hitB = false;
-                    lineCast.each(i -> {
-                        int tx = Point2.x(i), ty = Point2.y(i);
-                        Building build = world.build(tx, ty);
+                    lineCast.each(i -> {// 遍历当前需要检测的格子
+                        int tx = Point2.x(i), ty = Point2.y(i); // 获取格子坐标
+                        Building build = world.build(tx, ty);// 获取该位置的建筑物
 
                         boolean hit = false;
                         if(build != null && (buildingFilter == null || buildingFilter.get(build)) && collidedBlocks.add(build.pos())){
@@ -590,13 +583,13 @@ public final class WHUtils {
 
                                 hitEffects.add(he);
                             }
-
+                            // 如果命中且是第一次命中，调整射线终点
                             if(hit && !hitB){
                                 tV.trns(Angles.angle(x, y, x2, y2), Mathf.dst(x, y, build.x, build.y)).add(x, y);
                                 hitB = true;
                             }
                         }
-
+                        // 处理相邻格子的碰撞检测
                         Vec2 segment = Intersector.nearestSegmentPoint(x, y, tV.x, tV.y, tx * tilesize, ty * tilesize, tV2);
                         if(!hit && tileWidth > 0f){
                             for(Point2 p : Geometry.d8){
@@ -615,7 +608,7 @@ public final class WHUtils {
                     lineCast.addAll(lineCastNext);
                     lineCastNext.clear();
                 };
-
+                // 初始射线投射
                 world.raycastEachWorld(x, y, x2, y2, (cx, cy) -> {
                     if(collideLineCollided.within(cx, cy) && !collideLineCollided.get(cx, cy)){
                         lineCast.add(Point2.pack(cx, cy));
@@ -648,6 +641,7 @@ public final class WHUtils {
                         unit.hitbox(hitRect);
                         hitRect.grow(unitWidth * 2);
 
+                        // 计算射线与单位碰撞盒的交点
                         Vec2 vec = Geometry.raycastRect(x, y, tV.x, tV.y, hitRect);
 
                         if(vec != null){
@@ -666,7 +660,7 @@ public final class WHUtils {
                     }
                 });
             }
-
+            // 排序和处理命中效果
             if(sort != null){
                 hit = false;
                 hitEffects.sort(he -> sort.get(he.ent)).each(he -> {
@@ -679,77 +673,6 @@ public final class WHUtils {
             }
 
             hitEffects.clear();
-        }
-
-        /**
-         * Casts forward in a line.
-         * @return the first encountered model.
-         * There's an issue with the one in 126.2, which I fixed in a pr. This can be removed after the next Mindustry release.
-         */
-        public static Healthc linecast(Bullet hitter, float x, float y, float angle, float length){
-            tV.trns(angle, length);
-
-            tmpBuilding = null;
-
-            if(hitter.type.collidesGround){
-                world.raycastEachWorld(x, y, x + tV.x, y + tV.y, (cx, cy) -> {
-                    Building tile = world.build(cx, cy);
-                    if(tile != null && tile.team != hitter.team){
-                        tmpBuilding = tile;
-                        return true;
-                    }
-                    return false;
-                });
-            }
-
-            rect.setPosition(x, y).setSize(tV.x, tV.y);
-            float x2 = tV.x + x, y2 = tV.y + y;
-
-            if(rect.width < 0){
-                rect.x += rect.width;
-                rect.width *= -1;
-            }
-
-            if(rect.height < 0){
-                rect.y += rect.height;
-                rect.height *= -1;
-            }
-
-            float expand = 3f;
-
-            rect.y -= expand;
-            rect.x -= expand;
-            rect.width += expand * 2;
-            rect.height += expand * 2;
-
-            tmpUnit = null;
-
-            Units.nearbyEnemies(hitter.team, rect, e -> {
-                if((tmpUnit != null && e.dst2(x, y) > tmpUnit.dst2(x, y)) || !e.checkTarget(hitter.type.collidesAir, hitter.type.collidesGround)) return;
-
-                e.hitbox(hitRect);
-                Rect other = hitRect;
-                other.y -= expand;
-                other.x -= expand;
-                other.width += expand * 2;
-                other.height += expand * 2;
-
-                Vec2 vec = Geometry.raycastRect(x, y, x2, y2, other);
-
-                if(vec != null){
-                    tmpUnit = e;
-                }
-            });
-
-            if(tmpBuilding != null && tmpUnit != null){
-                if(Mathf.dst2(x, y, tmpBuilding.getX(), tmpBuilding.getY()) <= Mathf.dst2(x, y, tmpUnit.getX(), tmpUnit.getY())){
-                    return tmpBuilding;
-                }
-            }else if(tmpBuilding != null){
-                return tmpBuilding;
-            }
-
-            return tmpUnit;
         }
 
         static class Hit implements Pool.Poolable {

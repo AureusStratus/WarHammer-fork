@@ -1,3 +1,4 @@
+/*
 {
 	"type": "VariableReactor",
 	"name": "等离子反应堆",
@@ -140,4 +141,4 @@
 		"parent": "detonation-reactor"
 	},
 	"researchCostMultiplier": 0.6
-}
+}*/

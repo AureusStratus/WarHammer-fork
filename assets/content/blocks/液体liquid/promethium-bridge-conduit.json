@@ -1,3 +1,4 @@
+/*
 {
 	"type": "LiquidBridge",
 	"name": "电力导管桥",
@@ -22,4 +23,4 @@
 		"parent": "steel-bridge-conduit"
 	},
 	"researchCostMultiplier": 0.45
-}
+}*/

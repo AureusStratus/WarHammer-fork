@@ -159,11 +159,11 @@ public class WHResearchDialog extends BaseDialog {
 
         addCloseButton();
 
-        keyDown(key -> {
+     /*   keyDown(key -> {
             if (key == Core.keybinds.get(Binding.research).key) {
                 Core.app.post(this::hide);
             }
-        });
+        });*/
 
         buttons.button("@database", Icon.book, () -> {
             hide();

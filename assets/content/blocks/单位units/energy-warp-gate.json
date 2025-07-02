@@ -341,9 +341,9 @@
 				"width": 24,
 				"height": 24,
 				"fragBullets": 1,
-				"fragBullet": {
+			/*	"fragBullet": {
 					"spawnUnit": "wh-c-moon"
-				}
+				}*/
 			}
 		},
 		"sealed-promethium": {

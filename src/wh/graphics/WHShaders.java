@@ -14,7 +14,7 @@ import arc.math.geom.Mat3D;
 import arc.util.Tmp;
 import mindustry.Vars;
 import wh.WHVars;
-import wh.world.type.BetterPlanet;
+import wh.entities.world.type.BetterPlanet;
 
 public class WHShaders {
     public static DepthShader depth;
@@ -57,29 +57,37 @@ public class WHShaders {
         }
     }
 
-    public static final class DepthAtmosphereShader extends Shader {
+    public static class DepthAtmosphereShader extends Shader {
         private static final Mat3D mat = new Mat3D();
+
         public Camera3D camera;
         public BetterPlanet planet;
-
+        /**
+         * The only instance of this class: {@link #depthAtmosphere}.
+         */
         private DepthAtmosphereShader() {
             super(WHShaders.mv("depth-atmosphere"), WHShaders.mf("depth-atmosphere"));
         }
 
+
+        @Override
         public void apply() {
-            this.setUniformMatrix4("u_proj", this.camera.combined.val);
-            this.setUniformMatrix4("u_trans", this.planet.getTransform(mat).val);
-            this.setUniformf("u_camPos", this.camera.position);
-            this.setUniformf("u_relCamPos", Tmp.v31.set(this.camera.position).sub(this.planet.position));
-            this.setUniformf("u_camRange", this.camera.near, this.camera.far - this.camera.near);
-            this.setUniformf("u_center", this.planet.position);
-            this.setUniformf("u_light", this.planet.getLightNormal());
-            this.setUniformf("u_color", this.planet.atmosphereColor.r, this.planet.atmosphereColor.g, this.planet.atmosphereColor.b);
-            this.setUniformf("u_innerRadius", this.planet.radius + this.planet.atmosphereRadIn);
-            this.setUniformf("u_outerRadius", this.planet.radius + this.planet.atmosphereRadOut);
-            ((Texture)this.planet.depthBuffer.getTexture()).bind(0);
-            this.setUniformi("u_topology", 0);
-            this.setUniformf("u_viewport", (float)Core.graphics.getWidth(), (float)Core.graphics.getHeight());
+            setUniformMatrix4("u_proj", camera.combined.val);
+            setUniformMatrix4("u_trans", planet.getTransform(mat).val);
+
+            setUniformf("u_camPos", camera.position);
+            setUniformf("u_relCamPos", Tmp.v31.set(camera.position).sub(planet.position));
+            setUniformf("u_camRange", camera.near, camera.far - camera.near);
+            setUniformf("u_center", planet.position);
+            setUniformf("u_light", planet.getLightNormal());
+            setUniformf("u_color", planet.atmosphereColor.r, planet.atmosphereColor.g, planet.atmosphereColor.b);
+
+            setUniformf("u_innerRadius", planet.radius + planet.atmosphereRadIn);
+            setUniformf("u_outerRadius", planet.radius + planet.atmosphereRadOut);
+
+            planet.buffer.getTexture().bind(0);
+            setUniformi("u_topology", 0);
+            setUniformf("u_viewport", Core.graphics.getWidth(), Core.graphics.getHeight());
         }
     }
 }

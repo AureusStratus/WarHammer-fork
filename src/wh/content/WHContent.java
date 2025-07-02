@@ -7,19 +7,29 @@ package wh.content;
 
 import arc.Core;
 import arc.graphics.g2d.TextureRegion;
+import arc.util.*;
+import mindustry.ctype.*;
+import wh.core.*;
 
-public class WHContent {
+public class WHContent extends Content{
     public static TextureRegion arrowRegion;
     public static TextureRegion pointerRegion;
-    public WHContent() {
+    public static TextureRegion strafeRegion;
+    public static TextureRegion missileRegion;
+    public static TextureRegion bombRegion;
+    @Override
+    public ContentType getContentType() {
+        return ContentType.error;
     }
-
     public static void loadPriority() {
-        (new WHContent()).load();
+        new WHContent().load();
     }
 
     public void load() {
-        arrowRegion = Core.atlas.find("wh-jump-gate-arrow");
-        pointerRegion = Core.atlas.find("jump-gate-pointer");
+        arrowRegion = Core.atlas.find(WarHammerMod.name("jump-gate-arrow"));
+        pointerRegion = Core.atlas.find(WarHammerMod.name("jump-gate-pointer"));
+        strafeRegion = Core.atlas.find(WarHammerMod.name("strafe-mode"));
+        missileRegion = Core.atlas.find(WarHammerMod.name("missile-mode"));
+        bombRegion = Core.atlas.find(WarHammerMod.name("bomb-mode"));
     }
 }

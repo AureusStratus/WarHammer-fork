@@ -1,3 +1,4 @@
+/*
 {
 	"type": "Pump",
 	"name": "重力泵",
@@ -29,4 +30,4 @@
 		"parent": "titanium-steel-pump"
 	},
 	"researchCostMultiplier": 0.36
-}
+}*/

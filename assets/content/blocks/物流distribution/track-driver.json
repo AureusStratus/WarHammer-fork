@@ -1,3 +1,4 @@
+/*
 {
 	"name": "轨道驱动器",
 	"type": "MassDriver",
@@ -42,4 +43,4 @@
 		"parent": "ceramite-conveyor"
 	},
 	"researchCostMultiplier": 0.6
-}
+}*/

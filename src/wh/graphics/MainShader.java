@@ -9,6 +9,9 @@ import arc.Core;
 import arc.graphics.gl.Shader;
 import mindustry.Vars;
 
+import static arc.Core.files;
+import static mindustry.Vars.tree;
+
 public class MainShader {
     public static int MaxCont = 4;
     public static HoleShader holeShader;
@@ -17,23 +20,23 @@ public class MainShader {
     }
 
     public static void createShader() {
-        if (MaxCont < 510) {
-            MaxCont = Math.min(MaxCont * 2, 510);
-            if (holeShader != null) {
-                holeShader.dispose();
-            }
+        if(MaxCont >= 512) return;
 
-            Shader.prependFragmentCode = "#define MAX_COUNT " + MaxCont + "\n";
-            holeShader = new HoleShader();
-            Shader.prependFragmentCode = "";
-        }
+        MaxCont = Math.min(MaxCont * 2, 512);
+        if(holeShader != null) holeShader.dispose();
+        Shader.prependFragmentCode = "#define MAX_COUNT " + MaxCont + "\n";
+        holeShader = new HoleShader();
+        Shader.prependFragmentCode = "";
     }
 
     public static class HoleShader extends Shader {
         public float[] blackHoles;
 
-        public HoleShader() {
-            super(Core.files.internal("shaders/screenspace.vert"), Vars.tree.get("shaders/TearingSpace.frag"));
+        public HoleShader(){
+            super(
+                    files.internal("shaders/screenspace.vert"),
+                    tree.get("shaders/TearingSpace.frag")
+            );
         }
 
         public void apply() {

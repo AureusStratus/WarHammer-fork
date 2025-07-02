@@ -21,19 +21,17 @@ import wh.entities.bullet.ShieldBreakerType;
 import wh.entities.bullet.StrafeLaserBulletType;
 import wh.entities.bullet.TrailFadeBulletType;
 import wh.entities.effect.WrapperEffect;
-import wh.world.type.ExtraSectorPreset;
-import wh.world.unit.AncientUnitType;
-import wh.world.unit.NucleoidUnitType;
-import wh.world.unit.PesterUnitType;
-import wh.world.blocks.defense.AirRaider;
-import wh.world.blocks.defense.BombLauncher;
-import wh.world.blocks.defense.turrets.SpeedupTurret;
-import wh.world.blocks.distribution.BeltConveyor;
-import wh.world.blocks.distribution.CoveredConveyor;
-import wh.world.blocks.distribution.DirectionalUnloaderF;
-import wh.world.blocks.distribution.TubeConveyor;
-import wh.world.blocks.storage.FrontlineCoreBlock;
-import wh.world.blocks.storage.UnloaderF;
+import wh.entities.world.type.ExtraSectorPreset;
+import wh.entities.world.unit.AncientUnitType;
+import wh.entities.world.unit.NucleoidUnitType;
+import wh.entities.world.unit.PesterUnitType;
+import wh.entities.world.blocks.defense.AirRaider;
+import wh.entities.world.blocks.defense.BombLauncher;
+import wh.entities.world.blocks.defense.turrets.SpeedupTurret;
+import wh.entities.world.blocks.distribution.DirectionalUnloaderF;
+import wh.entities.world.blocks.distribution.TubeConveyor;
+import wh.entities.world.blocks.storage.FrontlineCoreBlock;
+import wh.entities.world.blocks.storage.UnloaderF;
 
 final class WHClassMap {
 
@@ -67,10 +65,6 @@ final class WHClassMap {
         ClassMap.classes.put("BombLauncherBuild", BombLauncher.BombLauncherBuild.class);
         ClassMap.classes.put("SpeedupTurret", SpeedupTurret.class);
         ClassMap.classes.put("SpeedupTurretBuild", SpeedupTurret.SpeedupTurretBuild.class);
-        ClassMap.classes.put("BeltConveyor", BeltConveyor.class);
-        ClassMap.classes.put("BeltConveyorBuild", BeltConveyor.BeltConveyorBuild.class);
-        ClassMap.classes.put("CoveredConveyor", CoveredConveyor.class);
-        ClassMap.classes.put("CoveredConveyorBuild", CoveredConveyor.CoveredConveyorBuild.class);
         ClassMap.classes.put("TubeConveyor", TubeConveyor.class);
         ClassMap.classes.put("TubeConveyorBuild", TubeConveyor.TubeConveyorBuild.class);
         ClassMap.classes.put("UnloaderF", UnloaderF.class);

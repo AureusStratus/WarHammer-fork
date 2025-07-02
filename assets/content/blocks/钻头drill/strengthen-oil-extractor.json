@@ -1,3 +1,4 @@
+/*
 {
 	"name": "强效油井",
 	"type": "SolidPump",
@@ -24,4 +25,4 @@
 	"category": "production",
 	"researchCostMultiplier": 0.6,
 	"research": "imperium"
-}
+}*/

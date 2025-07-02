@@ -23,7 +23,12 @@ import wh.graphics.WHShaders;
 import wh.ui.dialogs.WHResearchDialog;
 
 public class WarHammerMod extends Mod {
-    public static String ModName = "WarHammerMod";
+    public static String ModName = "wh";
+    public static boolean DEBUGGING = false;
+
+    public static void debugLog(Object obj){
+        if(DEBUGGING)Log.info(obj);
+    }
 
     public WarHammerMod() {
         WHClassMap.load();
@@ -40,8 +45,10 @@ public class WarHammerMod extends Mod {
         return ModName + "-" + add;
     }
 
+
+    @Override
     public void init() {
-        WHContent.loadPriority();
+
         MainRenderer.init();
         WHResearchDialog dialog = new WHResearchDialog();
         ResearchDialog research = Vars.ui.research;
@@ -56,18 +63,19 @@ public class WarHammerMod extends Mod {
     @Override
     public void loadContent() {
         super.loadContent();
-        WHOverride.load();
-
-
-      /* WorldRegister.load();
+        WorldRegister.load();
         EntityRegister.load();
+
+        WHContent.loadPriority();
+
         WHStatusEffects.load();
         WHItems.load();
         WHLiquids.load();
         WHBullets.load();
         WHUnitTypes.load();
         WHBlocks.load();
+        WHOverride.load();
         WHPlanets.load();
-        WHTechTree.load();*/
+        WHTechTree.load();
     }
 }

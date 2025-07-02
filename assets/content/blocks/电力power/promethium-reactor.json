@@ -1,3 +1,4 @@
+/*
 {
 	"type": "NuclearReactor",
 	"name": "钷反应室",
@@ -107,4 +108,4 @@
 		"parent": "advanced-turbo-generator"
 	},
 	"researchCostMultiplier": 0.8
-}
+}*/

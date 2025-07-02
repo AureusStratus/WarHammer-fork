@@ -1,3 +1,4 @@
+/*
 {
 	"name": "矿渣提取机",
 	"type": "AttributeCrafter",
@@ -48,4 +49,4 @@
 		"parent": "heavy-cutting-drill"
 	},
 	"researchCostMultiplier": 0.45
-}
+}*/

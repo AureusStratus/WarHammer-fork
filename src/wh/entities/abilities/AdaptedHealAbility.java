@@ -1,8 +1,3 @@
-//
-// Source code recreated from a .class file by IntelliJ IDEA
-// (powered by FernFlower decompiler)
-//
-
 package wh.entities.abilities;
 
 import arc.func.Cons;
@@ -14,70 +9,67 @@ import mindustry.gen.Unit;
 import mindustry.graphics.Pal;
 import wh.content.WHFx;
 
-public class AdaptedHealAbility extends RepairFieldAbility {
-    public Color applyColor;
-    public boolean ignoreHealthMultiplier;
-    public float selfHealAmount;
-    public float selfHealReloadTime;
-    protected float lastHealth;
-    protected float selfHealReload;
-
-    public AdaptedHealAbility() {
-        this(1.0F, 1.0F, 1.0F);
-    }
-
-    public AdaptedHealAbility(float amount, float reload, float range, Color applyColor) {
+public class AdaptedHealAbility extends RepairFieldAbility{
+    public AdaptedHealAbility(float amount, float reload, float range, Color applyColor){
         this(amount, reload, range);
         this.applyColor = applyColor;
     }
 
-    public AdaptedHealAbility(float amount, float reload, float range) {
+    public AdaptedHealAbility(float amount, float reload, float range){
         super(amount, reload, range);
-        this.applyColor = Pal.heal;
-        this.ignoreHealthMultiplier = true;
-        this.selfHealAmount = 5.0E-4F;
-        this.selfHealReloadTime = -1.0F;
-        this.lastHealth = 0.0F;
-        this.selfHealReload = 0.0F;
-        this.healEffect = WHFx.healReceiveCircle;
-        this.activeEffect = WHFx.healSendCircle;
+
+        healEffect = WHFx.healReceiveCircle;
+        activeEffect = WHFx.healSendCircle;
     }
 
-    public AdaptedHealAbility modify(Cons<AdaptedHealAbility> modifier) {
+    public AdaptedHealAbility modify(Cons<AdaptedHealAbility> modifier){
         modifier.get(this);
         return this;
     }
 
+    public Color applyColor = Pal.heal;
+
+    public boolean ignoreHealthMultiplier = true;
+    //Percent per tick
+    public float selfHealAmount = 0.0005f;
+    public float selfHealReloadTime = -1;
+
+    protected float lastHealth = 0;
+    protected float selfHealReload = 0;
+
     public void update(Unit unit) {
-        this.timer += Time.delta;
-        if (this.timer >= this.reload) {
-            this.wasHealed = false;
-            Units.nearby(unit.team, unit.x, unit.y, this.range, (other) -> {
-                if (other.damaged()) {
-                    this.healEffect.at(other.x, other.y, 0.0F, this.applyColor, this.parentizeEffects ? other : null);
-                    this.wasHealed = true;
-                }
+        timer += Time.delta;
 
-                other.heal(this.amount);
+        if(timer >= reload){
+            wasHealed = false;
+
+            Units.nearby(unit.team, unit.x, unit.y, range, other -> {
+                if(other.damaged()){
+                    healEffect.at(other.x, other.y, 0, applyColor, parentizeEffects ? other : null);
+                    wasHealed = true;
+                }
+                other.heal(amount);
             });
-            if (this.wasHealed) {
-                this.activeEffect.at(unit.x, unit.y, this.range, this.applyColor);
+
+            if(wasHealed){
+                activeEffect.at(unit.x, unit.y, range, applyColor);
             }
 
-            this.timer = 0.0F;
+            timer = 0f;
         }
 
-        if (!(this.selfHealReloadTime < 0.0F)) {
-            if (this.lastHealth <= unit.health && unit.damaged()) {
-                this.selfHealReload += Time.delta;
-                if (this.selfHealReload > this.selfHealReloadTime) {
-                    unit.healFract(this.selfHealAmount * (this.ignoreHealthMultiplier ? 1.0F : 1.0F / unit.healthMultiplier));
-                }
-            } else {
-                this.selfHealReload = 0.0F;
+        if(selfHealReloadTime < 0)return;
+
+        if(lastHealth <= unit.health && unit.damaged()){
+            selfHealReload += Time.delta;
+
+            if(selfHealReload > selfHealReloadTime){
+                unit.healFract(selfHealAmount * (ignoreHealthMultiplier ? 1 : 1 / unit.healthMultiplier));
             }
-
-            this.lastHealth = unit.health;
+        }else{
+            selfHealReload = 0;
         }
+
+        lastHealth = unit.health;
     }
 }

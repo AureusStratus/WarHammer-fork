@@ -17,24 +17,30 @@ import arc.math.Angles;
 import arc.math.Interp;
 import arc.math.Mathf;
 import arc.math.Rand;
-import arc.math.geom.Mat3D;
-import arc.math.geom.Position;
-import arc.math.geom.Vec2;
-import arc.math.geom.Vec3;
+import arc.math.geom.*;
 import arc.scene.ui.layout.Scl;
+import arc.struct.FloatSeq;
+import arc.util.Log;
 import arc.util.Time;
 import arc.util.Tmp;
 import arc.util.pooling.Pools;
 import mindustry.Vars;
 import mindustry.gen.Player;
 import mindustry.gen.Unit;
+import mindustry.graphics.Drawf;
+import mindustry.graphics.Layer;
 import mindustry.graphics.Pal;
 import mindustry.ui.Fonts;
 import wh.content.WHFx;
 import wh.math.WHInterp;
+import wh.struct.Vec2Seq;
 import wh.util.WHUtils;
 
+import static arc.graphics.g2d.Lines.polyline;
+import static mindustry.Vars.tilesize;
+
 public final class Drawn {
+    private static final FloatSeq points = new FloatSeq();
     public static final int[] oneArr = new int[]{1};
     public static final float sinScl = 1.0F;
     public static final float[] v = new float[6];
@@ -53,13 +59,6 @@ public final class Drawn {
     static final Vec2 v4 = new Vec2();
     static final Vec2 v5 = new Vec2();
     static final Vec2 v6 = new Vec2();
-    static final Vec2 v7 = new Vec2();
-    static final Vec2 v8 = new Vec2();
-    static final Vec2 v9 = new Vec2();
-    static final Vec2 v10 = new Vec2();
-    static final Vec2 v11 = new Vec2();
-    static final Vec2 v12 = new Vec2();
-    static final Vec2 v13 = new Vec2();
     static final Vec2 rv = new Vec2();
     static final Vec3 v31 = new Vec3();
     static final Vec3 v32 = new Vec3();
@@ -74,13 +73,6 @@ public final class Drawn {
     static final Color c1 = new Color();
     static final Color c2 = new Color();
     static final Color c3 = new Color();
-    static final Color c4 = new Color();
-    static final Color c5 = new Color();
-    static final Color c6 = new Color();
-    static final Color c7 = new Color();
-    static final Color c8 = new Color();
-    static final Color c9 = new Color();
-    static final Color c10 = new Color();
 
     private Drawn() {
     }
@@ -107,12 +99,11 @@ public final class Drawn {
     }
 
     public static void circlePercent(float x, float y, float rad, float percent, float angle) {
-//        Lines.swirl(x, y, rad, 360 * percent, angle);
         float p = Mathf.clamp(percent);
 
         int sides = Lines.circleVertices(rad);
 
-        float space = 360.0F / (float)sides;
+        float space = 360.0F / (float) sides;
         float len = 2 * rad * Mathf.sinDeg(space / 2);
         float hstep = Lines.getStroke() / 2.0F / Mathf.cosDeg(space / 2.0F);
         float r1 = rad - hstep;
@@ -120,8 +111,8 @@ public final class Drawn {
 
         int i;
 
-        for(i = 0; i < sides * p - 1; ++i){
-            float a = space * (float)i + angle;
+        for (i = 0; i < sides * p - 1; ++i) {
+            float a = space * (float) i + angle;
             float cos = Mathf.cosDeg(a);
             float sin = Mathf.sinDeg(a);
             float cos2 = Mathf.cosDeg(a + space);
@@ -139,6 +130,24 @@ public final class Drawn {
         Fill.quad(x + r1 * cos, y + r1 * sin, x + r1 * cos2 + v1.x, y + r1 * sin2 + v1.y, x + r2 * cos2 + v1.x, y + r2 * sin2 + v1.y, x + r2 * cos, y + r2 * sin);
     }
 
+    public static void arcProcess(float x, float y, float radius, float fraction, float rotation, int sides, float progress){
+        int max = Mathf.ceil(sides * fraction);
+        points.clear();
+        int progressMax = Math.min(max, Mathf.ceil(max * progress));
+
+        for(int i = 0; i <= progressMax; i++){
+            v6.trns((float)i / max * fraction * 360f + rotation, radius);
+            float x1 = v6.x;
+            float y1 = v6.y;
+
+            v6.trns((float)(i + 1) / max * fraction * 360f + rotation, radius);
+
+            points.add(x1 + x, y1 + y);
+        }
+
+        polyline(points, false);
+    }
+
     public static void posSquareLink(Color color, float stroke, float size, boolean drawBottom, float x, float y, float x2, float y2) {
         posSquareLink(color, stroke, size, drawBottom, v6.set(x, y), v6.set(x2, y2));
     }
@@ -147,27 +156,27 @@ public final class Drawn {
         posSquareLinkArr(color, stroke, size, drawBottom, false, from, to);
     }
 
-    public static void posSquareLinkArr(Color color, float stroke, float size, boolean drawBottom, boolean linkLine, Position... pos){
-        if(pos.length < 2 || (!linkLine && pos[0] == null))return;
+    public static void posSquareLinkArr(Color color, float stroke, float size, boolean drawBottom, boolean linkLine, Position... pos) {
+        if (pos.length < 2 || (!linkLine && pos[0] == null)) return;
 
         for (int c : drawBottom ? Mathf.signs : oneArr) {
             for (int i = 1; i < pos.length; i++) {
-                if (pos[i] == null)continue;
+                if (pos[i] == null) continue;
                 Position p1 = pos[i - 1], p2 = pos[i];
                 Lines.stroke(stroke + 1 - c, c == 1 ? color : bottomColor);
-                if(linkLine) {
-                    if(p1 == null)continue;
+                if (linkLine) {
+                    if (p1 == null) continue;
                     Lines.line(p2.getX(), p2.getY(), p1.getX(), p1.getY());
-                }else{
+                } else {
                     Lines.line(p2.getX(), p2.getY(), pos[0].getX(), pos[0].getY());
                 }
                 Draw.reset();
             }
 
             for (Position p : pos) {
-                if (p == null)continue;
+                if (p == null) continue;
                 Draw.color(c == 1 ? color : bottomColor);
-                Fill.square(p.getX(), p.getY(), size + 1 -c / 1.5f, 45);
+                Fill.square(p.getX(), p.getY(), size + 1 - c / 1.5f, 45);
                 Draw.reset();
             }
         }
@@ -217,7 +226,7 @@ public final class Drawn {
         Rand rand = WHUtils.rand;
         rand.setSeed(id);
 
-        for(int i = 0; i < num; ++i) {
+        for (int i = 0; i < num; ++i) {
             float len = rad * rand.random(0.75F, 1.5F);
             v6.trns(rand.random(360.0F) + rand.range(2.0F) * (1.5F - Mathf.curve(len, rad * 0.75F, rad * 1.5F)) * Time.time, len);
             float angle = v6.angle();
@@ -232,13 +241,13 @@ public final class Drawn {
         Draw.reset();
         float sin = Mathf.absin(Time.time * 1.0F, 8.0F, 1.25F);
 
-        for(int i = 0; i < 4; ++i) {
+        for (int i = 0; i < 4; ++i) {
             float length = size / 2.0F + 3.0F + sin;
-            Tmp.v1.trns((float)(i * 90), -length);
+            Tmp.v1.trns((float) (i * 90), -length);
             Draw.color(Pal.gray);
-            Draw.rect(Core.atlas.find("wh-linked-arrow-back"), x + Tmp.v1.x, y + Tmp.v1.y, (float)(i * 90));
+            Draw.rect(Core.atlas.find("wh-linked-arrow-back"), x + Tmp.v1.x, y + Tmp.v1.y, (float) (i * 90));
             Draw.color(color);
-            Draw.rect(Core.atlas.find("wh-linked-arrow"), x + Tmp.v1.x, y + Tmp.v1.y, (float)(i * 90));
+            Draw.rect(Core.atlas.find("wh-linked-arrow"), x + Tmp.v1.x, y + Tmp.v1.y, (float) (i * 90));
         }
 
         Draw.reset();
@@ -248,7 +257,7 @@ public final class Drawn {
         overlayText(Fonts.outline, text, x, y, offset, 1.0F, 0.25F, color, underline, false);
     }
 
-    public static void overlayText(Font font, String text, float x, float y, float offset, float offsetScl, float size, Color color, boolean underline, boolean align){
+    public static void overlayText(Font font, String text, float x, float y, float offset, float offsetScl, float size, Color color, boolean underline, boolean align) {
         GlyphLayout layout = Pools.obtain(GlyphLayout.class, GlyphLayout::new);
         boolean ints = font.usesIntegerPositions();
         font.setUseIntegerPositions(false);
@@ -260,7 +269,7 @@ public final class Drawn {
         font.draw(text, x, y + layout.height / (align ? 2 : 1) + (dy + 1.0F) * offsetScl, 1);
         --dy;
 
-        if(underline){
+        if (underline) {
             Lines.stroke(2.0F, Color.darkGray);
             Lines.line(x - layout.width / 2.0F - 2.0F, dy + y, x + layout.width / 2.0F + 1.5F, dy + y);
             Lines.stroke(1.0F, color);
@@ -293,15 +302,142 @@ public final class Drawn {
     }
 
     public static void circlePercentFlip(float x, float y, float rad, float in, float scl) {
-        boolean var10000 = in % (scl * 4.0F) < scl * 2.0F;
         float f = Mathf.cos(in % (scl * 3.0F), scl, 1.1F);
-        circlePercent(x, y, rad, f > 0.0F ? f : -f, in + (float)(-90 * Mathf.sign(f)));
+        circlePercent(x, y, rad, f > 0.0F ? f : -f, in + (float) (-90 * Mathf.sign(f)));
+    }
+
+
+    public static void fillOctagon(float x, float y, float range, float f,Color color) {
+
+        float r = Math.max(0f, Mathf.clamp(2f - f * 2f) * range/2 -0.2f-f ),
+                w = Mathf.clamp(0.5f - f) * range;
+        Draw.color(color);
+        Draw.z(Layer.flyingUnitLow - 1);
+        Draw.alpha(0.5f * Mathf.curve(f, 0, 0.4f));
+        points.clear();
+        for (int i = 0; i < 4; i++) {
+            points.add(x + Geometry.d4(i).x * r + Geometry.d4(i).y * w,
+                    y + Geometry.d4(i).y * r - Geometry.d4(i).x * w);
+            if (f < 0.5f) {
+                points.add(x + Geometry.d4(i).x * r - Geometry.d4(i).y * w,
+                        y + Geometry.d4(i).y * r + Geometry.d4(i).x * w);
+            }
+        }
+        Fill.poly(points);
+
+        Draw.color(color.cpy().lerp(Color.white,0.1f));
+        Draw.alpha(1-f);
+        Lines.stroke(3.5f * Mathf.curve(1-f, 0f, 0.3f));
+        Lines.beginLine();
+        for (int i = 0; i < 4; i++) {
+            Lines.linePoint(x + Geometry.d4(i).x * r + Geometry.d4(i).y * w, y + Geometry.d4(i).y * r - Geometry.d4(i).x * w);
+            if (f < 0.5f)
+                Lines.linePoint(x + Geometry.d4(i).x * r - Geometry.d4(i).y * w, y + Geometry.d4(i).y * r + Geometry.d4(i).x * w);
+        }
+        Lines.endLine(true);
+    }
+
+    public static void smoothSquareLine(float x, float y, float length, float width, Interp inp, float percent, float angle,boolean smoothCorner, Color color) {
+        float p = Mathf.clamp(percent);
+        if (p >= 1f) return;
+
+        int lines =smoothCorner ?8:4;
+        float segmentP = inp.apply(p) * lines;
+        float halfLength = length / 2f;
+
+        Vec2Seq corners = new Vec2Seq(lines);
+        for(int i = 0; i < lines; i++){
+            float cornerAngle = angle + i * (smoothCorner ?45f:90f);
+            corners.add(
+                    x + Angles.trnsx(cornerAngle, halfLength),
+                    y + Angles.trnsy(cornerAngle, halfLength)
+            );
+        }
+
+        for (int i = 0; i < lines; i++) {
+
+            float lineProgress = Mathf.clamp(segmentP - i);
+            if (lineProgress <= 0f) continue;
+
+            Vec2 start = corners.newVec2(i);
+            Vec2 end =corners.newVec2((i + 1) % lines);
+
+            if(smoothCorner) {
+                if( i % 2 == 0) {
+                    Vec2 actualEnd = new Vec2(
+                            start.x + (end.x - start.x) * lineProgress,
+                            start.y + (end.y - start.y) * lineProgress
+                    );
+                    Lines.stroke(width, color);
+                    Lines.line(start.x, start.y, actualEnd.x, actualEnd.y);
+                    Lines.stroke(width*1/3f, color.cpy().lerp(Color.white,0.2f));
+                    Lines.line(start.x, start.y, actualEnd.x, actualEnd.y);
+                } else {
+                    float cornerAngle = angle + i * 45f+90f;
+                    Drawn.arcProcess(x, y, halfLength, 0.123f, cornerAngle, 70, lineProgress);
+                    Lines.stroke(width*1/3f, color.cpy().lerp(Color.white,0.2f));
+                    Drawn.arcProcess(x, y, halfLength, 0.123f, cornerAngle, 70, lineProgress);
+                }
+            } else {
+                Vec2 actualEnd = new Vec2(
+                        start.x + (end.x - start.x) * lineProgress,
+                        start.y + (end.y - start.y) * lineProgress);
+                Lines.stroke(width, color);
+                Lines.line(start.x, start.y, actualEnd.x, actualEnd.y);
+                Lines.stroke(width*1/3f, color.cpy().lerp(Color.white,0.2f));
+                Lines.line(start.x, start.y, actualEnd.x, actualEnd.y);
+            }
+        }
+    }
+
+    public static void ellipse(float x, float y, int divisions, float rotation, float width, float length){
+        points.clear();
+        for(int i = 0; i < divisions; i++){
+            float angle = 360f * i / (float)divisions;
+            Tmp.v1.trnsExact(angle, width);
+            point(
+                    Tmp.v1.x / width * length,
+                    Tmp.v1.y,
+                    x, y,
+                    rotation
+            );
+        }
+        Fill.poly(points);
+    }
+
+    public static void ellipseProcess(float x, float y, int divisions, float rotation, float width, float length, float progress) {
+        points.clear();
+        int progressMax = Math.min(divisions, Mathf.ceil(divisions * progress));
+        for(int i = 0; i <= progressMax; i++) {
+            float angle = 360f * i / (float)divisions;
+            Tmp.v1.trnsExact(angle, width);
+            point(
+                    Tmp.v1.x / width * length,
+                    Tmp.v1.y,
+                    x, y,
+                    rotation
+            );
+        }
+
+        polyline(points, false);
+    }
+
+    public static float ellipseXY(float px, float py, float a, float b, float rotation, float angle, int xy){
+        float x = a * Mathf.cosDeg(angle);
+        float y = b * Mathf.sinDeg(angle);
+        float xRotated = x * Mathf.cosDeg(rotation) - y * Mathf.sinDeg(rotation) + px;
+        float yRotated = x * Mathf.sinDeg(rotation) + y * Mathf.cosDeg(rotation) + py;
+        return xy == 0 ? xRotated : yRotated;
+    }
+
+    private static void point(float x, float y, float baseX, float baseY, float rotation){
+        Tmp.v1.set(x, y).rotateRadExact(rotation * Mathf.degRad);
+        points.add(Tmp.v1.x + baseX, Tmp.v1.y + baseY);
     }
 
     static {
-        for(int i = 0; i < tmpV.length; ++i) {
+        for (int i = 0; i < tmpV.length; ++i) {
             tmpV[i] = new Vec3();
         }
-
     }
 }

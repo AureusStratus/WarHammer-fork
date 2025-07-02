@@ -5,13 +5,11 @@
 
 package wh.content;
 
-import arc.func.Boolf;
 import arc.graphics.Blending;
 import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
 import arc.graphics.g2d.Fill;
 import arc.graphics.g2d.Lines;
-import arc.graphics.g2d.TextureRegion;
 import arc.math.Angles;
 import arc.math.Interp;
 import arc.math.Mathf;
@@ -22,10 +20,8 @@ import arc.util.Time;
 import arc.util.Tmp;
 
 import java.util.Iterator;
-import java.util.Objects;
 
 import mindustry.Vars;
-import mindustry.ai.BlockIndexer;
 import mindustry.content.Fx;
 import mindustry.content.StatusEffects;
 import mindustry.entities.Damage;
@@ -33,14 +29,9 @@ import mindustry.entities.Effect;
 import mindustry.entities.Lightning;
 import mindustry.entities.Sized;
 import mindustry.entities.Units;
-import mindustry.entities.bullet.ArtilleryBulletType;
-import mindustry.entities.bullet.BasicBulletType;
-import mindustry.entities.bullet.BulletType;
-import mindustry.entities.bullet.ContinuousLaserBulletType;
-import mindustry.entities.bullet.FireBulletType;
-import mindustry.entities.bullet.FlakBulletType;
-import mindustry.entities.bullet.MissileBulletType;
+import mindustry.entities.bullet.*;
 import mindustry.entities.effect.MultiEffect;
+import mindustry.entities.effect.WrapEffect;
 import mindustry.game.Team;
 import mindustry.gen.Building;
 import mindustry.gen.Bullet;
@@ -52,11 +43,9 @@ import mindustry.gen.Sounds;
 import mindustry.gen.Teamc;
 import mindustry.gen.Unit;
 import mindustry.graphics.Drawf;
-import mindustry.graphics.Layer;
 import mindustry.graphics.Pal;
 import wh.entities.bullet.*;
 import wh.entities.effect.WrapperEffect;
-import wh.gen.PlasmaFire;
 import wh.gen.UltFire;
 import wh.gen.WHSounds;
 import wh.graphics.Drawn;
@@ -91,6 +80,7 @@ public final class WHBullets {
 
     public static BulletType PlasmaFireBall;
     public static BulletType sealedPromethiumMillBreak;
+    public static BulletType warpBreak;
     public static BulletType AGFrag;
     public static BulletType tankAG7;
     public static BulletType collaspsePf;
@@ -101,6 +91,7 @@ public final class WHBullets {
     }
 
     public static void load() {
+
         basicMissile = new MissileBulletType(4.2F, 15.0F) {
             {
                 homingPower = 0.12F;
@@ -1380,11 +1371,7 @@ public final class WHBullets {
         };
 
 
-
-
-
-
-        PlasmaFireBall = new FireBulletType(1.0F, 10.0F) {
+        PlasmaFireBall = new FireBulletType(1.0F, 30.0F) {
             {
                 colorFrom = colorMid = WHPal.SkyBlue;
                 lifetime = 12.0F;
@@ -1410,8 +1397,6 @@ public final class WHBullets {
                 if (Mathf.chanceDelta(fireEffectChance2)) {
                     trailEffect2.at(b.x, b.y);
                 }
-
-                ;
             }
         };
 
@@ -1465,8 +1450,41 @@ public final class WHBullets {
                 Lines.stroke(2);
                 Lines.circle(b.x, b.y, bullrtRadius);
             }
-
         };
+
+        warpBreak = new BasicBulletType(0, 100.0F) {
+            {
+                instantDisappear = true;
+                status = StatusEffects.slow;
+                statusDuration = 180.0F;
+                hitShake = 8.0F;
+                hitSound = Sounds.plasmaboom;
+                hitSoundVolume = 3.0F;
+                hitColor = lightColor = lightningColor = backColor = Pal.sapBullet;
+                despawnEffect = hitEffect = new MultiEffect(new WrapEffect(Fx.dynamicSpikes, hitColor, 70),
+                        new WrapEffect(Fx.titanExplosion, hitColor));
+                lightning = 5;
+                lightningLength = 10;
+                lightningLengthRand = 5;
+                lightningDamage = 30;
+                fragBullets = 15;
+                fragLifeMax = 2f;
+                fragBullet = new LightningBulletType( ) {
+                    {
+                        lifetime = 30;
+                        hitColor = lightningColor = Pal.sapBullet;
+                        despawnEffect = hitEffect = Fx.hitLancer;
+                        lightning = 1;
+                        lightningDamage = 30;
+                        lightningLength = 15;
+                    }
+                };
+                hitSound = WHSounds.hugeBlast;
+                hitSoundVolume = 4.0F;
+
+            }
+        };
+
 
         AGFrag = new LightningLinkerBulletType() {
             {
@@ -1525,85 +1543,81 @@ public final class WHBullets {
                 despawnEffect = WHFx.TankAG7BulletExplode;
             }
 
+            @Override
             public void despawned(Bullet b) {
                 super.despawned(b);
-                Vec2 vec = (new Vec2()).set(b);
+
+                Vec2 vec = new Vec2().set(b);
+
                 float damageMulti = b.damageMultiplier();
                 Team team = b.team;
-
-                for (int i = 0; (float) i < splashDamageRadius / 28.0F; ++i) {
+                for (int i = 0; i < splashDamageRadius / (tilesize * 3.5f); i++) {
                     int finalI = i;
-                    Time.run((float) i * despawnEffect.lifetime / (splashDamageRadius / 16.0F), () -> {
-                        Damage.damage(team, vec.x, vec.y, (float) (8 * (finalI + 6)), splashDamage * damageMulti, true);
+                    Time.run(i * despawnEffect.lifetime / (splashDamageRadius / (tilesize * 2)), () -> {
+                        Damage.damage(team, vec.x, vec.y, tilesize * (finalI + 6), splashDamage * damageMulti, true);
                     });
                 }
 
-                float rad = 120.0F;
-                float spacing = 2.5F;
+                Units.nearby(team, vec.x, vec.y, splashDamageRadius * 2, u -> {
+                    u.heal((1 - u.healthf()) / 3 * u.maxHealth());
+                    u.apply(StatusEffects.overclock, 360f);
+                });
 
-                for (int k = 0; (float) k < (despawnEffect.lifetime - WHFx.chainLightningFadeReversed.lifetime) / spacing; ++k) {
-                    Time.run((float) k * spacing, () -> {
-                        int[] var3 = Mathf.signs;
-                        int var4 = var3.length;
+              /*  Units.nearbyEnemies(team, vec.x, vec.y, splashDamageRadius * 2, u -> {
+                    u.apply(NHStatusEffects.scannerDown, 600f);
+                });*/
 
-                        for (int var5 = 0; var5 < var4; ++var5) {
-                            int j = var3[var5];
-                            Vec2 v = Tmp.v6.rnd(rad * 2.0F + Mathf.random(rad * 2.0F)).add(vec);
-                            (j > 0 ? WHFx.chainLightningFade : WHFx.chainLightningFadeReversed).at(v.x, v.y, 12.0F, hitColor, vec);
+                float rad = 120;
+                float spacing = 2.5f;
+
+                for (int k = 0; k < (despawnEffect.lifetime - WHFx.chainLightningFadeReversed.lifetime) / spacing; k++) {
+                    Time.run(k * spacing, () -> {
+                        for (int j : Mathf.signs) {
+                            Vec2 v = Tmp.v6.rnd(rad * 2 + Mathf.random(rad * 4)).add(vec);
+                            (j > 0 ? WHFx.chainLightningFade : WHFx.chainLightningFadeReversed).at(v.x, v.y, 12f, hitColor, vec);
                         }
                     });
                 }
             }
 
+            @Override
             public void update(Bullet b) {
-                float rad = 120.0F;
-                Effect.shake(8.0F * b.fin(), 6.0F, b);
-                if (b.timer(1, 12.0F)) {
-                    Seq<Teamc> entites = new Seq();
-                    Team var10000 = b.team;
-                    float var10001 = b.x;
-                    float var10002 = b.y;
-                    float var10003 = rad * 2.5F * (1.0F + b.fin()) / 2.0F;
-                    Objects.requireNonNull(entites);
-                    Units.nearbyEnemies(var10000, var10001, var10002, var10003, entites::add);
-                    Units.nearbyBuildings(b.x, b.y, rad * 2.5F * (1.0F + b.fin()) / 2.0F, (ex) -> {
-                        if (ex.team != b.team) {
-                            entites.add(ex);
-                        }
+                float rad = 120;
 
+                Effect.shake(8 * b.fin(), 6, b);
+
+                if (b.timer(1, 12)) {
+                    Seq<Teamc> entites = new Seq<>();
+
+                    Units.nearbyEnemies(b.team, b.x, b.y, rad * 2.5f * (1 + b.fin()) / 2, entites::add);
+
+                    Units.nearbyBuildings(b.x, b.y, rad * 2.5f * (1 + b.fin()) / 2, e -> {
+                        if (e.team != b.team) entites.add(e);
                     });
+
                     entites.shuffle();
                     entites.truncate(15);
-                    Iterator var4 = entites.iterator();
 
-                    while (var4.hasNext()) {
-                        Teamc e = (Teamc) var4.next();
-                        PositionLightning.create(b, b.team, b, e, lightningColor, false, lightningDamage, 5 + Mathf.random(5), 2.5F, 1, (p) -> {
-                            WHFx.lightningHitSmall.at(p.getX(), p.getY(), 0.0F, lightningColor);
+                    for (Teamc e : entites) {
+                        PositionLightning.create(b, b.team, b, e, lightningColor, false, lightningDamage, 5 + Mathf.random(5), PositionLightning.WIDTH, 1, p -> {
+                            WHFx.lightningHitSmall.at(p.getX(), p.getY(), 0, lightningColor);
                         });
                     }
                 }
 
-                if (b.lifetime() - b.time() > WHFx.chainLightningFadeReversed.lifetime) {
-                    for (int i = 0; i < 2; ++i) {
-                        if (Mathf.chanceDelta(0.2 * (double) Mathf.curve(b.fin(), 0.0F, 0.8F))) {
-                            int[] var10 = Mathf.signs;
-                            int var11 = var10.length;
-
-                            for (int var6 = 0; var6 < var11; ++var6) {
-                                int j = var10[var6];
-                                Sounds.spark.at(b.x, b.y, 1.0F, 0.3F);
-                                Vec2 v = Tmp.v6.rnd(rad / 2.0F + Mathf.random(rad * 2.0F) * (1.0F + Mathf.curve(b.fin(), 0.0F, 0.9F)) / 1.5F).add(b);
-                                (j > 0 ? WHFx.chainLightningFade : WHFx.chainLightningFadeReversed).at(v.x, v.y, 12.0F, hitColor, b);
-                            }
+                if (b.lifetime() - b.time() > WHFx.chainLightningFadeReversed.lifetime) for (int i = 0; i < 2; i++) {
+                    if (Mathf.chanceDelta(0.2 * Mathf.curve(b.fin(), 0, 0.8f))) {
+                        for (int j : Mathf.signs) {
+                            Sounds.spark.at(b.x, b.y, 1f, 0.3f);
+                            Vec2 v = Tmp.v6.rnd(rad / 2 + Mathf.random(rad * 2) * (1 + Mathf.curve(b.fin(), 0, 0.9f)) / 1.5f).add(b);
+                            (j > 0 ? WHFx.chainLightningFade : WHFx.chainLightningFadeReversed).at(v.x, v.y, 12f, hitColor, b);
                         }
                     }
                 }
 
-                if (b.fin() > 0.05F && Mathf.chanceDelta((double) (b.fin() * 0.3F + 0.02F))) {
-                    WHSounds.blaster.at(b.x, b.y, 1.0F, 0.3F);
-                    Tmp.v1.rnd(rad / 4.0F * b.fin());
-                    WHFx.shuttleLerp.at(b.x + Tmp.v1.x, b.y + Tmp.v1.y, Tmp.v1.angle(), hitColor, Mathf.random(rad, rad * 3.0F) * (Mathf.curve(b.fin(Interp.pow2In), 0.0F, 0.7F) + 2.0F) / 3.0F);
+                if (b.fin() > 0.05f && Mathf.chanceDelta(b.fin() * 0.3f + 0.02f)) {
+                    Tmp.v1.rnd(rad / 4 * b.fin());
+                    WHFx.shuttleLerp.at(b.x + Tmp.v1.x, b.y + Tmp.v1.y, Tmp.v1.angle(), hitColor, Mathf.random(rad, rad * 3f) * (Mathf.curve(b.fin(Interp.pow2In), 0, 0.7f) + 2) / 3);
                 }
             }
 

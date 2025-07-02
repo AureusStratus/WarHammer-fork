@@ -5,7 +5,7 @@
 
 package wh.graphics;
 
-import arc.KeyBinds;
+
 import arc.graphics.Color;
 import mindustry.content.Items;
 import mindustry.graphics.Pal;
