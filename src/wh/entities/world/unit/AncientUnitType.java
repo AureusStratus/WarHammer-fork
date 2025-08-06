@@ -11,9 +11,9 @@ import mindustry.gen.*;
 import mindustry.graphics.*;
 import mindustry.type.*;
 import mindustry.type.ammo.*;
+import mindustry.world.meta.*;
 import wh.content.*;
 import wh.graphics.*;
-import wh.entities.world.meta.*;
 
 import static arc.Core.*;
 import static arc.graphics.g2d.Lines.circleVertices;
@@ -35,7 +35,7 @@ public class AncientUnitType extends UnitType {
     public void setStats() {
         super.setStats();
         if (damageMultiplier < 1f) {
-            stats.add(WHStat.damageReduction, bundle.format("bar.wh-damage-reduction", Strings.autoFixed((1f - damageMultiplier) * 100, 2)));
+            stats.add( new Stat("wh-damage-reduction"), bundle.format("bar.wh-damage-reduction", Strings.autoFixed((1f - damageMultiplier) * 100, 2)));
         }
     }
 

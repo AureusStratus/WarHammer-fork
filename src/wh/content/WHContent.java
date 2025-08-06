@@ -9,14 +9,21 @@ import arc.Core;
 import arc.graphics.g2d.TextureRegion;
 import arc.util.*;
 import mindustry.ctype.*;
+import mindustry.graphics.*;
 import wh.core.*;
 
+import static wh.core.WarHammerMod.name;
+
 public class WHContent extends Content{
-    public static TextureRegion arrowRegion;
-    public static TextureRegion pointerRegion;
-    public static TextureRegion strafeRegion;
-    public static TextureRegion missileRegion;
-    public static TextureRegion bombRegion;
+    public static TextureRegion arrowRegion,
+     pointerRegion,
+    strafeRegion, missileRegion, bombRegion;
+
+    public static final float HEXAGONAL_SHIELD = Layer.shields + 12f;
+    public static final float VOID_SHIELD = Layer.shields + 9f;
+    public static final float POWER_AREA = Layer.power + 3f;
+    public static final float POWER_DYNAMIC = Layer.power + 4f;
+
     @Override
     public ContentType getContentType() {
         return ContentType.error;
@@ -28,8 +35,8 @@ public class WHContent extends Content{
     public void load() {
         arrowRegion = Core.atlas.find(WarHammerMod.name("jump-gate-arrow"));
         pointerRegion = Core.atlas.find(WarHammerMod.name("jump-gate-pointer"));
-        strafeRegion = Core.atlas.find(WarHammerMod.name("strafe-mode"));
-        missileRegion = Core.atlas.find(WarHammerMod.name("missile-mode"));
-        bombRegion = Core.atlas.find(WarHammerMod.name("bomb-mode"));
+        strafeRegion = Core.atlas.find(name("strafe-mode"));
+        missileRegion = Core.atlas.find(name("missile-mode"));
+        bombRegion = Core.atlas.find(name("bomb-mode"));
     }
 }

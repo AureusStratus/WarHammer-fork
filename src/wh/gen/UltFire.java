@@ -141,7 +141,7 @@ public class UltFire extends Fire {
 
                 if ((damageTimer += Time.delta) >= 40f) {
                     damageTimer = 0f;
-                    Puddlec p = Puddles.get(tile);
+                    Puddle p = Puddles.get(tile);
                     puddleFlammability = p != null ? p.getFlammability() / 3f : 0f;
                     if (damage) {
                         entity.damage(25f);

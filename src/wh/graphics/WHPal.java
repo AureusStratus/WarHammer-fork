@@ -24,6 +24,7 @@ public final class WHPal {
     public static Color pop2;
     public static Color OR;
     public static Color ORL;
+    public static Color Outline;
     public static Color Heat;
     public static Color SkyBlue;
     public static Color SkyBlueF;
@@ -52,6 +53,8 @@ public final class WHPal {
         OR = Color.valueOf("FFC397FF");
         ORL =Color.valueOf("FFA05C");
         Heat=Color.valueOf("FF4040");
+        Outline=Color.valueOf("383848");
+
         SkyBlue=Color.valueOf("579ED4FF");
         SkyBlueF=Color.valueOf("DBFFFDFF");
         TiSteelColor=Color.valueOf("80D2F3FF");

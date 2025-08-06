@@ -9,26 +9,42 @@ import arc.util.Tmp;
 import arc.util.pooling.Pool;
 import arc.util.pooling.Pools;
 import mindustry.Vars;
+import mindustry.game.*;
 import mindustry.game.EventType.*;
 import mindustry.graphics.*;
+import wh.content.*;
+
 import static arc.Core.*;
 
 public class MainRenderer{
     private final Seq<BlackHole> holes = new Seq<>();
-    private static MainRenderer renderer;
+    public static MainRenderer renderer;
 
-    private FrameBuffer buffer;
+    public FrameBuffer buffer = new FrameBuffer();
+    public FrameBuffer buffer2 = new FrameBuffer();
+    public int width, height;
 
     private static final float[][] initFloat = new float[512][];
     private static final Pool<BlackHole> holePool = Pools.get(BlackHole.class, BlackHole::new);
 
     protected MainRenderer(){
-        if(!Vars.headless) {
-            MainShader.createShader();
-
-            buffer = new FrameBuffer();
-            Events.run(Trigger.draw, this::advancedDraw);
+        if(!Vars.headless){
+            WHShaders.createHoleShader();
+            Events.run(EventType.Trigger.draw, this::draw);
         }
+    }
+
+    public void draw() {
+        width = graphics.getWidth();
+        height = graphics.getHeight();
+
+        buffer2.resize(graphics.getWidth(), graphics.getHeight());
+        drawShader(WHShaders.powerArea, WHContent.POWER_AREA,0.001f);
+        drawShader(WHShaders.powerDynamicArea, WHContent.POWER_DYNAMIC,0.001f);
+        if (Vars.renderer.animateShields) {
+            drawShader(WHShaders.HexagonalShield, WHContent.HEXAGONAL_SHIELD,0.3f);
+        }
+        advancedDraw();
     }
 
     public static void init(){
@@ -38,9 +54,19 @@ public class MainRenderer{
         }
     }
 
+    public void drawShader(Shader shader, float layer,float range) {
+        if (shader != null) {
+            Draw.drawRange(layer, range, () -> buffer2.begin(Color.clear), () -> {
+                buffer2.end();
+                buffer2.blit(shader);
+            });
+        }
+    }
+
     public static void addBlackHole(float x, float y, float inRadius, float outRadius, float alpha){
         if(!Vars.headless) renderer.addHole(x, y, inRadius, outRadius, alpha);
     }
+
     public static void addBlackHole(float x, float y, float inRadius, float outRadius){
         if(!Vars.headless) renderer.addHole(x, y, inRadius, outRadius, 1);
     }
@@ -50,15 +76,15 @@ public class MainRenderer{
             holes.clear();
             return;
         }
-        Draw.draw(Layer.background - 1.1f, () -> {
+        Draw.draw(Layer.background - 1, () -> {
             buffer.resize(graphics.getWidth(), graphics.getHeight());
             buffer.begin();
         });
 
-        Draw.draw(Layer.max - 1, () -> {
+        Draw.draw(Layer.space +10, () -> {
             buffer.end();
 
-            if(holes.size >= MainShader.MaxCont) MainShader.createShader();
+            if(holes.size >= WHShaders.MaxCont) WHShaders.createHoleShader();
 
             float[] blackholes = initFloat[holes.size];
 
@@ -72,10 +98,11 @@ public class MainRenderer{
                 Draw.color(Tmp.c2.set(Color.black).a(hole.alpha));
                 Fill.circle(hole.x, hole.y, hole.inRadius * 1.5f);
                 Draw.color();
+
                 holePool.free(hole);
             }
-            MainShader.holeShader.blackHoles = blackholes;
-            buffer.blit(MainShader.holeShader);
+            WHShaders.holeShader.blackHoles = blackholes;
+            buffer.blit(WHShaders.holeShader);
 
             buffer.begin();
             Draw.rect();

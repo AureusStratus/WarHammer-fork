@@ -7,41 +7,68 @@ package wh.gen;
 
 import arc.Core;
 import arc.Events;
-import arc.struct.Seq;
+import arc.struct.*;
 import mindustry.core.GameState.State;
-import mindustry.game.EventType;
-import wh.entities.world.blocks.defense.CommandableBlock;
+import mindustry.game.*;
+import mindustry.game.EventType.*;
+import mindustry.gen.*;
+import wh.entities.world.blocks.defense.*;
+import wh.entities.world.blocks.defense.AirRaiderCallBlock.*;
+import wh.entities.world.blocks.defense.CommandableBlock.*;
+import wh.graphics.*;
 
-public final class WorldRegister {
-    public static final Seq<Runnable> afterLoad = new Seq();
-    public static final Seq<CommandableBlock.CommandableBlockBuild> commandableBuilds = new Seq();
+import static wh.graphics.MainRenderer.renderer;
+
+public class WorldRegister {
+    public static final Seq<Runnable> afterLoad = new Seq<>();
+    public static final Seq<CommandableBlockBuild> commandableBuilds = new Seq<>();
+    public static final Seq<AirRaiderUnitBuild> ARBuilds = new Seq<>();
+    public static final ObjectMap<Team, ObjectMap<Class<?>, ObjectSet<Building>>> placedBuildings = new ObjectMap<>();
+    static {
+        for (Team team : Team.all) {
+            placedBuildings.put(team, new ObjectMap<>());
+        }
+    }
     public static boolean worldLoaded = false;
 
     private WorldRegister() {
     }
 
-    public static void postAfterLoad(Runnable runnable) {
-        if (worldLoaded) {
-            afterLoad.add(runnable);
+    // 获取某队某类型的建筑的总数
+    public static <T extends Building> ObjectSet<T> getPlaced(Team team, Class<T> type) {
+        ObjectMap<Class<?>, ObjectSet<Building>> teamMap = placedBuildings.get(team);
+
+        if (teamMap == null) {
+            teamMap = new ObjectMap<>();
+            placedBuildings.put(team, teamMap);
         }
 
+        ObjectSet<Building> set = teamMap.get(type);
+        if (set == null) {
+            set = new ObjectSet<>();
+            teamMap.put(type, set);
+        }
+        return (ObjectSet<T>) set;
+    }
+
+    public static <T extends Building> void addPlaced(Team team, T building) {
+        getPlaced(team, (Class<T>) building.getClass()).add(building);
+    }
+
+    public static <T extends Building> void removePlaced(Team team, T building) {
+        getPlaced(team, (Class<T>) building.getClass()).remove(building);
+    }
+
+    public static void clear() {
+        commandableBuilds.clear();
+        ARBuilds.clear();
+        AirRaiderCallBlock.clear();
     }
 
     public static void load() {
         Events.on(EventType.ResetEvent.class, (e) -> {
-            commandableBuilds.clear();
+            WorldRegister.clear();
             worldLoaded = true;
-        });
-        Events.on(EventType.WorldLoadEvent.class, (e) -> {
-            Core.app.post(() -> {
-                worldLoaded = false;
-            });
-        });
-        Events.on(EventType.StateChangeEvent.class, (e) -> {
-            if (e.to == State.menu) {
-                worldLoaded = true;
-            }
-
         });
     }
 }

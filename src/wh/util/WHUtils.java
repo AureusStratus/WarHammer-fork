@@ -67,6 +67,8 @@ public final class WHUtils {
         private static final Seq<Hit> hitEffects = new Seq<>();
         private WHUtils() {}
 
+
+    //这一块也要删除
         @Contract(pure = true)
         public static int reverse(int rotation) {
             return switch (rotation) {
@@ -96,12 +98,15 @@ public final class WHUtils {
             return tiles;
         }
 
+        //
+
         /**
          * Gets multiple regions inside a {@link TextureRegion}.
          *
          * @param width  The amount of regions horizontally.
          * @param height The amount of regions vertically.
          */
+        //删掉 ultFire
         public static TextureRegion[] split(String name, int size, int width, int height) {
             TextureRegion textures = atlas.find(name);
             int textureSize = width * height;
@@ -138,6 +143,14 @@ public final class WHUtils {
             if (from.x < to.x && from.y == to.y) return (4 - from.rotation) % 4;
             return -1;
         }
+
+        public static float dx(float px, float r, float angle) {
+        return px + r * (float) Math.cos(angle * Math.PI / 180);
+    }
+
+        public static float dy(float py, float r, float angle) {
+        return py + r * (float) Math.sin(angle * Math.PI / 180);
+    }
 
         public static void drawTiledFramesBar(float w, float h, float x, float y, Liquid liquid, float alpha) {
             TextureRegion region = renderer.fluidFrames[liquid.gas ? 1 : 0][liquid.getAnimationFrame()];
@@ -256,6 +269,7 @@ public final class WHUtils {
                 items[ii] = temp;
             }
         }
+
     public static Seq<Tile> getAcceptableTiles(int x, int y, int range, Boolf<Tile> bool){
         Seq<Tile> tiles = new Seq<>(true, (int)(Mathf.pow(range, 2) * Mathf.pi), Tile.class);
         Geometry.circle(x, y, range, (x1, y1) -> {
@@ -264,7 +278,7 @@ public final class WHUtils {
             }
         });
         return tiles;
-    }
+    }//有效位置
 
     private static void clearTmp(){
         tileParma = null;
@@ -272,26 +286,9 @@ public final class WHUtils {
         tiles.clear();
     }
 
-    public static Color getColor(Color defaultColor, Team team){
-        return defaultColor == null ? team.color : defaultColor;
-    }
-
     public static void limitRangeWithoutNew(ItemTurret turret, float margin){
         for(ObjectMap.Entry<Item, BulletType> entry : turret.ammoTypes.entries()){
             entry.value.lifetime = (turret.range + margin) / entry.value.speed;
-        }
-    }
-
-    //not support server
-    public static void spawnSingleUnit(UnitType type, Team team, int spawnNum, float x, float y){
-        for(int spawned = 0; spawned < spawnNum; spawned++){
-            Time.run(spawned * Time.delta, () -> {
-                Unit unit = type.create(team);
-                if(unit != null){
-                    unit.set(x, y);
-                    unit.add();
-                }else Log.info("Unit == null");
-            });
         }
     }
 
@@ -330,35 +327,25 @@ public final class WHUtils {
 
     public static Seq<Tile> ableToSpawn(UnitType type, float x, float y, float range){
         Seq<Tile> tSeq = new Seq<>(Tile.class);
-
         Boolf<Tile> boolf = ableToSpawn(type);
-
         return tSeq.addAll(getAcceptableTiles(toTile(x), toTile(y), toTile(range), boolf));
     }
 
-    public static boolean ableToSpawnPoints(
-            Seq<Vec2> spawnPoints, // 输出参数：用于存储生成的坐标
-            UnitType type,         // 要生成的单位类型
-            float x, float y,      // 生成中心坐标 (世界坐标)
-            float range,           // 生成半径 (世界单位)
-            int num,               // 需要生成的单位数量
-            long seed              // 随机种子 (保证客户端与服务端一致性)
-    ){
-        // 步骤 1：获取所有符合条件的可生成区域
+    public static boolean hasAnyValidSpawnPosition(UnitType type, float x, float y, float range) {
+        if(type == null) return false;
+        //获取可生成的位置
+        Seq<Tile> validTiles = ableToSpawn(type, x, y, range);
+        return validTiles.any();
+    }
+
+    public static boolean ableToSpawnPoints(Seq<Vec2> spawnPoints, UnitType type,
+                                            float x, float y, float range, int num, long seed){
         Seq<Tile> tSeq = ableToSpawn(type, x, y, range);
-
-        // 步骤 2：初始化随机数生成器
         rand.setSeed(seed);
-
-        // 步骤 3：尝试生成指定数量的有效位置
         for(int i = 0; i < num; i++){
             // 将 Tile 序列转换为数组并清空原序列
             Tile[] positions = tSeq.shrink();
-
-            // 检查可用位置是否足够
             if(positions.length < num)return false;
-
-            // 随机选择一个位置并转换为世界坐标
             spawnPoints.add(new Vec2().set(positions[rand.nextInt(positions.length)]));
         }
 
@@ -368,31 +355,17 @@ public final class WHUtils {
 
     public static boolean spawnUnit(Team team, float x, float y, float angle, float spawnRange, float spawnReloadTime, float spawnDelay, UnitType type, int spawnNum,boolean airdrop, Cons<Spawner> modifier){
         if(type == null)return false;
-
-        // 2. 清理临时数据
         clearTmp();
-
-        // 3. 创建生成点容器
         Seq<Vec2> vectorSeq = new Seq<>();
 
-        // 4. 获取有效生成位置（核心逻辑）
+        // 获取有效生成位置
         if(!ableToSpawnPoints(vectorSeq, type, x, y, spawnRange, spawnNum, rand.nextLong()))return false;
 
-        // 5. 遍历所有生成点
         int i = 0;
         for (Vec2 s : vectorSeq) {
-            // 6. 从对象池获取生成器
             Spawner spawner = Pools.obtain(Spawner.class, Spawner::new);
+            spawner.init(type, team, s, angle, spawnReloadTime + i * spawnDelay, airdrop);
 
-            // 7. 初始化生成参数
-            spawner.init(
-                    type,             // 要生成的单位类型
-                    team,             // 所属队伍
-                    s,                // 生成位置坐标
-                    angle,            // 初始朝向角度
-                    spawnReloadTime + i * spawnDelay,// 生成延迟时间（基础时间 + 递增延迟）
-                    airdrop
-            );
             modifier.get(spawner);
             if(!net.client())spawner.add();
             i++;

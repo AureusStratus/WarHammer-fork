@@ -7,14 +7,13 @@ import mindustry.entities.*;
 import mindustry.entities.bullet.*;
 import mindustry.graphics.*;
 import mindustry.ui.*;
-import mindustry.world.blocks.defense.turrets.*;
 import mindustry.world.meta.*;
 
 import static arc.Core.*;
 import static mindustry.Vars.*;
 import static mindustry.world.meta.StatValues.liquids;
 
-public class SpeedupTurret extends PowerTurret {
+public class SpeedupTurret extends EnhancedPowerTurret{
     public float overheatTime = 360f;
     public float overheatCoolAmount = 1.25f;
 

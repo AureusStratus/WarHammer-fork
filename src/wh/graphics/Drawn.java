@@ -52,7 +52,6 @@ public final class Drawn {
     static final Vec3 tmpV2 = new Vec3();
     static final TextureRegion t1 = new TextureRegion();
     static final TextureRegion t2 = new TextureRegion();
-    static final TextureRegion nRegion = new TextureRegion();
     static final Vec2 v1 = new Vec2();
     static final Vec2 v2 = new Vec2();
     static final Vec2 v3 = new Vec2();
@@ -63,13 +62,6 @@ public final class Drawn {
     static final Vec3 v31 = new Vec3();
     static final Vec3 v32 = new Vec3();
     static final Vec3 v33 = new Vec3();
-    static final Vec3 v34 = new Vec3();
-    static final Vec3 v35 = new Vec3();
-    static final Vec3 v36 = new Vec3();
-    static final Vec3 v37 = new Vec3();
-    static final Vec3 v38 = new Vec3();
-    static final Vec3 v39 = new Vec3();
-    static final Vec3 v310 = new Vec3();
     static final Color c1 = new Color();
     static final Color c2 = new Color();
     static final Color c3 = new Color();
@@ -130,10 +122,15 @@ public final class Drawn {
         Fill.quad(x + r1 * cos, y + r1 * sin, x + r1 * cos2 + v1.x, y + r1 * sin2 + v1.y, x + r2 * cos2 + v1.x, y + r2 * sin2 + v1.y, x + r2 * cos, y + r2 * sin);
     }
 
+    public static void circlePercentFlip(float x, float y, float rad, float in, float scl) {
+        float f = Mathf.cos(in % (scl * 3.0F), scl, 1.1F);
+        circlePercent(x, y, rad, f > 0.0F ? f : -f, in + (float) (-90 * Mathf.sign(f)));
+    }
+
     public static void arcProcess(float x, float y, float radius, float fraction, float rotation, int sides, float progress){
         int max = Mathf.ceil(sides * fraction);
         points.clear();
-        int progressMax = Math.min(max, Mathf.ceil(max * progress));
+        float progressMax = Math.min(max, max * progress);
 
         for(int i = 0; i <= progressMax; i++){
             v6.trns((float)i / max * fraction * 360f + rotation, radius);
@@ -149,7 +146,7 @@ public final class Drawn {
     }
 
     public static void posSquareLink(Color color, float stroke, float size, boolean drawBottom, float x, float y, float x2, float y2) {
-        posSquareLink(color, stroke, size, drawBottom, v6.set(x, y), v6.set(x2, y2));
+        posSquareLink(color, stroke, size, drawBottom, v1.set(x, y), v2.set(x2, y2));
     }
 
     public static void posSquareLink(Color color, float stroke, float size, boolean drawBottom, Position from, Position to) {
@@ -301,12 +298,6 @@ public final class Drawn {
         Fill.tri(x + wx, y + wy, x - wx, y - wy, Angles.trnsx(angle, length) + x, Angles.trnsy(angle, length) + y);
     }
 
-    public static void circlePercentFlip(float x, float y, float rad, float in, float scl) {
-        float f = Mathf.cos(in % (scl * 3.0F), scl, 1.1F);
-        circlePercent(x, y, rad, f > 0.0F ? f : -f, in + (float) (-90 * Mathf.sign(f)));
-    }
-
-
     public static void fillOctagon(float x, float y, float range, float f,Color color) {
 
         float r = Math.max(0f, Mathf.clamp(2f - f * 2f) * range/2 -0.2f-f ),
@@ -316,7 +307,7 @@ public final class Drawn {
         Draw.alpha(0.5f * Mathf.curve(f, 0, 0.4f));
         points.clear();
         for (int i = 0; i < 4; i++) {
-            points.add(x + Geometry.d4(i).x * r + Geometry.d4(i).y * w,
+                points.add(x + Geometry.d4(i).x * r + Geometry.d4(i).y * w,
                     y + Geometry.d4(i).y * r - Geometry.d4(i).x * w);
             if (f < 0.5f) {
                 points.add(x + Geometry.d4(i).x * r - Geometry.d4(i).y * w,
@@ -330,7 +321,7 @@ public final class Drawn {
         Lines.stroke(3.5f * Mathf.curve(1-f, 0f, 0.3f));
         Lines.beginLine();
         for (int i = 0; i < 4; i++) {
-            Lines.linePoint(x + Geometry.d4(i).x * r + Geometry.d4(i).y * w, y + Geometry.d4(i).y * r - Geometry.d4(i).x * w);
+                Lines.linePoint(x + Geometry.d4(i).x * r + Geometry.d4(i).y * w, y + Geometry.d4(i).y * r - Geometry.d4(i).x * w);
             if (f < 0.5f)
                 Lines.linePoint(x + Geometry.d4(i).x * r - Geometry.d4(i).y * w, y + Geometry.d4(i).y * r + Geometry.d4(i).x * w);
         }
@@ -390,17 +381,14 @@ public final class Drawn {
         }
     }
 
+
+
     public static void ellipse(float x, float y, int divisions, float rotation, float width, float length){
         points.clear();
         for(int i = 0; i < divisions; i++){
             float angle = 360f * i / (float)divisions;
             Tmp.v1.trnsExact(angle, width);
-            point(
-                    Tmp.v1.x / width * length,
-                    Tmp.v1.y,
-                    x, y,
-                    rotation
-            );
+            point(Tmp.v1.x / width * length, Tmp.v1.y, x, y, rotation);
         }
         Fill.poly(points);
     }
@@ -411,14 +399,8 @@ public final class Drawn {
         for(int i = 0; i <= progressMax; i++) {
             float angle = 360f * i / (float)divisions;
             Tmp.v1.trnsExact(angle, width);
-            point(
-                    Tmp.v1.x / width * length,
-                    Tmp.v1.y,
-                    x, y,
-                    rotation
-            );
+            point(Tmp.v1.x / width * length, Tmp.v1.y, x, y, rotation);
         }
-
         polyline(points, false);
     }
 
@@ -435,9 +417,4 @@ public final class Drawn {
         points.add(Tmp.v1.x + baseX, Tmp.v1.y + baseY);
     }
 
-    static {
-        for (int i = 0; i < tmpV.length; ++i) {
-            tmpV[i] = new Vec3();
-        }
-    }
 }

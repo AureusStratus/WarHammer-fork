@@ -7,11 +7,15 @@ package wh.core;
 
 import arc.Core;
 import arc.Events;
+import arc.graphics.*;
+import arc.graphics.g2d.*;
 import arc.util.Log;
 import arc.util.Time;
 import java.util.Objects;
 import mindustry.Vars;
 import mindustry.game.EventType;
+import mindustry.game.EventType.*;
+import mindustry.graphics.*;
 import mindustry.mod.Mod;
 import mindustry.ui.dialogs.ResearchDialog;
 import wh.content.*;
@@ -24,11 +28,6 @@ import wh.ui.dialogs.WHResearchDialog;
 
 public class WarHammerMod extends Mod {
     public static String ModName = "wh";
-    public static boolean DEBUGGING = false;
-
-    public static void debugLog(Object obj){
-        if(DEBUGGING)Log.info(obj);
-    }
 
     public WarHammerMod() {
         WHClassMap.load();
@@ -37,7 +36,6 @@ public class WarHammerMod extends Mod {
                 WHSounds.load();
                 Core.app.post(WHShaders::init);
             }
-
         });
     }
 
@@ -48,13 +46,11 @@ public class WarHammerMod extends Mod {
 
     @Override
     public void init() {
-
         MainRenderer.init();
         WHResearchDialog dialog = new WHResearchDialog();
         ResearchDialog research = Vars.ui.research;
         research.shown(() -> {
             dialog.show();
-            Objects.requireNonNull(research);
             Objects.requireNonNull(research);
             Time.runTask(1.0F, research::hide);
         });

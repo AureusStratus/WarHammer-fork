@@ -148,12 +148,11 @@ public class PlasmaFire extends Fire{
 
             if ((damageTimer += Time.delta) >= damageDelay) {
                 damageTimer = 0.0F;
-                Puddlec p = Puddles.get(tile);
-                puddleFlammability = p != null ? p.getFlammability() / 3.0F : 0;
+                Puddle p = Puddles.get(tile);
+                puddleFlammability = p != null ? p.getFlammability() / 3f : 0;
                 if (damage) {
                     entity.damage(tileDamage);
                 }
-
                 Damage.damageUnits(null, tile.worldx(), tile.worldy(), 8f, 15f, (unit) -> !unit.isFlying() && !unit.isImmune(WHStatusEffects.PlasmaFireBurn), (unit) -> {
                     unit.apply(WHStatusEffects.PlasmaFireBurn, 300f);
 

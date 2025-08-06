@@ -10,6 +10,7 @@ import mindustry.world.blocks.storage.*;
 import static mindustry.Vars.*;
 
 public class FrontlineCoreBlock extends CoreBlock {
+    //TODO 可以加点bar
     public int max = 8;
     public boolean killed = false;
 
@@ -19,12 +20,10 @@ public class FrontlineCoreBlock extends CoreBlock {
     public FrontlineCoreBlock(String name) {
         super(name);
     }
-
     @Override
     public boolean canBreak(Tile tile) {
         return state.teams.cores(tile.team()).size > 1;
     }
-
     @Override
     public boolean canReplace(Block other) {
         return other.alwaysReplace;

@@ -20,6 +20,7 @@
     "warmupMaintainTime": 400,
     "shootWarmupSpeed": 0.03,
     "squareSprite": false,
+    "recoils": 3,
     "drawer": {
         "type": "DrawTurret",
         "parts": [

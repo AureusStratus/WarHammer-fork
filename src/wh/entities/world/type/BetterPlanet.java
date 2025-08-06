@@ -47,6 +47,7 @@ public class BetterPlanet extends Planet {
         }
     }
 
+
     @Override
     public void drawAtmosphere(Mesh atmosphere, Camera3D cam) {
         Gl.depthMask(false);
@@ -67,7 +68,7 @@ public class BetterPlanet extends Planet {
         protected Mesh mesh;
 
         public AtmosphereHexMesh(HexMesher mesher, int divisions) {
-            mesh = MeshBuilder.buildHex(mesher, divisions, false, radius, 0.2f);
+            mesh = MeshBuilder.buildHex(mesher, divisions, radius, 0.2f);
         }
 
         public AtmosphereHexMesh(int divisions) {
@@ -102,6 +103,11 @@ public class BetterPlanet extends Planet {
             shader.setUniformMatrix4("u_trans", transform.val);
             shader.apply();
             mesh.render(shader, Gl.triangles);
+        }
+
+        @Override
+        public void dispose(){
+            mesh.dispose();
         }
     }
 }

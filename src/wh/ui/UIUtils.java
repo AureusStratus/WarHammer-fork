@@ -33,7 +33,7 @@ import java.text.*;
 
 import static arc.Core.*;
 import static mindustry.Vars.*;
-import static mindustry.world.meta.StatValues.displayItem;
+import static mindustry.world.meta.StatValues.*;
 
 public final class UIUtils{
     public static final float LEN = 60f;
@@ -336,6 +336,48 @@ public final class UIUtils{
                 }
             }).growX().colspan(table.getColumns());
             table.row();
+        };
+    }
+    public static StatValue enhancedAmmo(ObjectMap<Item, Item> enhancerMap){
+        return table -> {
+            table.row();
+            table.table(Styles.grayPanel, bt -> {
+                bt.left().top().defaults().padRight(15);
+
+                // 创建分组映射：强化物品 -> 主弹药列表
+                ObjectMap<Item, Seq<Item>> groups = new ObjectMap<>();
+                enhancerMap.each((base, enhancer) -> {
+                    groups.get(enhancer, Seq::new).add(base);
+                });
+
+                int count = 0;
+                for(Item enhancer : groups.keys()){
+                    // 创建基础弹药图标列表
+                    bt.table(baseTable -> {
+                        baseTable.defaults().padRight(4);
+                        for(Item base : groups.get(enhancer)){
+                            baseTable.add(new Table(item -> {
+                                item.image(base.uiIcon).size(24).scaling(Scaling.fit);
+                                item.add(base.localizedName).padLeft(4);
+                            })).padRight(2);
+
+                            if(base == groups.get(enhancer).peek()) baseTable.add("->");
+                            else baseTable.add("/");
+                        }
+                    });
+
+                    bt.table(enhancerTable -> {
+                        // 强化物品图标+名称
+                        enhancerTable.image(enhancer.uiIcon).size(24).scaling(Scaling.fit);
+                        enhancerTable.add(enhancer.localizedName).padLeft(4);
+                    }).left().padRight(4);
+
+
+                    if(++count % 4 == 0){
+                        bt.row();
+                    }
+                }
+            });
         };
     }
 }
