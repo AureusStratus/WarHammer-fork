@@ -55,6 +55,7 @@ import static arc.graphics.g2d.Lines.circleVertices;
 import static mindustry.Vars.tilesize;
 import static mindustry.gen.Sounds.plasmaboom;
 import static wh.content.WHFx.*;
+import static wh.core.WarHammerMod.name;
 
 public final class WHBullets{
     public static BulletType basicMissile;
@@ -90,10 +91,15 @@ public final class WHBullets{
     public static BulletType collaspsePf;
     public static BulletType collapseSp;
     public static BulletType SK;
+
     //空袭
     public static BulletType airRaiderMissile;
     public static BulletType airRaiderBomb;
 
+    //炮塔
+    public static BulletType CrushBulletLead;
+    public static BulletType CrushBulletMetaGlass;
+    public static BulletType CrushBulletTiSteel;
 
     private WHBullets(){
     }
@@ -2027,5 +2033,67 @@ public final class WHBullets{
                 }
             }
         };
+
+        CrushBulletLead= new FlakBulletType(6.5f, 10){{
+            ammoMultiplier=3;
+            speed=6.5f;
+            lifetime=60f;
+            width=6;
+            height=8;
+            trailWidth=1.5f;
+            trailLength=5;
+            trailSinScl = 4f;
+            trailSinMag = 0.12f;
+            explodeRange=splashDamageRadius=24;
+            splashDamageRadius=24;
+            explodeRange=15;
+            shootEffect = Fx.shootSmall;
+            hitEffect=Fx.flakExplosion;
+            collidesGround=true;
+        }};
+
+        CrushBulletMetaGlass= new FlakBulletType(6.5f, 10){{
+            ammoMultiplier=3;
+            speed=6.5f;
+            lifetime=60f;
+            width=9;
+            height=9;
+            trailWidth=1.5f;
+            trailLength=5;
+            trailSinScl = 4f;
+            trailSinMag = 0.12f;
+            damage=splashDamage=30f;
+            explodeRange=splashDamageRadius=24;
+            backColor = hitColor = trailColor = Pal.glassAmmoBack;
+            shootEffect = Fx.shootSmall;
+            hitEffect=Fx.flakExplosion;
+            fragBullet = new BasicBulletType(3f, 12, name("tall")){{
+                width = 10f;
+                height = 10f;
+                shrinkY = 1f;
+                lifetime = 20f;
+                backColor = Pal.gray;
+                frontColor = Color.white;
+                despawnEffect = Fx.none;
+            }};
+        }};
+
+        CrushBulletTiSteel= new FlakBulletType(6.5f, 10){{
+            ammoMultiplier=3;
+            speed=6.5f;
+            lifetime=60f;
+            width=6;
+            height=8;
+            trailWidth=1.5f;
+            trailLength=5;
+            trailSinScl = 4f;
+            trailSinMag = 0.12f;
+            damage=splashDamage=45f;
+            explodeRange=splashDamageRadius=28;
+            shootEffect = Fx.shootSmall;
+            hitEffect=new WrapEffect(Fx.flakExplosion, WHPal.TiSteelColor);
+            backColor = hitColor = trailColor = WHPal.TiSteelColor;
+            collidesGround=true;
+        }};
     }
 }

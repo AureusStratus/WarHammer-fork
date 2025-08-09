@@ -1,3 +1,4 @@
+/*
 {
 	"type": "ItemTurret",
 	"name": "镇压",
@@ -97,4 +98,4 @@
 	"research": {
 		"parent": "imperium"
 	}
-}
+}*/

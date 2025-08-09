@@ -76,13 +76,13 @@ public class MainRenderer{
             holes.clear();
             return;
         }
-        Draw.draw(Layer.background - 1, () -> {
+        Draw.draw(Layer.floor - 8, () -> {
             buffer.resize(graphics.getWidth(), graphics.getHeight());
-            buffer.begin();
+            if(!buffer.isBound()) buffer.begin();
         });
 
-        Draw.draw(Layer.space +10, () -> {
-            buffer.end();
+        Draw.draw(Layer.space +16, () -> {
+            if(buffer.isBound()) buffer.end();
 
             if(holes.size >= WHShaders.MaxCont) WHShaders.createHoleShader();
 
@@ -104,9 +104,9 @@ public class MainRenderer{
             WHShaders.holeShader.blackHoles = blackholes;
             buffer.blit(WHShaders.holeShader);
 
-            buffer.begin();
+            if(!buffer.isBound()) buffer.begin();
             Draw.rect();
-            buffer.end();
+            if(buffer.isBound()) buffer.end();
             holes.clear();
         });
     }

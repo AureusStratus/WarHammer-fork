@@ -53,6 +53,7 @@ import wh.entities.world.drawer.*;
 
 import static mindustry.Vars.tilesize;
 import static mindustry.type.ItemStack.with;
+import static mindustry.world.meta.StatValues.ammo;
 import static wh.graphics.WHPal.CeramiteColor;
 import static wh.graphics.WHPal.TiSteelColor;
 
@@ -81,8 +82,24 @@ public final class WHBlocks{
     //power
     public static Block T2steamGenerator, T2thermalGenerator, T2impactReactor, plaRector, promethiunmRector,
     Mbattery, Lbattery, MK3battery, TiNode, T2TiNode;
+
+    //units
+
     //turrets
-    public static Block flash, collapse, Deflection;
+    public static Block
+    //22
+    Crush,AutoGun,
+    //33
+    Lcarus,SSWord,Shard,Prevent,Deflection,
+    //44
+    Pyros,Ionize,Viper,HeavyHammer,Flash,
+    //55
+    Collapse,Colossus,Crumble,CycloneMissleLauncher,
+    //66
+    Hydra,Erase,Annihilate,Melta,
+    //88,88+
+    Hector,Mezoa;
+
     //TEST
     public static Block sb, sb3, sb4, sb5, sb6, sb7, sb8, sb9, sb10, sb11, sb12, sb13, sb14, sb15, sb16, airDrop;
 
@@ -1272,7 +1289,7 @@ public final class WHBlocks{
             }
         };
 
-        steelDust = new CoConveyor("steel-dust"){{
+        steelDust = new CoverdConveyor("steel-dust"){{
 
             requirements(Category.distribution, with(WHItems.titaniumSteel, 2, Items.lead, 1, Items.silicon, 2));
 
@@ -1336,7 +1353,7 @@ public final class WHBlocks{
             }
         }};
 
-        ceramiteConveyor = new StackConveyor("ceramite-conveyor"){{
+        ceramiteConveyor = new BetterStackConvyor("ceramite-conveyor"){{
 
             requirements(Category.distribution, with(Items.lead, 5, Items.silicon, 4, WHItems.titaniumSteel, 3, WHItems.ceramite, 2));
 
@@ -1611,7 +1628,7 @@ public final class WHBlocks{
             }
         };
 
-        flash = new
+        Flash = new
 
         PowerTurret("Flash"){
             {
@@ -1631,7 +1648,7 @@ public final class WHBlocks{
         }
 
         ;
-        collapse = new
+        Collapse = new
 
         ItemTurret("Collapse"){
             {
@@ -1842,6 +1859,48 @@ public final class WHBlocks{
             consumePower(100f);
         }};
 
+        Crush = new ItemTurret("Crush"){{
+
+            requirements(Category.turret, with(Items.copper, 80, Items.lead, 80));
+
+            health=600;
+            size = 2;
+            range = 180;
+            reload = 20;
+            maxAmmo=30;
+            inaccuracy = 6; xRand = 0.1f;
+            heatColor =Pal.turretHeat;
+            recoilTime = 10;  recoil = 0.5f;
+            outlineColor=WHPal.Outline;
+            outlineRadius = 3;
+            shootCone = 30f;
+            shootSound = Sounds.shootSnap;
+            coolant = consumeCoolant(0.3f);
+            ammo(
+                Items.lead,WHBullets.CrushBulletLead,
+                Items.metaglass,WHBullets.CrushBulletMetaGlass,
+                WHItems.titaniumSteel,WHBullets.CrushBulletTiSteel
+            );
+            drawer=new DrawTurret("turret");
+            alwaysUnlocked=true;
+            researchCostMultiplier = 0.6f;
+        }};
+
+        Deflection = new BulletDefenseTurret("Deflection"){{
+
+            requirements(Category.turret, with(WHItems.titaniumSteel, 500, Items.carbide, 200, WHItems.ceramite, 200, WHItems.refineCeramite, 100, WHItems.sealedPromethium, 50));
+
+            size = 4;
+            health = 5300;
+            outlineColor = Color.valueOf("36363CFF");
+            outlineRadius = 3;
+            shootWarmupSpeed = 0.1f;
+            minWarmup = 0.8f;
+            warmupMaintainTime = 120f;
+            researchCostMultiplier = 0.6f;
+        }};
+        //Test
+
         UnitCallBlock airDrop = new UnitCallBlock("air-drop-unit"){
             {
                 addSets(
@@ -1953,19 +2012,7 @@ public final class WHBlocks{
         }};
 
 
-        Deflection = new BulletDefenseTurret("Deflection"){{
 
-            requirements(Category.turret, with(WHItems.titaniumSteel, 500, Items.carbide, 200, WHItems.ceramite, 200, WHItems.refineCeramite, 100, WHItems.sealedPromethium, 50));
-
-            size = 4;
-            health = 5300;
-            outlineColor = Color.valueOf("36363CFF");
-            outlineRadius = 3;
-            shootWarmupSpeed = 0.1f;
-            minWarmup = 0.8f;
-            warmupMaintainTime = 120f;
-            researchCostMultiplier = 0.6f;
-        }};
 
         ShootMatchTurret shootMatchTurret = new ShootMatchTurret("shoot-match-turret"){{
 
@@ -2083,7 +2130,6 @@ public final class WHBlocks{
 
             shootType = new LaserBulletType(140){{
                 colors = new Color[]{Pal.lancerLaser.cpy().a(0.4f), Pal.lancerLaser, Color.white};
-                //TODO merge
                 chargeEffect = new MultiEffect(Fx.lancerLaserCharge, Fx.lancerLaserChargeBegin);
 
                 buildingDamageMultiplier = 0.25f;
@@ -2099,7 +2145,6 @@ public final class WHBlocks{
             }};
             enhance(Items.surgeAlloy, new LaserBulletType(140){{
                 colors = new Color[]{Items.surgeAlloy.color.cpy().a(0.4f), Items.surgeAlloy.color, Color.white};
-                //TODO merge
                 chargeEffect = new MultiEffect(Fx.lancerLaserCharge, Fx.lancerLaserChargeBegin);
                 Tmp.v1.set(8,0);
                 chargeEffect.at(shootX,shootY);
