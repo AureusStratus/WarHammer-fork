@@ -21,8 +21,13 @@ public class BetterStackConvyor extends StackConveyor{
     public void load() {
         super.load();
         edge2Region = Core.atlas.find(name + "-edge-2");
+        edgeRegion = Core.atlas.find(name + "-edge");
+        stackRegion = Core.atlas.find(name + "-stack");
+        regions = new TextureRegion[3];
+        for(int i = 0; i < 3; i++){
+            regions[i] = Core.atlas.find(name + "-" + i);
+        }
     }
-
 
   public class BetterStackConvyorBuilding extends StackConveyorBuild{
       @Override

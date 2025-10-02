@@ -23,18 +23,13 @@ import mindustry.world.*;
 import mindustry.world.consumers.*;
 import mindustry.world.meta.*;
 import wh.content.*;
-import wh.core.*;
-import wh.entities.world.blocks.effect.SelectForceProjector.*;
-import wh.entities.world.unit.*;
-import wh.gen.*;
+import wh.entities.world.entities.*;
 import wh.graphics.*;
 import wh.ui.*;
-import wh.ui.display.*;
 
 import static arc.Core.bundle;
 import static mindustry.Vars.*;
 import static mindustry.type.ItemStack.with;
-import static wh.content.WHContent.*;
 import static wh.core.WarHammerMod.name;
 import static wh.ui.UIUtils.LEN;
 

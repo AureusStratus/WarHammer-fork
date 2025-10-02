@@ -19,7 +19,7 @@ import wh.util.*;
 import static mindustry.Vars.*;
 
 /**
- * 这么不是我们boomBeach的光束刃吗
+ * 这么不是我们boomBeach的激光吗
  */
 public class LaserBeamBulletType extends ContinuousBulletType{
     public Color[] colors = {Pal.lancerLaser.cpy().mul(1f, 1f, 1f, 0.4f), Pal.lancerLaser, Color.white};
@@ -32,7 +32,7 @@ public class LaserBeamBulletType extends ContinuousBulletType{
     public boolean drawPositionLighting = false;
     public boolean checkAbsorber = true;
     public float lightningChance = 0.1f;
-    public float damageMult=3f;
+    public float damageMult=1;
     public Effect LasergroundEffect = WHFx.BeamLaserGroundEffect;
     public Interp moveInterp = Interp.pow2In;
 
@@ -40,35 +40,34 @@ public class LaserBeamBulletType extends ContinuousBulletType{
         this.damage = damage;
         this.speed = 0f;
         hitEffect = Fx.hitLaserBlast;
-        hitColor = colors[2];
-        despawnEffect = Fx.none;
-        shootEffect = Fx.hitLancer;
-        smokeEffect = Fx.none;
         hitSize = 4;
         lifetime = 100f;
         impact = true;
-        keepVelocity = false;
-        collides = false;
-        pierce = true;
+        drawSize = 420f;
         pierceCap = 1;
-        hittable = false;
-        absorbable = false;
-        removeAfterPierce = false;
         largeHit = true;
     }
 
-    public LaserBeamBulletType(){
-        this(1f);
+    public LaserBeamBulletType(){};
+
+    @Override
+    public float continuousDamage(){
+        if(!continuous) return -1f;
+        return Mathf.round(damage / damageInterval * 60f*(1+damageMult*0.2f));
     }
 
     @Override
     public float estimateDPS(){
-        return super.estimateDPS() * 3f;
+        if(!continuous) return super.estimateDPS();
+        //assume firing duration is about 100 by default, may not be accurate there's no way of knowing in this method
+        //assume it pierces 3 blocks/units
+        return Mathf.round(damage / damageInterval * 60f*(1+damageMult*0.2f));
     }
 
     @Override
     public void init(){
         super.init();
+        hitColor = colors[2];
         drawSize = Math.max(drawSize, length * 2f);
     }
 
@@ -88,9 +87,11 @@ public class LaserBeamBulletType extends ContinuousBulletType{
     }
     private float findAbsorber(Bullet b){
         float baseLength = Math.min(Mathf.dst(b.x, b.y, b.aimX, b.aimY), length);
-
         float targetLength = baseLength + b.fin(moveInterp) * length * extensionProportion;
-        return WHUtils.findPierceLength(b,pierceCap, checkAbsorber, targetLength);
+        if(timescaleDamage && b.owner instanceof Building build){
+                targetLength = baseLength + b.fin(moveInterp) * length * extensionProportion*build.timeScale();
+        }
+        return Damage.findPierceLength(b,pierceCap, checkAbsorber, targetLength);
     }
     @Override
     public void draw(Bullet b){
@@ -181,15 +182,16 @@ public class LaserBeamBulletType extends ContinuousBulletType{
         LaserData data = (LaserData)b.data;
 
         b.fdata=findAbsorber(b);
+
         if(data.lastLength != b.fdata){
-            b.fdata= Mathf.lerpDelta(data.lastLength, b.fdata, 0.03f+0.03f*b.fout(moveInterp));
+            b.fdata= Mathf.lerpDelta(data.lastLength, b.fdata, 0.03f+0.07f*b.fin(moveInterp));
         }
         data.currentLength = b.fdata;
         Tmp.v1.trns(b.rotation(), b.fdata);
         float effectX = b.x + Tmp.v1.x;
         float effectY = b.y + Tmp.v1.y;
 
-        if(b.timer(0, damageInterval)){
+        if(b.timer(0, 5)){
             LasergroundEffect.at(effectX, effectY, b.rotation(), hitColor, b.fdata);
         }
         data.lastLength = data.currentLength;

@@ -50,7 +50,6 @@ public class DelayedPointBulletType extends BulletType {
         collides = false;
         reflectable = false;
         keepVelocity = false;
-        backMove = false;
         hittable = absorbable = false;
         despawnHit = false;
         setDefaults = false;

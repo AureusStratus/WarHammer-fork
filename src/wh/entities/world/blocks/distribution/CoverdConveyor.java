@@ -170,11 +170,13 @@ public class CoverdConveyor extends Block implements Autotiler{
                         Draw.rect(sliced(coverdRegions[0], i != 0 ? SliceMode.bottom : SliceMode.top), x + Geometry.d4x(dir) * tilesize*0.75f, y + Geometry.d4y(dir) * tilesize*0.75f, rot);
                     }
                 }
-                Draw.z(Layer.block);
-                Draw.rect(coverdRegions[blendbits], x, y, tilesize * blendsclx, tilesize * blendscly, rotation*90);
-                Draw.z(Layer.block - 0.2f);
+
+                Draw.z(Layer.block - 0.11f);
 
                 Draw.rect(CoRegions[blendbits][frame], x, y, tilesize * blendsclx, tilesize * blendscly, rotation*90);
+
+                Draw.z(Layer.block);
+                Draw.rect(coverdRegions[blendbits], x, y, tilesize * blendsclx, tilesize * blendscly, rotation*90);
 
                 Draw.z(Layer.block - 0.1f);
                 float layer = Layer.block - 0.1f, wwidth = world.unitWidth(), wheight = world.unitHeight(), scaling = 0.01f;

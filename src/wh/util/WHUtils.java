@@ -5,8 +5,8 @@
 
 package wh.util;
 
+import arc.*;
 import arc.func.*;
-import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
 import arc.graphics.g2d.Fill;
 import arc.graphics.g2d.TextureRegion;
@@ -19,9 +19,8 @@ import arc.struct.*;
 import arc.util.Nullable;
 import arc.util.Time;
 import arc.util.Tmp;
-import arc.util.pooling.Pool;
 import arc.util.pooling.Pools;
-import mindustry.content.Fx;
+import mindustry.ai.types.*;
 import mindustry.core.World;
 import mindustry.entities.*;
 import mindustry.entities.bullet.BulletType;
@@ -31,11 +30,10 @@ import mindustry.type.Item;
 import mindustry.type.Liquid;
 import mindustry.type.UnitType;
 import mindustry.world.Tile;
+import mindustry.world.blocks.*;
 import mindustry.world.blocks.defense.turrets.ItemTurret;
 import org.jetbrains.annotations.*;
 import wh.entities.Spawner;
-
-import java.util.function.*;
 
 import static arc.Core.atlas;
 import static mindustry.Vars.*;
@@ -56,11 +54,8 @@ public final class WHUtils{
     private static final Seq<Unit> units = new Seq<>();
     private static Building tmpBuilding;
     private static Unit tmpUnit;
-    private static boolean hit, hitB;
-    private static final BoolGrid collideLineCollided = new BoolGrid();
-    private static final IntSeq lineCast = new IntSeq(), lineCastNext = new IntSeq();
-    private static final Seq<Hit> hitEffects = new Seq<>();
-    private static final FloatSeq distances = new FloatSeq();
+
+    private static EntityCollisions mover = new EntityCollisions();
 
 
     private WHUtils(){
@@ -75,6 +70,31 @@ public final class WHUtils{
             case 3 -> 1;
             default -> throw new IllegalStateException("Unexpected value: " + rotation);
         };
+    }
+
+    public static TextureRegion[][] splitUnLayers(String name, int size) {
+        return splitUnLayers(Core.atlas.find(name), size);
+    }
+
+    public static TextureRegion[][] splitUnLayers(TextureRegion region, int size) {
+        int x = region.getX();
+        int y = region.getY();
+        int width = region.width;
+        int height = region.height;
+
+        int sw = width / size;
+        int sh = height / size;
+
+        int startX = x;
+        TextureRegion[][] tiles = new TextureRegion[sw][sh];
+        for (int cy = 0; cy < sh; cy++, y += size) {
+            x = startX;
+            for (int cx = 0; cx < sw; cx++, x += size) {
+                tiles[cx][cy] = new TextureRegion(region.texture, x, y, size, size);
+            }
+        }
+
+        return tiles;
     }
 
     public static TextureRegion[][] splitLayers(String name, int size, int layerCount){
@@ -98,26 +118,38 @@ public final class WHUtils{
         return tiles;
     }
 
-    //
+    public static TextureRegion[][] splitLayers2(String name, int size, int width, int height){
+        TextureRegion base = Core.atlas.find(name);
+        if(base == null) throw new IllegalArgumentException("Texture not found: " + name);
+
+        TextureRegion[][] layers = new TextureRegion[height/size][width/size];
+
+        for(int y = 0; y < height/size; y++){
+            for(int x = 0; x < width/size; x++){
+                layers[y][x] = new TextureRegion(base, x*size, y*size, size, size);
+            }
+        }
+        return layers;
+    }
 
     /**
      * Gets multiple regions inside a {@link TextureRegion}.
      * @param width The amount of regions horizontally.
      * @param height The amount of regions vertically.
      */
-    //删掉 ultFire
-    public static TextureRegion[] split(String name, int size, int width, int height){
-        TextureRegion textures = atlas.find(name);
+
+    public static TextureRegion[] split(String name, int size, int width, int height) {
+        TextureRegion reg = Core.atlas.find(name);
         int textureSize = width * height;
         TextureRegion[] regions = new TextureRegion[textureSize];
 
-        float tileWidth = (textures.u2 - textures.u) / width;
-        float tileHeight = (textures.v2 - textures.v) / height;
+        float tileWidth = (reg.u2 - reg.u) / width;
+        float tileHeight = (reg.v2 - reg.v) / height;
 
-        for(int i = 0; i < textureSize; i++){
-            float tileX = ((float)(i % width)) / width;
-            float tileY = ((float)(i / width)) / height;
-            TextureRegion region = new TextureRegion(textures);
+        for (int i = 0; i < textureSize; i++) {
+            float tileX = ((float) (i % width)) / width;
+            float tileY = ((float) (i / width)) / height;
+            TextureRegion region = new TextureRegion(reg);
 
             //start coordinate
             region.u = Mathf.map(tileX, 0f, 1f, region.u, region.u2) + tileWidth * 0.02f;
@@ -192,7 +224,6 @@ public final class WHUtils{
         return xy == 0 ? xRotated : yRotated;
     }
 
-
     /**
      * 人为移动子弹
      * @param b 要移动的子弹
@@ -200,9 +231,9 @@ public final class WHUtils{
      * @param endY 结束坐标Y
      * @param speed 速度
      */
-    public static void movePoint(Bullet b, float endX, float endY, float speed){
+    public static void movePoint(Bullet b, float endX, float endY, float speed) {
         // 计算两点之间的距离
-        float distance = (float)Math.sqrt(Math.pow(endX - b.x, 2) + Math.pow(endY - b.y, 2));
+        float distance = (float) Math.sqrt(Math.pow(endX - b.x, 2) + Math.pow(endY - b.y, 2));
 
         float moveSpeed = distance * speed;
 
@@ -213,17 +244,53 @@ public final class WHUtils{
         // 计算每个tick内移动的距离
         float moveDistance = moveSpeed * Time.delta;
 
-        // 更新子弹的位置
-        b.move(dx * moveDistance, dy * moveDistance);
+
+        mover.move(b, dx * moveDistance, dy * moveDistance);
 
         // 检查是否到达或超过终点
-        if(Math.abs(b.x - endX) < 1e-4f && Math.abs(b.y - endY) < 1e-4f){
+        if (Math.abs(b.x - endX) < 1e-4f && Math.abs(b.y - endY) < 1e-4f) {
             b.set(endX, endY);
         }
     }
 
+
     public static Bullet anyOtherCreate(Bullet bullet, BulletType bt, Entityc shooter, Entityc owner, Team team, float x, float y, float angle, float damage, float velocityScl, float lifetimeScl, Object data, Mover mover, float aimX, float aimY, @Nullable Teamc target){
         if(bt == null) return null;
+        angle += bt.angleOffset + Mathf.range(bt.randomAngleOffset);
+
+        if(!Mathf.chance(bt.createChance)) return null;
+        if(bt.ignoreSpawnAngle) angle = 0;
+        if(bt.spawnUnit != null){
+            //don't spawn units clientside!
+            if(!net.client()){
+                Unit spawned = bt.spawnUnit.create(team);
+                spawned.set(x, y);
+                spawned.rotation = angle;
+                //immediately spawn at top speed, since it was launched
+                if(bt.spawnUnit.missileAccelTime <= 0f){
+                    spawned.vel.trns(angle, bt.spawnUnit.speed);
+                }
+                //assign unit owner
+                if(spawned.controller() instanceof MissileAI ai){
+                    if(shooter instanceof Unit unit){
+                        ai.shooter = unit;
+                    }
+
+                    if(shooter instanceof ControlBlock control){
+                        ai.shooter = control.unit();
+                    }
+
+                }
+                spawned.add();
+                Units.notifyUnitSpawn(spawned);
+            }
+            //Since bullet init is never called, handle killing shooter here
+            if(bt.killShooter && owner instanceof Healthc h && !h.dead()) h.kill();
+
+            //no bullet returned
+            return null;
+        }
+
         bullet.type = bt;
         bullet.owner = owner;
         bullet.shooter = (shooter == null ? owner : shooter);
@@ -238,14 +305,11 @@ public final class WHUtils{
         bullet.aimY = aimY;
 
         bullet.initVel(angle, bt.speed * velocityScl * (bt.velocityScaleRandMin != 1f || bt.velocityScaleRandMax != 1f ? Mathf.random(bt.velocityScaleRandMin, bt.velocityScaleRandMax) : 1f));
-        if(bt.backMove){
-            bullet.set(x - bullet.vel.x * Time.delta, y - bullet.vel.y * Time.delta);
-        }else{
-            bullet.set(x, y);
-        }
+        bullet.set(x, y);
+        bullet.lastX = x;
+        bullet.lastY = y;
         bullet.lifetime = bt.lifetime * lifetimeScl * (bt.lifeScaleRandMin != 1f || bt.lifeScaleRandMax != 1f ? Mathf.random(bt.lifeScaleRandMin, bt.lifeScaleRandMax) : 1f);
         bullet.data = data;
-        bullet.drag = bt.drag;
         bullet.hitSize = bt.hitSize;
         bullet.mover = mover;
         bullet.damage = (damage < 0 ? bt.damage : damage) * bullet.damageMultiplier();
@@ -498,230 +562,6 @@ public final class WHUtils{
             tV.trns(angle + rand.range(range), minLength + rand.random(length));
             cons.get(tV.x, tV.y);
         }
-    }
-
-    public static void collideLineRawEnemyRatio(Team team, float x, float y, float x2, float y2, float width, Boolf3<Building, Float, Boolean> buildingCons, Boolf2<Unit, Float> unitCons, Floatc2 effectHandler){
-        float minRatio = 0.05f;
-        collideLineRawEnemy(team, x, y, x2, y2, width, (building, direct) -> {
-            float size = (building.block.size * tilesize / 2f);
-            float dst = Mathf.clamp(1f - ((Intersector.distanceSegmentPoint(x, y, x2, y2, building.x, building.y) - width) / size), minRatio, 1f);
-            return buildingCons.get(building, dst, direct);
-        }, unit -> {
-            float size = (unit.hitSize / 2f);
-            float dst = Mathf.clamp(1f - ((Intersector.distanceSegmentPoint(x, y, x2, y2, unit.x, unit.y) - width) / size), minRatio, 1f);
-            return unitCons.get(unit, dst);
-        }, effectHandler, true);
-    }
-
-    /** @author EyeOfDarkness */
-    public static void collideLineRawEnemy(Team team, float x, float y, float x2, float y2, float width, boolean hitTiles, boolean hitUnits, boolean stopSort, HitHandler handler){
-        collideLineRaw(x, y, x2, y2, width, width, b -> b.team != team, u -> u.team != team, hitTiles, hitUnits, h -> h.dst2(x, y), handler, stopSort);
-    }
-
-    /** @author EyeOfDarkness */
-    public static void collideLineRawEnemy(Team team, float x, float y, float x2, float y2, Boolf2<Building, Boolean> buildingCons, Cons<Unit> unitCons, Floatc2 effectHandler, boolean stopSort){
-        collideLineRaw(x, y, x2, y2, 3f, b -> b.team != team, u -> u.team != team, buildingCons, unitCons, healthc -> healthc.dst2(x, y), effectHandler, stopSort);
-    }
-
-    /** @author EyeOfDarkness */
-    public static void collideLineRawEnemy(Team team, float x, float y, float x2, float y2, float width, Boolf2<Building, Boolean> buildingCons, Boolf<Unit> unitCons, Floatc2 effectHandler, boolean stopSort){
-        collideLineRaw(x, y, x2, y2, width, width, b -> b.team != team, u -> u.team != team, buildingCons, unitCons, healthc -> healthc.dst2(x, y), effectHandler, stopSort);
-    }
-
-    /** @author EyeOfDarkness */
-    public static void collideLineRawEnemy(Team team, float x, float y, float x2, float y2, float width, Boolf2<Building, Boolean> buildingCons, Boolf<Unit> unitCons, Floatf<Healthc> sort, Floatc2 effectHandler, boolean stopSort){
-        collideLineRaw(x, y, x2, y2, width, width, b -> b.team != team, u -> u.team != team, buildingCons, unitCons, sort, effectHandler, stopSort);
-    }
-
-    /** @author EyeOfDarkness */
-    public static void collideLineRawEnemy(Team team, float x, float y, float x2, float y2, float unitWidth, float tileWidth, Boolf2<Building, Boolean> buildingCons, Boolf<Unit> unitCons, Floatc2 effectHandler, boolean stopSort){
-        collideLineRaw(x, y, x2, y2, unitWidth, tileWidth, b -> b.team != team, u -> u.team != team, buildingCons, unitCons, healthc -> healthc.dst2(x, y), effectHandler, stopSort);
-    }
-
-    /** @author EyeOfDarkness */
-    public static void collideLineRawEnemy(Team team, float x, float y, float x2, float y2, Boolf2<Building, Boolean> buildingCons, Boolf<Unit> unitCons, Floatc2 effectHandler, boolean stopSort){
-        collideLineRaw(x, y, x2, y2, 3f, b -> b.team != team, u -> u.team != team, buildingCons, unitCons, healthc -> healthc.dst2(x, y), effectHandler, stopSort);
-    }
-
-    /** @author EyeOfDarkness */
-    public static void collideLineRawEnemy(Team team, float x, float y, float x2, float y2, Boolf2<Building, Boolean> buildingCons, Cons<Unit> unitCons, Floatf<Healthc> sort, Floatc2 effectHandler){
-        collideLineRaw(x, y, x2, y2, 3f, b -> b.team != team, u -> u.team != team, buildingCons, unitCons, sort, effectHandler);
-    }
-
-    public static void collideLineRawEnemy(Team team, float x, float y, float x2, float y2, float width, Boolf<Healthc> pred, Boolf2<Building, Boolean> buildingCons, Boolf<Unit> unitCons, Floatc2 effectHandler, boolean stopSort){
-        collideLineRaw(x, y, x2, y2, width, width, b -> b.team != team && pred.get(b), u -> u.team != team && pred.get(u), buildingCons, unitCons, healthc -> healthc.dst2(x, y), effectHandler, stopSort);
-    }
-
-    /** @author EyeOfDarkness */
-    public static void collideLineRaw(float x, float y, float x2, float y2, float unitWidth, Boolf<Building> buildingFilter, Boolf<Unit> unitFilter, Boolf2<Building, Boolean> buildingCons, Cons<Unit> unitCons, Floatf<Healthc> sort, Floatc2 effectHandler){
-        collideLineRaw(x, y, x2, y2, unitWidth, buildingFilter, unitFilter, buildingCons, unitCons, sort, effectHandler, false);
-    }
-
-    /** @author EyeOfDarkness */
-    public static void collideLineRaw(float x, float y, float x2, float y2, float unitWidth, Boolf<Building> buildingFilter, Boolf<Unit> unitFilter, Boolf2<Building, Boolean> buildingCons, Cons<Unit> unitCons, Floatf<Healthc> sort, Floatc2 effectHandler, boolean stopSort){
-        collideLineRaw(x, y, x2, y2, unitWidth, buildingFilter, unitFilter, buildingCons, unitCons == null ? null : unit -> {
-            unitCons.get(unit);
-            return false;
-        }, sort, effectHandler, stopSort);
-    }
-
-    /** @author EyeOfDarkness */
-    public static void collideLineRaw(float x, float y, float x2, float y2, float unitWidth, Boolf<Building> buildingFilter, Boolf<Unit> unitFilter, Boolf2<Building, Boolean> buildingCons, Boolf<Unit> unitCons, Floatf<Healthc> sort, Floatc2 effectHandler, boolean stopSort){
-        collideLineRaw(x, y, x2, y2, unitWidth, 0f, buildingFilter, unitFilter, buildingCons, unitCons, sort, effectHandler, stopSort);
-    }
-
-    /** @author EyeOfDarkness */
-    public static void collideLineRaw(float x, float y, float x2, float y2, float unitWidth, float tileWidth, Boolf<Building> buildingFilter, Boolf<Unit> unitFilter, Boolf2<Building, Boolean> buildingCons, Boolf<Unit> unitCons, Floatf<Healthc> sort, Floatc2 effectHandler, boolean stopSort){
-        collideLineRaw(x, y, x2, y2, unitWidth, tileWidth,
-        buildingFilter, unitFilter, buildingCons != null, unitCons != null,
-        sort, (ex, ey, ent, direct) -> {
-            boolean hit = false;
-            if(unitCons != null && direct && ent instanceof Unit){
-                hit = unitCons.get((Unit)ent);
-            }else if(buildingCons != null && ent instanceof Building){
-                hit = buildingCons.get((Building)ent, direct);
-            }
-
-            if(effectHandler != null && direct) effectHandler.get(ex, ey);
-            return hit;
-        }, stopSort
-        );
-    }
-
-    /** @author EyeOfDarkness */
-    public static void collideLineRaw(float x, float y, float x2, float y2, float unitWidth, float tileWidth, Boolf<Building> buildingFilter, Boolf<Unit> unitFilter, boolean hitTile, boolean hitUnit, Floatf<Healthc> sort, HitHandler hitHandler, boolean stopSort){
-        hitEffects.clear();
-        lineCast.clear();
-        lineCastNext.clear();
-        collidedBlocks.clear();
-
-        tV.set(x2, y2);
-        if(hitTile){
-            collideLineCollided.clear();
-            Runnable cast = () -> {
-                hitB = false;
-                lineCast.each(i -> {// 遍历当前需要检测的格子
-                    int tx = Point2.x(i), ty = Point2.y(i); // 获取格子坐标
-                    Building build = world.build(tx, ty);// 获取该位置的建筑物
-
-                    boolean hit = false;
-                    if(build != null && (buildingFilter == null || buildingFilter.get(build)) && collidedBlocks.add(build.pos())){
-                        if(sort == null){
-                            hit = hitHandler.get(tx * tilesize, ty * tilesize, build, true);
-                        }else{
-                            hit = hitHandler.get(tx * tilesize, ty * tilesize, build, false);
-                            Hit he = Pools.obtain(Hit.class, Hit::new);
-                            he.ent = build;
-                            he.x = tx * tilesize;
-                            he.y = ty * tilesize;
-
-                            hitEffects.add(he);
-                        }
-                        // 如果命中且是第一次命中，调整射线终点
-                        if(hit && !hitB){
-                            tV.trns(Angles.angle(x, y, x2, y2), Mathf.dst(x, y, build.x, build.y)).add(x, y);
-                            hitB = true;
-                        }
-                    }
-                    // 处理相邻格子的碰撞检测
-                    Vec2 segment = Intersector.nearestSegmentPoint(x, y, tV.x, tV.y, tx * tilesize, ty * tilesize, tV2);
-                    if(!hit && tileWidth > 0f){
-                        for(Point2 p : Geometry.d8){
-                            int newX = (p.x + tx);
-                            int newY = (p.y + ty);
-                            boolean within = !hitB || Mathf.within(x / tilesize, y / tilesize, newX, newY, tV.dst(x, y) / tilesize);
-                            if(segment.within(newX * tilesize, newY * tilesize, tileWidth) && collideLineCollided.within(newX, newY) && !collideLineCollided.get(newX, newY) && within){
-                                lineCastNext.add(Point2.pack(newX, newY));
-                                collideLineCollided.set(newX, newY, true);
-                            }
-                        }
-                    }
-                });
-
-                lineCast.clear();
-                lineCast.addAll(lineCastNext);
-                lineCastNext.clear();
-            };
-            // 初始射线投射
-            world.raycastEachWorld(x, y, x2, y2, (cx, cy) -> {
-                if(collideLineCollided.within(cx, cy) && !collideLineCollided.get(cx, cy)){
-                    lineCast.add(Point2.pack(cx, cy));
-                    collideLineCollided.set(cx, cy, true);
-                }
-
-                cast.run();
-                return hitB;
-            });
-
-            while(!lineCast.isEmpty()) cast.run();
-        }
-
-        if(hitUnit){
-            rect.setPosition(x, y).setSize(tV.x - x, tV.y - y);
-
-            if(rect.width < 0){
-                rect.x += rect.width;
-                rect.width *= -1;
-            }
-
-            if(rect.height < 0){
-                rect.y += rect.height;
-                rect.height *= -1;
-            }
-
-            rect.grow(unitWidth * 2f);
-            Groups.unit.intersect(rect.x, rect.y, rect.width, rect.height, unit -> {
-                if(unitFilter == null || unitFilter.get(unit)){
-                    unit.hitbox(hitRect);
-                    hitRect.grow(unitWidth * 2);
-
-                    // 计算射线与单位碰撞盒的交点
-                    Vec2 vec = Geometry.raycastRect(x, y, tV.x, tV.y, hitRect);
-
-                    if(vec != null){
-                        float scl = (unit.hitSize - unitWidth) / unit.hitSize;
-                        vec.sub(unit).scl(scl).add(unit);
-                        if(sort == null){
-                            hitHandler.get(vec.x, vec.y, unit, true);
-                        }else{
-                            Hit he = Pools.obtain(Hit.class, Hit::new);
-                            he.ent = unit;
-                            he.x = vec.x;
-                            he.y = vec.y;
-                            hitEffects.add(he);
-                        }
-                    }
-                }
-            });
-        }
-        // 排序和处理命中效果
-        if(sort != null){
-            hit = false;
-            hitEffects.sort(he -> sort.get(he.ent)).each(he -> {
-                if(!stopSort || !hit){
-                    hit = hitHandler.get(he.x, he.y, he.ent, true);
-                }
-
-                Pools.free(he);
-            });
-        }
-
-        hitEffects.clear();
-    }
-
-    static class Hit implements Pool.Poolable{
-        Healthc ent;
-        float x, y;
-
-        @Override
-        public void reset(){
-            ent = null;
-            x = y = 0f;
-        }
-    }
-
-    public interface HitHandler{
-        boolean get(float x, float y, Healthc ent, boolean direct);
     }
 
 }

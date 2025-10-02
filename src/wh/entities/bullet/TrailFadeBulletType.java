@@ -68,8 +68,14 @@ public class TrailFadeBulletType extends BasicBulletType{
         this(speed, damage, "bullet");
     }
 
+
     @Override
     public void despawned(Bullet b){
+        despawnBlink(b);
+        super.despawned(b);
+    }
+
+    public void despawnBlink (Bullet b){
         if(!Vars.headless && (b.data instanceof Vec2Seq[])){
             Vec2Seq[] pointsArr = (Vec2Seq[])b.data();
             for(Vec2Seq points : pointsArr){
@@ -83,11 +89,8 @@ public class TrailFadeBulletType extends BasicBulletType{
                     WHFx.lightningFade.at(b.x, b.y, tracerStrokeOffset, hitColor, points);
                 }
             }
-
             b.data = null;
         }
-
-        super.despawned(b);
     }
 
     @Override
@@ -158,7 +161,9 @@ public class TrailFadeBulletType extends BasicBulletType{
                 Draw.color(hitColor);
                 for(int i = 1; i < points.size(); i++){
 //					Draw.alpha(((float)(i + fadeOffset) / points.size));
-                    Lines.stroke(Mathf.clamp((i + tracerFadeOffset / 2f) / points.size() * (tracerStrokeOffset - (points.size() - i)) / tracerStrokeOffset) * tracerStroke);
+                    Lines.stroke(
+                    Mathf.clamp((i + tracerFadeOffset / 2f) / points.size() *
+                    (tracerStrokeOffset - (points.size() - i)) / tracerStrokeOffset) * tracerStroke);
                     Vec2 from = points.setVec2(i - 1, Tmp.v1);
                     Vec2 to = points.setVec2(i, Tmp.v2);
                     Lines.line(from.x, from.y, to.x, to.y, false);

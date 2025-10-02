@@ -20,6 +20,7 @@ public final class WHLiquids{
             heatCapacity = 0.2f;
             explosiveness = 0.4f;
             viscosity = 1f;
+            boilPoint = 0.7f;
             canStayOn.addAll(Liquids.water,swageWater);
         }};
 
@@ -27,9 +28,10 @@ public final class WHLiquids{
             lightColor = WHPal.RefinePromethiumColor;
             flammability = 0.5f;
             temperature = 0.6f;
-            heatCapacity = 0.2f;
             viscosity = 0.5f;
             explosiveness = 0.5f;
+            boilPoint = 0.5f;
+            coolant = false;
             canStayOn.addAll(Liquids.water,swageWater);
         }};
 
@@ -41,11 +43,13 @@ public final class WHLiquids{
                 heatCapacity = 1.6f;
                 explosiveness = 0f;
                 viscosity = 0.3f;
+                boilPoint = 0.2f;
                 canStayOn.addAll(Liquids.water, Liquids.oil,swageWater);
             }
         };
         swageWater = new Liquid("liquid-swage-water", Color.valueOf("92E1ADFF")){
             {
+                lightColor = Color.valueOf("92E1ADFF");
                 coolant = false;
                 heatCapacity = 0.4f;
                 effect = StatusEffects.wet;

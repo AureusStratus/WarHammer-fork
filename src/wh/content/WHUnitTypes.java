@@ -41,14 +41,14 @@ import wh.entities.abilities.*;
 import wh.entities.bullet.*;
 import wh.entities.bullet.laser.*;
 import wh.entities.world.drawer.part.*;
-import wh.entities.world.unit.*;
-import wh.entities.world.unit.AirRaiderAI.*;
-import wh.entities.world.unit.AirRaiderUnitType.*;
+import wh.entities.world.entities.*;
+import wh.entities.world.entities.AirRaiderAI.*;
+import wh.entities.world.entities.AirRaiderUnitType.*;
+import wh.entities.world.entities.weapon.*;
 import wh.gen.*;
 import wh.graphics.Drawn;
 import wh.graphics.WHPal;
 import wh.util.WHUtils;
-import wh.entities.world.unit.MarkWeapon;
 
 import static arc.graphics.g2d.Draw.color;
 import static arc.graphics.g2d.Lines.lineAngle;
@@ -88,6 +88,8 @@ public final class WHUnitTypes{
     //陆军
     M5, M4, M3, M2, M1, test, corvus;
 
+    //原版
+    public static UnitType
     private WHUnitTypes(){
     }
 
@@ -1016,25 +1018,19 @@ public final class WHUnitTypes{
                     velocityRnd = 0.05f;
                     shootSound = WHSounds.launch;
 
-                    bullet = new AccelBulletType(7f, 100){
+                    bullet = new BasicBulletType(7f, 100){
                         {
                             sprite = "wh-重型导弹";
                             width = 16f;
                             height = 16f;
                             shrinkY = 0f;
-                            accelerateBegin = 0.1f;
-                            accelerateEnd = 0.6f;
-
-                            velocityBegin = 3f;
-                            velocityIncrease = 11f;
-
                             backColor = hitColor = lightColor = lightningColor = WHPal.WHYellow;
                             trailColor = Color.gray;
                             frontColor = WHPal.WHYellow;
                             homingPower = 0.08f;
                             homingDelay = 5f;
                             lifetime = 120f;
-                            hitEffect = WHFx.instHit(backColor,true, 2, 30f);
+                            hitEffect = WHFx.instHit(backColor, true, 2, 30f);
                             despawnEffect = WHFx.shootCircleSmall(backColor);
                             lightning = 1;
                             lightningLengthRand = 4;
@@ -1535,16 +1531,18 @@ public final class WHUnitTypes{
                 }
                 for(float x1 : new float[]{-37.5f, -55.5f}){
                     for(float y1 : new float[]{-56.25f, -45f}){
-                        parts.addAll(new HoverPart(){{
-                            layerOffset = -0.1f;
-                            mirror = true;
-                            x = x1;
-                            y = y1;
-                            radius = 35.0F;
-                            color = WHPal.OR;
-                            phase = 100.0F;
-                            stroke = 8;
-                        }});
+                        parts.addAll(new HoverPart(){
+                            {
+                                layerOffset = -0.1f;
+                                mirror = true;
+                                x = x1;
+                                y = y1;
+                                radius = 35.0F;
+                                color = WHPal.OR;
+                                phase = 100.0F;
+                                stroke = 8;
+                            }
+                        });
                     }
                 }
                 weapons.add(new Weapon("tankAG-weapon7"){
@@ -1956,7 +1954,7 @@ public final class WHUnitTypes{
                                 splashDamageRadius = 48.0F;
                                 splashDamage = 300.0F;
                                 hitEffect = WHFx.sharpBlast(WHPal.OR, WHPal.OR, 35.0F, splashDamageRadius * 1.25F);
-                                despawnEffect = new MultiEffect(WHFx.lightningHitLarge(WHPal.OR), WHFx.hitSpark(WHPal.OR, 30f, 20, 60f, 2f, 10f));
+                                despawnEffect = new MultiEffect(WHFx.lightningHitLarge(WHPal.OR, 40, 6, 5), WHFx.hitSpark(WHPal.OR, 30f, 20, 60f, 2f, 10f));
                                 trailRotation = true;
                                 hitSound = Sounds.plasmaboom;
                                 trailLength = 12;
@@ -1999,8 +1997,11 @@ public final class WHUnitTypes{
                     {
                         originalReload = 40f;
 
-                        parts.add(new BarrelPart("-barrel"){{y=18f;moveY=-1f;
-                        progress = PartProgress.heat;}});
+                        parts.add(new BarrelPart("-barrel"){{
+                            y = 18f;
+                            moveY = -1f;
+                            progress = PartProgress.heat;
+                        }});
                         heatColor = Color.valueOf("FF774280");
                         //shoot.firstShotDelay=10f;
                         x = 0;
@@ -2779,7 +2780,7 @@ public final class WHUnitTypes{
                             pierce = true;
                             pierceCap = 4;
                             knockback = 8;
-                            hitEffect = WHFx.instHit(WHPal.OR, true,5, 70);
+                            hitEffect = WHFx.instHit(WHPal.OR, true, 5, 70);
                             shootEffect = new MultiEffect(WHFx.shootLineSmall(WHPal.OR).followParent(true),
                             new WrapEffect(WHFx.lightningHitLarge, WHPal.OR),
                             WHFx.hugeSmoke,
@@ -2805,7 +2806,7 @@ public final class WHUnitTypes{
                                 trailEffect = none;
                                 despawnEffect = none;
                                 status = blasted;
-                                hitEffect = new MultiEffect(WHFx.instHit(WHPal.OR,true, 3, 20),
+                                hitEffect = new MultiEffect(WHFx.instHit(WHPal.OR, true, 3, 20),
                                 WHFx.hitSpark(WHPal.OR, 30f, 30, 60f, 2f, 10f));
                                 lightning = 1;
                                 lightningDamage = 25;
@@ -2827,7 +2828,7 @@ public final class WHUnitTypes{
                                         despawnEffect = bigShockwave;
                                         status = blasted;
                                         hitEffect = new MultiEffect(WHFx.hitSpark(WHPal.OR, 30f, 15, 20f, 2f, 10f),
-                                        WHFx.instHit(WHPal.OR, true,3, 15));
+                                        WHFx.instHit(WHPal.OR, true, 3, 15));
                                         lightning = 1;
                                         lightningDamage = 25;
                                         lightningLength = 5;
@@ -2973,7 +2974,7 @@ public final class WHUnitTypes{
                                 })
                                 );
                                 shrinkY = 0;
-                                hitEffect = WHFx.instHit(WHPal.ORL, true,3, 20);
+                                hitEffect = WHFx.instHit(WHPal.ORL, true, 3, 20);
                                 despawnEffect = new MultiEffect(WHFx.hitSpark(WHPal.ORL, 30f, 60, 60f, 2f, 10f),
                                 WHFx.circleOut(WHPal.OR, 70),
                                 WHFx.lineCircleOut(WHPal.OR, 20f, 70, 2),
@@ -3263,7 +3264,7 @@ public final class WHUnitTypes{
                                             WHFx.circleOut(WHPal.OR, 110),
                                             lineCircleOut(WHPal.OR, 20f, 70, 4),
                                             WHFx.hitSpark(WHPal.ORL, 40, 16, 150, 4f, 20),
-                                            WHFx.lightningHitLarge(WHPal.ORL),
+                                            WHFx.lightningHitLarge(WHPal.ORL, splashDamageRadius, 12, 8),
                                             WHFx.blast(WHPal.ORL, 60)
                                             );
                                             hitSound = plasmaboom;
@@ -3415,7 +3416,7 @@ public final class WHUnitTypes{
                                                     width = 8;
                                                     height = 16;
                                                     despawnEffect = blastExplosion;
-                                                    hitEffect = WHFx.instHit(backColor, true,2, 20f);
+                                                    hitEffect = WHFx.instHit(backColor, true, 2, 20f);
                                                     shootEffect = none;
                                                     lightningDamage = 50;
                                                     lightning = 3;
@@ -3560,7 +3561,7 @@ public final class WHUnitTypes{
                         rotate = true;
                         rotateSpeed = 0.4f;
                         shoot.firstShotDelay = 70f;
-                        bullet = new AccelBulletType(){{
+                        bullet = new BasicBulletType(){{
                             absorbable = false;
                             width = 36;
                             height = 36;
@@ -3572,10 +3573,6 @@ public final class WHUnitTypes{
                             frontColor = WHPal.SkyBlueF;
                             backColor = WHPal.SkyBlue;
                             lifetime = 130;
-                            velocityBegin = 1f;
-                            velocityIncrease = 3.43f;
-                            accelerateBegin = 0f;
-                            accelerateEnd = 0.09f;
                             sprite = "large-orb";
                             chargeEffect = new Effect(70, (e) -> {
                                 Draw.color(WHPal.SkyBlue);
@@ -3641,7 +3638,7 @@ public final class WHUnitTypes{
                                 Fill.light(e.x, e.y, Lines.circleVertices(circleRad), circleRad, Color.clear, Tmp.c1.set(WHPal.SkyBlue).a(e.fout(Interp.pow10Out)));
                                 Drawf.light(e.x, e.y, rad * e.fout(Interp.circleOut) * 4.0F, WHPal.SkyBlue, 0.7F);
                                 Draw.blend();
-                            }), WHFx.lightningHitLarge(WHPal.SkyBlue)).layer(110.001F);
+                            }), WHFx.lightningHitLarge(WHPal.SkyBlue, splashDamageRadius, 10, 6));
                             fragBullets = 5;
                             fragLifeMin = 0.6f;
                             fragLifeMax = 1.5f;
@@ -4278,7 +4275,7 @@ public final class WHUnitTypes{
                                     });
                                 }));
                                 despawnEffect = new MultiEffect(WHFx.blast(WHPal.SkyBlue, 50),
-                                WHFx.airAsh(51, splashDamageRadius *4f, splashDamageRadius *8f, splashDamageRadius / 10f, WHPal.SkyBlue, 2.7f, 30),
+                                WHFx.airAsh(51, splashDamageRadius * 4f, splashDamageRadius * 8f, splashDamageRadius / 10f, WHPal.SkyBlue, 2.7f, 30),
                                 new Effect(60, e -> {
                                     Draw.color(WHPal.SkyBlue);
                                     for(int i = 0; i < 4; i++){
@@ -4325,7 +4322,7 @@ public final class WHUnitTypes{
                         }};
                         inaccuracy = 1.5f;
                         shootSound = missile;
-                       velocityRnd = 0.12f;
+                        velocityRnd = 0.12f;
                         bullet = WHBullets.air5Missile;
                     }
                 });
@@ -4632,7 +4629,7 @@ public final class WHUnitTypes{
                                 homingPower = 0.08f;
                                 homingDelay = 5f;
                                 lifetime = 65f;
-                                hitEffect = WHFx.instHit(backColor, true,2, 10f);
+                                hitEffect = WHFx.instHit(backColor, true, 2, 10f);
                                 despawnEffect = WHFx.shootCircleSmall(backColor);
                                 lightning = 1;
                                 lightningLength = 6;
@@ -4711,15 +4708,16 @@ public final class WHUnitTypes{
         test = new UnitType("scepter"){{
             constructor = MechUnit::create;
             speed = 3.6f;
-            hitSize = 22f;
+            hitSize = 20f;
             rotateSpeed = 2.1f;
             health = 500000;
             armor = 10f;
             mechFrontSway = 1f;
+            flying = false;
             ammoType = new ItemAmmoType(Items.thorium);
-            abilities.add(
+          /*  abilities.add(
             new EllipseForceFieldAbility(100, 80, 2000/60f, 10000f, 60f * 3, 0.2f)
-            {{shader=true;fullAbsorb=true;Regen=true;}});
+            {{shader=true;fullAbsorb=true;Regen=true;}});*/
             mechStepParticles = true;
             stepShake = 0.15f;
             singleTarget = true;
@@ -4729,153 +4727,109 @@ public final class WHUnitTypes{
                 height = 9f;
                 lifetime = 50f;
             }};
-            weapons.add(
+           /* weapons.add(new LaserPointDefenseWeapon("reign-weapon", 3){{
+                y = 1f;
+                x = 21.5f;
+                layerOffset=-0.002f;
+                bullet = new BulletType(){{
+                    damage = 4;
+                    maxRange = 240;
+                    collidesGround = false;
+                }};
+            }});*/
+          /*  weapons.addAll(
             new MarkWeapon("reign-weapon"){{
-                top = false;
+                layerOffset = -0.001f;
                 y = 1f;
                 x = 21.5f;
                 shootY = 11f;
-                reload = 9f;
+                reload = 60f;
                 recoil = 5f;
                 shake = 2f;
                 ejectEffect = Fx.casing4;
                 shootSound = Sounds.bang;
                 rotate = true;
                 rotateSpeed = 1f;
-                rotationLimit = 30f;
+                rotationLimit = 60f;
                 shootCone = 10f;
+                markChance = 0.3f;
 
-                shoot = new ShootAlternate(){{
-                    shots = 3;
-                    shotDelay = 3f;
-                    barrels = 3;
+                shoot = new ShootBarrel(){
+                    {
+                        shots = 3;
+                        barrels = new float[]{
+                        -15f, 5f, 0f,
+                        0f, 5f, 0f,
+                        15f, 5f, 0f,
+                        };
+                        shotDelay = 15f;
+                    }
+                };
+
+                shoot.firstShotDelay = markShoot.firstShotDelay = Fx.greenLaserChargeSmall.lifetime - 1f;
+                continuous = true;
+                bullet = new LaserBeamBulletType(){{
+                    pierceCap = 1;
+                    moveInterp = Interp.pow10Out;
+                    damage = 35f;
+                    damageMult = 2f;
+                    length = 10f;
+                    extensionProportion = 25f;
+                    hitEffect = Fx.hitMeltHeal;
+                    drawSize = 420f;
+                    lifetime = 200f;
+                    shake = 1f;
+                    despawnEffect = Fx.smokeCloud;
+                    smokeEffect = Fx.none;
+
+                    chargeEffect = Fx.greenLaserChargeSmall;
+
+                    incendChance = 0.1f;
+                    incendSpread = 5f;
+                    incendAmount = 1;
+                    colors = new Color[]{Pal.heal.cpy().a(.2f), Pal.heal.cpy().a(.5f), Pal.heal.cpy().mul(1.2f), Color.white};
                 }};
-                bullet = new BasicBulletType(13f, 80){{
-                    pierce = true;
-                    pierceCap = 10;
-                    width = 14f;
-                    height = 33f;
-                    lifetime = 15f;
-                    shootEffect = Fx.shootBig;
-                    fragVelocityMin = 0.4f;
 
-                    hitEffect = Fx.blastExplosion;
-                    splashDamage = 18f;
-                    splashDamageRadius = 13f;
+                markBullet = new LaserBeamBulletType(){{
+                    pierceCap = 1;
+                    moveInterp = Interp.pow10Out;
+                    damage = 90f;
+                    damageMult = 5f;
+                    length = 10f;
+                    extensionProportion = 25f;
+                    hitEffect = Fx.hitMeltHeal;
+                    drawSize = 420f;
+                    lifetime = 200f;
+                    shake = 1f;
+                    despawnEffect = Fx.smokeCloud;
+                    smokeEffect = Fx.none;
 
-                    fragBullets = 3;
-                    fragLifeMin = 0f;
-                    fragRandomSpread = 30f;
+                    chargeEffect = Fx.greenLaserChargeSmall;
 
-                    fragBullet = new BasicBulletType(9f, 20){{
-                        width = 10f;
-                        height = 10f;
-                        pierce = true;
-                        pierceBuilding = true;
-                        pierceCap = 3;
+                    incendChance = 0.1f;
+                    incendSpread = 5f;
+                    incendAmount = 1;
 
-                        lifetime = 20f;
-                        hitEffect = Fx.flakExplosion;
-                        splashDamage = 15f;
-                        splashDamageRadius = 10f;
-                    }};
+                    colors = new Color[]{Pal.slagOrange.cpy().a(.2f), Pal.slagOrange.cpy().a(.5f), Pal.slagOrange.cpy().mul(1.2f), Color.white};
                 }};
-                markShoot = new ShootAlternate(){{
-                    shots = 4;
-                    barrels = 4;
-                    spread = 15f;
-                    shotDelay = 20f;
+
+            }});*/
+            weapons.add(new Weapon("mount-weapon"){{
+                x = 8.5f;
+                y = 6f;
+                reload=30f;
+                rotate = true;
+                rotateSpeed = 5f;
+                alwaysContinuous = true;
+                alternate=false;
+                bullet = new MoveSuppressionBullet(30f, 180, 3){{
+                    color = Pal.slagOrange.cpy().lerp(Color.white, 0.2f);
                 }};
-                markBullet = new ArtilleryBulletType(5.5f, 260){{
-                    collidesTiles = collides = true;
-                    lifetime = 70f;
-                    shootEffect = Fx.shootBigColor;
-                    smokeEffect = Fx.shootSmokeSquareBig;
-                    frontColor = Color.white;
-                    trailEffect = new MultiEffect(Fx.artilleryTrail, Fx.artilleryTrailSmoke);
-                    hitSound = Sounds.none;
-                    width = 18f;
-                    height = 24f;
 
-                    lightColor = trailColor = hitColor = backColor = Pal.techBlue;
-                    lightRadius = 40f;
-                    lightOpacity = 0.7f;
-
-                    trailWidth = 4.5f;
-                    trailLength = 19;
-                    trailChance = -1f;
-
-                    despawnEffect = Fx.none;
-                    despawnSound = Sounds.dullExplosion;
-
-                    hitEffect = despawnEffect = new ExplosionEffect(){{
-                        lifetime = 34f;
-                        waveStroke = 4f;
-                        waveColor = sparkColor = trailColor;
-                        waveRad = 25f;
-                        smokeSize = 0f;
-                        smokeSizeBase = 0f;
-                        sparks = 10;
-                        sparkRad = 25f;
-                        sparkLen = 8f;
-                        sparkStroke = 3f;
-                    }};
-
-                    splashDamage = 85f;
-                    splashDamageRadius = 20f;
-
-                    fragBullets = 15;
-                    fragVelocityMin = 0.5f;
-                    fragRandomSpread = 130f;
-                    fragLifeMin = 0.3f;
-                    despawnShake = 5f;
-
-                    fragBullet = new BasicBulletType(5.5f, 50){{
-                        pierceCap = 2;
-                        pierceBuilding = true;
-
-                        homingPower = 0.09f;
-                        homingRange = 150f;
-
-                        lifetime = 50f;
-                        shootEffect = Fx.shootBigColor;
-                        smokeEffect = Fx.shootSmokeSquareBig;
-                        frontColor = Color.white;
-                        hitSound = Sounds.none;
-                        width = 12f;
-                        height = 20f;
-
-                        lightColor = trailColor = hitColor = backColor = Pal.techBlue;
-                        lightRadius = 40f;
-                        lightOpacity = 0.7f;
-
-                        trailWidth = 2.2f;
-                        trailLength = 7;
-                        trailChance = -1f;
-
-                        collidesAir = false;
-
-                        despawnEffect = Fx.none;
-                        splashDamage = 46f;
-                        splashDamageRadius = 30f;
-
-                        hitEffect = despawnEffect = new MultiEffect(new ExplosionEffect(){{
-                            lifetime = 30f;
-                            waveStroke = 2f;
-                            waveColor = sparkColor = trailColor;
-                            waveRad = 5f;
-                            smokeSize = 0f;
-                            smokeSizeBase = 0f;
-                            sparks = 5;
-                            sparkRad = 20f;
-                            sparkLen = 6f;
-                            sparkStroke = 2f;
-                        }}, Fx.blastExplosion);
-                    }};
-                }};
             }});
 
-            weapons.add(new MarkWeapon("mount-weapon"){{
+           /* weapons.add(new MarkWeapon("mount-weapon"){{
+                layerOffset=-0.001f;
                 reload = 20f;
                 x = 8.5f;
                 y = 6f;
@@ -4924,6 +4878,7 @@ public final class WHUnitTypes{
                 }};
             }});
             weapons.add(new MarkWeapon("mount-weapon"){{
+                layerOffset=-0.001f;
                 reload = 60f;
                 x = 8.5f;
                 y = -7f;
@@ -4971,7 +4926,7 @@ public final class WHUnitTypes{
                         sparkStroke = 1.5f;
                     }};
                 }};
-            }});
+            }});*/
         }};
 
 
@@ -5060,7 +5015,7 @@ public final class WHUnitTypes{
                 ammoType = new PowerAmmoType(3000);
                 hitSize = 30f;
                 flying = true;
-                outlineRadius=3;
+                outlineRadius = 3;
                 outlineColor = WHPal.Outline;
                 engineLayer = 110;
                 engineSize = 4;
@@ -5068,7 +5023,7 @@ public final class WHUnitTypes{
                 trailLength = 20;
                 faceTarget = true;
                 hidden = true;
-                lowAltitude=false;
+                lowAltitude = false;
                 allowedInPayloads = playerControllable = useUnitCap = logicControllable = false;
                 fallEffect = fallEngineEffect = Fx.none;
                 physics = false;
@@ -5090,7 +5045,7 @@ public final class WHUnitTypes{
                         xRand = 10;
                         alternate = false;
                         mirror = true;
-                        shoot =new ShootPattern(){{
+                        shoot = new ShootPattern(){{
                             shots = 12;
                             shotDelay = 6;
                         }};
@@ -5121,7 +5076,7 @@ public final class WHUnitTypes{
                 drag = 0.017f;
                 lowAltitude = false;
                 flying = true;
-                outlineRadius=3;
+                outlineRadius = 3;
                 outlineColor = WHPal.Outline;
                 engineOffset = 40;
                 engineSize = 10f;
@@ -5140,7 +5095,7 @@ public final class WHUnitTypes{
                 weapons.add(new ARWeapon(){{
                     x = y = 0f;
                     mirror = false;
-                    ignoreRotation=true;
+                    ignoreRotation = true;
                     reload = 99999;
 
                     soundPitchMin = 1f;

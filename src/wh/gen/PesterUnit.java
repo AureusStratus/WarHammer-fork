@@ -47,7 +47,7 @@ import wh.content.*;
 import wh.entities.WHUnitSorts;
 import wh.graphics.Drawn;
 import wh.math.WHInterp;
-import wh.entities.world.unit.PesterUnitType;
+import wh.entities.world.entities.PesterUnitType;
 import wh.util.WHUtils;
 
 public class PesterUnit extends UnitEntity implements Pesterc {

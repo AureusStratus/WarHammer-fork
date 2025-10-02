@@ -1,25 +1,30 @@
 package wh.entities.abilities;
 
+import arc.*;
 import arc.audio.Sound;
 import arc.func.Cons;
 import arc.func.Cons2;
 import arc.graphics.Color;
 import arc.math.Mathf;
 import arc.math.geom.Position;
+import arc.scene.ui.layout.*;
 import arc.struct.ObjectFloatMap;
 import arc.struct.Seq;
-import arc.util.Time;
-import arc.util.Tmp;
+import arc.util.*;
+import mindustry.content.*;
 import mindustry.entities.Effect;
 import mindustry.entities.Units;
 import mindustry.entities.abilities.Ability;
 import mindustry.gen.Unit;
 import mindustry.type.StatusEffect;
 import mindustry.type.UnitType;
+import mindustry.world.meta.*;
 import wh.content.WHFx;
 import wh.content.WHSounds;
 import wh.graphics.PositionLightning;
 import wh.graphics.WHPal;
+
+import static mindustry.Vars.tilesize;
 
 
 public class ShockWaveAbility extends Ability{
@@ -118,6 +123,24 @@ public class ShockWaveAbility extends Ability{
                     hitEffect.at(u.x, u.y, hitColor);
                     effect.get(Tmp.v1, u);
                 }
+            }
+        }
+    }
+
+    @Override
+    public void addStats(Table t){
+        super.addStats(t);
+        t.row();
+        t.add(Core.bundle.format("bullet.damage", damage));
+        t.row();
+        t.add(abilityStat("firingrate", Strings.autoFixed(60f / reload, 2)));
+        t.row();
+        t.add(Core.bundle.format("bullet.range", Strings.autoFixed(range / tilesize, 2)));
+        if(status != null && status.size > 0){
+            for(StatusEffect statu : status.keys()){
+                t.row();
+                t.add((statu.hasEmoji() ? statu.emoji() : "") + "[stat]" + statu.localizedName).
+                with(l -> StatValues.withTooltip(l, statu));
             }
         }
     }

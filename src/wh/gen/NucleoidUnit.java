@@ -20,7 +20,7 @@ import mindustry.content.Fx;
 import mindustry.gen.UnitEntity;
 import mindustry.type.UnitType;
 import wh.graphics.Drawn;
-import wh.entities.world.unit.NucleoidUnitType;
+import wh.entities.world.entities.NucleoidUnitType;
 
 public class NucleoidUnit extends UnitEntity implements Nucleoidc {
     public float recentDamage = 0.0F;

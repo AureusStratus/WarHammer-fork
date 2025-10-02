@@ -2,25 +2,22 @@ package wh.entities.bullet;
 
 import arc.Core;
 import arc.graphics.g2d.Draw;
-import arc.math.Mathf;
 import arc.util.Tmp;
 import mindustry.content.StatusEffects;
-import mindustry.entities.Damage;
-import mindustry.entities.Effect;
-import mindustry.entities.Lightning;
+import mindustry.entities.*;
 import mindustry.entities.bullet.*;
 import mindustry.gen.Building;
 import mindustry.gen.Bullet;
 import mindustry.graphics.Drawf;
 import mindustry.graphics.Layer;
 import mindustry.graphics.Trail;
-import wh.gen.PlasmaFire;
+import wh.entities.world.entities.PlasmaFire;
 
-
-import static mindustry.Vars.headless;
+import static mindustry.Vars.*;
 
 public class TextureMissileType extends BasicBulletType{
     public String sprite;
+	public float plaFireChance = 0.35f;
 	public TextureMissileType(float damage, String bulletSprite){
         this.sprite = bulletSprite;
 		this.damage = damage;
@@ -62,29 +59,31 @@ public class TextureMissileType extends BasicBulletType{
 		Draw.rect(backRegion, Tmp.v1.x, Tmp.v1.y, b.rotation() - 90);
 		Draw.z(z);
 	}
-	
-	public void hit(Bullet b, float x, float y){
-		hitEffect.at(x, y, b.rotation(), hitColor);
-		hitSound.at(x, y, hitSoundPitch, hitSoundVolume);
-		
-		Effect.shake(hitShake, hitShake, b);
-		
-		if(splashDamageRadius > 0 && !b.absorbed){
-			Damage.damage(b.team, x, y, splashDamageRadius, splashDamage * b.damageMultiplier(), collidesAir, collidesGround);
-			
-			if(status != StatusEffects.none){
-				Damage.status(b.team, x, y, splashDamageRadius, status, statusDuration, collidesAir, collidesGround);
-			}
-			
-			if(makeFire){
-				PlasmaFire.createChance(x, y, splashDamageRadius, 0.35f, b.team);
-			}
-		}
-		
-		for(int i = 0; i < lightning; i++){
-			Lightning.create(b, lightningColor, lightningDamage < 0 ? damage : lightningDamage, b.x, b.y, b.rotation() + Mathf.range(lightningCone/2) + lightningAngle, lightningLength + Mathf.random(lightningLengthRand));
-		}
-	}
+
+    public void createSplashDamage(Bullet b, float x, float y){
+        if(splashDamageRadius > 0 && !b.absorbed){
+            Damage.damage(b.team, x, y, splashDamageRadius, splashDamage * b.damageMultiplier(), splashDamagePierce, collidesAir, collidesGround, scaledSplashDamage, b);
+
+            if(status != StatusEffects.none){
+                Damage.status(b.team, x, y, splashDamageRadius, status, statusDuration, collidesAir, collidesGround);
+            }
+
+            if(heals()){
+                indexer.eachBlock(b.team, x, y, splashDamageRadius, Building::damaged, other -> {
+                    healEffect.at(other.x, other.y, 0f, healColor, other.block);
+                    other.heal(healPercent / 100f * other.maxHealth() + healAmount);
+                });
+            }
+
+            if(makeFire&&plaFireChance > 0){
+                PlasmaFire.createChance(x, y, splashDamageRadius, plaFireChance, b.team);
+            }
+
+            if(makeFire){
+                indexer.eachBlock(null, x, y, splashDamageRadius, other -> other.team != b.team, other -> PlasmaFire.create(other.tile));
+            }
+        }
+    }
 	
 	public void hitTile(Bullet b, Building build, float initialHealth, boolean direct){
 		PlasmaFire.create(build.tile);

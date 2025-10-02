@@ -39,10 +39,10 @@ public class MainRenderer{
         height = graphics.getHeight();
 
         buffer2.resize(graphics.getWidth(), graphics.getHeight());
-        drawShader(WHShaders.powerArea, WHContent.POWER_AREA,0.001f);
-        drawShader(WHShaders.powerDynamicArea, WHContent.POWER_DYNAMIC,0.001f);
+       /* drawShader(WHShaders.powerArea, WHContent.POWER_AREA,1);
+        drawShader(WHShaders.powerDynamicArea, WHContent.POWER_DYNAMIC, 1);*/
         if (Vars.renderer.animateShields) {
-            drawShader(WHShaders.HexagonalShield, WHContent.HEXAGONAL_SHIELD,0.3f);
+            drawShader(WHShaders.HexagonalShield, WHContent.HEXAGONAL_SHIELD,1);
         }
         advancedDraw();
     }

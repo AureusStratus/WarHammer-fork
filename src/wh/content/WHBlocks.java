@@ -1,6 +1,8 @@
 //
 package wh.content;
 
+import arc.*;
+import arc.audio.*;
 import arc.graphics.Color;
 import arc.graphics.g2d.*;
 import arc.math.Interp;
@@ -38,7 +40,6 @@ import mindustry.world.consumers.*;
 import mindustry.world.draw.*;
 import mindustry.world.meta.*;
 import wh.core.*;
-import wh.entities.bullet.*;
 import wh.entities.bullet.laser.*;
 import wh.entities.world.blocks.defense.*;
 import wh.entities.world.blocks.defense.turrets.*;
@@ -47,13 +48,17 @@ import wh.entities.world.blocks.effect.*;
 import wh.entities.world.blocks.production.*;
 import wh.entities.world.blocks.storage.*;
 import wh.entities.world.blocks.unit.*;
+import wh.entities.world.drawer.factory.*;
+import wh.entities.world.drawer.part.*;
 import wh.graphics.WHPal;
-import wh.entities.world.drawer.*;
+import wh.ui.*;
 
-import static arc.graphics.g2d.Draw.color;
-import static arc.math.Angles.randLenVectors;
+import static arc.graphics.g2d.Draw.*;
+import static arc.graphics.g2d.Lines.lineAngle;
+import static arc.math.Angles.*;
 import static mindustry.Vars.tilesize;
 import static mindustry.type.ItemStack.with;
+import static wh.content.WHFx.TrailCharge;
 import static wh.graphics.WHPal.CeramiteColor;
 import static wh.graphics.WHPal.TiSteelColor;
 
@@ -61,12 +66,15 @@ public final class WHBlocks{
     public static Block promethium;
     public static Block vibraniumOre;
     //factory
-    public static Block ADMill, T2TiSteelFurnace, titaniumSteelFurnace,
-    ceramiteSteelFoundry, ceramiteRefinery,
-    promethiumRefinery, sealedPromethiumMill,
+    public static Block
     siliconMixFurnace, atmosphericSeparator, T2CarbideCrucible, largeKiln, T2PlastaniumCompressor, T2Electrolyzer, T2SporePress,
     T2Cultivator, T2CryofluidMixer, T2PhaseSynthesizer, largeSurgeSmelter,
-    LiquidNitrogenPlant, slagfurnace, scrapCrusher, scrapFurance, tungstenConverter, t2MultiPress,
+
+    ADMill, T2TiSteelFurnace, titaniumSteelFurnace,
+    ceramiteSteelFoundry, ceramiteRefinery,
+    promethiumRefinery, sealedPromethiumMill, LiquidNitrogenPlant, slagfurnace,
+
+    scrapCrusher, scrapFurance, tungstenConverter, t2MultiPress,
     heatSiliconSmelter, crystalEngraver, moSurgeSmelter, sandSeparator, laserEngraver, WaterPurifier, T2WaterPurifier,
     pyratiteBlender, pyratiteSeparator,
     combustionHeater, decayHeater, slagHeatMaker, promethiumHeater, smallHeatRouter, heatBelt, heatBridge, T2heatBridge;
@@ -74,16 +82,17 @@ public final class WHBlocks{
     public static Block MechanicalQuarry, heavyCuttingDrill, highEnergyDrill, SpecialCuttingDrill,
     strengthenOilExtractor, slagExtractor, promethiumExtractor, heavyExtractor;
     //liquid
-    public static Block gravityPump, tiSteelPump, T2LiquidTank, tiSteelConduit,
+    public static Block gravityPump, tiSteelPump, T2LiquidTank, steelConduit,lightConduit,
     tiSteelBridgeConduit, T2BridgeConduit;
     //effect
     public static Block wrapProjector, wrapOverdrive, armoredVault,
     T2RepairTower, fortlessShield, strongholdCore, T2strongholdCore, selectProjector;
     //distribution
-    public static Block steelDust, steelBridge, T2steelBridge, ceramiteConveyor, steelUnloader, trackDriver;
+    public static Block steelDust, steelBridge, T2steelBridge,
+    ceramiteConveyor,armorCoverStackBelt, steelUnloader, trackDriver;
     //power
     public static Block ventDistiller, turboGenerator, crackingGenerator, T2thermalGenerator, T2impactReactor, plaRector, promethiunmRector,
-    Mbattery, Lbattery, MK3battery, TiNode, T2TiNode;
+    Mbattery, Lbattery, MK3battery, TiNode, T2TiNode, SmallTiNode;
 
     //units
 
@@ -96,7 +105,7 @@ public final class WHBlocks{
     //44
     Pyros, Ionize, Vortex, Viper, HeavyHammer, Flash, ArtilleryBeacon,
     //55
-    Collapse, Colossus, Crumble, CycloneMissleLauncher,
+    RoaringFlame, Collapse, Colossus, CycloneMissleLauncher, Crumble,
     //66
     Hydra, Erase, Annihilate, Melta,
     //88,88+
@@ -213,16 +222,17 @@ public final class WHBlocks{
 
         T2CarbideCrucible = new HeatCrafter("t2-carbide-crucible"){{
 
-            requirements(Category.crafting, with(Items.copper, 120, Items.thorium, 80, Items.silicon, 80, WHItems.titaniumSteel, 80));
+            requirements(Category.crafting, with(Items.tungsten, 100, WHItems.molybdenum, 80, Items.silicon, 80, WHItems.titaniumSteel, 80));
             size = 3;
-            health = 800;
-            itemCapacity = 24;
-            outputItem = new ItemStack(Items.carbide, 3);
+            health = 1200;
+            itemCapacity = 45;
+            outputItem = new ItemStack(Items.carbide, 2);
             craftTime = 180;
-            heatRequirement = 15;
+            heatRequirement = 8;
+            maxEfficiency = 3f;
             hasItems = hasPower = true;
-            consumePower(4.5f);
-            consumeItems(with(Items.graphite, 3, Items.tungsten, 5));
+            consumePower(600 / 60f);
+            consumeItems(with(Items.graphite, 5, Items.tungsten, 3));
             drawer = new DrawMulti(new DrawRegion("-bottom"), new DrawCrucibleFlame(), new DrawDefault(), new DrawHeatInput());
             researchCostMultiplier = 0.45f;
         }};
@@ -505,7 +515,7 @@ public final class WHBlocks{
                 liquidCapacity = 120;
                 size = 3;
                 consumePower(5);
-                consumeItems(with(WHItems.molybdenum, 2, Items.metaglass, 2, Items.silicon, 3));
+                consumeItems(with(WHItems.molybdenum, 2, Items.carbide, 1, Items.silicon, 3));
                 outputItem = new ItemStack(WHItems.resonantCrystal, 3);
                 drawer = new DrawMulti(new EngraverDraw(){{
                     rotate = true;
@@ -532,7 +542,7 @@ public final class WHBlocks{
 
                 health = 2500;
                 hasItems = hasPower = hasLiquids = true;
-                craftTime = 180;
+                craftTime = 240;
                 itemCapacity = 20;
                 liquidCapacity = 120;
                 size = 4;
@@ -757,7 +767,7 @@ public final class WHBlocks{
                 size = 3;
                 consumePower(4);
                 consumeLiquid(Liquids.water, 0.5f);
-                outputLiquid = new LiquidStack(Liquids.cryofluid, 0.65f);
+                outputLiquid = new LiquidStack(Liquids.cryofluid, 31 / 60f);
                 drawer = new DrawMulti(new DrawRegion("-bottom"), new DrawLiquidTile(Liquids.water),
                 new DrawLiquidTile(Liquids.cryofluid){{
                     drawLiquidLight = true;
@@ -810,10 +820,10 @@ public final class WHBlocks{
                 liquidCapacity = 180;
                 size = 3;
                 consumePower(5);
-                consumeItems(with(Items.phaseFabric, 3));
+                consumeItems(with(Items.phaseFabric, 4));
                 consumeLiquid(Liquids.oil, 45f / 60f);
                 consumeLiquid(WHLiquids.orePromethium, 15 / 60f);
-                outputLiquid = new LiquidStack(WHLiquids.refinePromethium, 31f / 60f);
+                outputLiquid = new LiquidStack(WHLiquids.refinePromethium, 30.1f / 60f);
                 drawer = new DrawMulti(
                 new DrawRegion("-bottom"),
                 new DrawLiquidTile(WHLiquids.orePromethium),
@@ -880,7 +890,7 @@ public final class WHBlocks{
             researchCostMultiplier = 0.6f;
         }};
 
-        scrapCrusher = new MultiCrafter("scrap-crusher"){{
+       /* scrapCrusher = new MultiCrafter("scrap-crusher"){{
 
             requirements(Category.crafting, with(Items.silicon, 50, Items.lead, 50, WHItems.titaniumSteel, 30, Items.graphite, 80));
 
@@ -924,7 +934,7 @@ public final class WHBlocks{
                 craftEffect = new MultiEffect(WHFx.square(Items.titanium.color, 35f, 4, 16f, 5f),
                 WHFx.arcSmelt(Items.titanium.color, 13f, 6, 60f));
             }});
-        }};
+        }};*/
 
         scrapFurance = new GenericCrafter("scrap-furance"){{
             requirements(Category.crafting, with(WHItems.titaniumSteel, 100, Items.lead, 120, Items.graphite, 120));
@@ -1192,12 +1202,12 @@ public final class WHBlocks{
                 requirements(Category.crafting, with(Items.surgeAlloy, 50, Items.carbide, 60, WHItems.ceramite, 50, Items.phaseFabric, 50));
                 health = 1500;
                 hasItems = hasPower = hasLiquids = true;
-                craftTime = 120;
+                craftTime = 180;
                 itemCapacity = 30;
                 size = 3;
                 overloadThreshold = 0.5f;
                 overloadEfficiency = 0.3f;
-                wasteHeatOutput = 3f;
+                wasteHeatOutput = 6f;
                 consumePower(6);
                 consumeItems(with(WHItems.molybdenumAlloy, 2, WHItems.ceramite, 3, Items.carbide, 2));
                 consumeLiquid(WHLiquids.refinePromethium, 10 / 60f);
@@ -1225,7 +1235,7 @@ public final class WHBlocks{
                 hasLiquids = true;
                 liquidCapacity = 40;
                 itemCapacity = 20;
-                craftTime = 120;
+                craftTime = 180;
                 overloadThreshold = 0.5f;
                 overloadEfficiency = 0.5f;
                 wasteHeatOutput = 3f;
@@ -1511,7 +1521,7 @@ public final class WHBlocks{
             }
         };
 
-        tiSteelConduit = new Conduit("steel-conduit"){
+        /*tiSteelConduit = new Conduit("steel-conduit"){
             {
                 requirements(Category.liquid, with(Items.titanium, 2, Items.metaglass, 3, WHItems.titaniumSteel, 1));
                 health = 250;
@@ -1519,6 +1529,30 @@ public final class WHBlocks{
                 liquidPressure = 2.5f;
                 bridgeReplacement = WHBlocks.tiSteelBridgeConduit;
                 //钢导管
+            }
+        };*/
+
+        steelConduit = new TubeConduit("steel-conduit"){
+            {
+                requirements(Category.liquid, with( WHItems.titaniumSteel,1, WHItems.ceramite, 1));
+                health = 500;
+                liquidCapacity = 80f;
+                liquidPressure = 2.5f;
+                drawCover = true;
+                bridgeReplacement = WHBlocks.T2BridgeConduit;
+                //重钢导管
+            }
+        };
+
+        lightConduit= new TubeConduit("light-conduit"){
+            {
+                requirements(Category.liquid, with (Items.metaglass, 3, WHItems.titaniumSteel, 1));
+                health = 250;
+                liquidCapacity = 35f;
+                liquidPressure = 2.5f;
+                drawArrow=true;
+                bridgeReplacement = WHBlocks.tiSteelBridgeConduit;
+                //轻质导管
             }
         };
 
@@ -1767,17 +1801,33 @@ public final class WHBlocks{
 
         ceramiteConveyor = new BetterStackConvyor("ceramite-conveyor"){{
 
-            requirements(Category.distribution, with(Items.lead, 5, Items.silicon, 4, WHItems.titaniumSteel, 3, WHItems.ceramite, 2));
+            requirements(Category.distribution, with(Items.lead, 5, Items.silicon, 4, WHItems.titaniumSteel, 2, WHItems.ceramite, 1));
 
             health = 550;
             size = 1;
+            floating=false;
             update = true;
             hasItems = true;
-            speed = 0.12f;
-            itemCapacity = 35;
+            speed = 3.2f/60f;
+            itemCapacity = 40;
             researchCostMultiplier = 1;
             //陶钢打包带
         }};
+
+        armorCoverStackBelt= new TubeStackConveyor("armor-cover-stack-belt"){
+            {
+                requirements(Category.distribution, with( Items.metaglass,3,WHItems.titaniumSteel, 2, WHItems.ceramite, 2));
+                health = 1000;
+                size = 1;
+                update = true;
+                drawCover = true;
+                floating = true;
+                speed = 5/60f;
+                itemCapacity = 40;
+                researchCostMultiplier = 1;
+                placeableLiquid = true;
+            }
+        };
 
         trackDriver = new MassDriver("track-driver"){
             {
@@ -2075,14 +2125,27 @@ public final class WHBlocks{
             }
         };
 
+        SmallTiNode = new PowerNode("composite-power-node"){{
+            requirements(Category.power, with(Items.lead, 8, WHItems.titaniumSteel, 1, Items.silicon, 2));
 
-        TiNode = new CompositePoweNode("titanium-steel-node"){
+            health = 150;
+            size = 1;
+            maxNodes = 12;
+            laserRange = 9;
+            laserScale = 0.4f;
+            laserColor1 = Color.white;
+            laserColor2 = WHPal.SkyBlue;
+            researchCostMultiplier = 0.8f;
+        }};
+
+
+        TiNode = new PowerNode("titanium-steel-node"){
             {
                 requirements(Category.power, with(Items.lead, 20, WHItems.titaniumSteel, 10, Items.silicon, 15));
 
                 health = 400;
                 size = 2;
-                maxNodes = 16;
+                maxNodes = 18;
                 laserRange = 18;
                 laserScale = 0.4f;
                 laserColor1 = Color.white;
@@ -2543,8 +2606,8 @@ public final class WHBlocks{
                         pierceCap = 5;
                         lightningColor = hitColor = WHPal.TiSteelColor;
                         shootEffect = WHFx.shootLine(6, 30);
-                        colors = new Color[]{WHPal.SkyBlue.cpy().a(0.4f).lerp(Pal.techBlue.cpy(),0.3f),
-                        WHPal.SkyBlue.cpy().a(0.6f).lerp(Pal.techBlue.cpy(),0.3f), WHPal.SkyBlueF.lerp(Pal.techBlue.cpy(),0.3f)};
+                        colors = new Color[]{WHPal.SkyBlue.cpy().a(0.4f).lerp(Pal.techBlue.cpy(), 0.3f),
+                        WHPal.SkyBlue.cpy().a(0.6f).lerp(Pal.techBlue.cpy(), 0.3f), WHPal.SkyBlueF.lerp(Pal.techBlue.cpy(), 0.3f)};
                     }
 
                     @Override
@@ -2585,7 +2648,7 @@ public final class WHBlocks{
 
                 ammo(
                 WHLiquids.swageWater, new LiquidBulletType(WHLiquids.swageWater){{
-                    lifetime = 290/4f;
+                    lifetime = 290 / 4f;
                     speed = 4f;
                     knockback = 1.7f;
                     puddleSize = 8f;
@@ -2598,7 +2661,7 @@ public final class WHBlocks{
                     status = StatusEffects.slow;
                 }},
                 Liquids.water, new LiquidBulletType(Liquids.water){{
-                    lifetime = 290/4f;
+                    lifetime = 290 / 4f;
                     speed = 4f;
                     knockback = 1.7f;
                     puddleSize = 8f;
@@ -2610,7 +2673,7 @@ public final class WHBlocks{
                     layer = Layer.bullet - 2f;
                 }},
                 Liquids.slag, new LiquidBulletType(Liquids.slag){{
-                    lifetime = 290/4f;
+                    lifetime = 290 / 4f;
                     speed = 4f;
                     knockback = 1.3f;
                     puddleSize = 8f;
@@ -2621,7 +2684,7 @@ public final class WHBlocks{
                     statusDuration = 60f * 4f;
                 }},
                 Liquids.cryofluid, new LiquidBulletType(Liquids.cryofluid){{
-                    lifetime = 290/4f;
+                    lifetime = 290 / 4f;
                     speed = 4f;
                     knockback = 1.3f;
                     puddleSize = 8f;
@@ -2632,7 +2695,7 @@ public final class WHBlocks{
                     damage = 0.2f;
                 }},
                 Liquids.oil, new LiquidBulletType(Liquids.oil){{
-                    lifetime = 290/4f;
+                    lifetime = 290 / 4f;
                     speed = 4f;
                     knockback = 1.3f;
                     puddleSize = 8f;
@@ -2652,13 +2715,13 @@ public final class WHBlocks{
 
         Ionize = new ShootMatchTurret("Ionize"){{
 
-            requirements(Category.turret, with( Items.tungsten, 150, Items.phaseFabric,100,Items.carbide, 80,WHItems.ceramite,80,WHItems.molybdenumAlloy,90));
+            requirements(Category.turret, with(Items.tungsten, 150, Items.phaseFabric, 100, Items.carbide, 80, WHItems.ceramite, 80, WHItems.molybdenumAlloy, 90));
 
             size = 4;
             buildCostMultiplier = 5f;
             outlineColor = WHPal.Outline;
             outlineRadius = 3;
-            shoot.firstShotDelay=120;
+            shoot.firstShotDelay = 120;
             reload = 360f;
             range = 400f;
             recoil = 4;
@@ -2666,13 +2729,13 @@ public final class WHBlocks{
             coolantMultiplier = 3.5f;
             shootSound = WHSounds.hugeShoot;
             chargeSound = Sounds.lasercharge;
-            rotateSpeed=2.5f;
+            rotateSpeed = 2.5f;
             cooldownTime = 110;
-            shootY = 57/4f;
+            shootY = 57 / 4f;
             consumePower(1500 / 60f);
             coolant = consumeCoolant(30 / 60f);
-            maxAmmo=6;
-            ammoPerShot=4;
+            maxAmmo = 6;
+            ammoPerShot = 4;
             drawer = new DrawMulti(new DrawTurret(WarHammerMod.name("turret-")){{
                 parts.add(new RegionPart("-mid"){{
                     heatColor = WHPal.SkyBlueF.cpy();
@@ -2681,17 +2744,18 @@ public final class WHBlocks{
             }});
             ammo(
             Items.phaseFabric, WHBullets.IonizePhaseFabricBullet,
-            WHItems.resonantCrystal,WHBullets.IonizeResonantCrystalBullet);
+            WHItems.resonantCrystal, WHBullets.IonizeResonantCrystalBullet);
 
         }};
 
-        Pyros=new HeatTurret("Pyros"){
+        Pyros = new HeatTurret("Pyros"){
             {
-                requirements(Category.turret, with(WHItems.titaniumSteel, 150,WHItems.ceramite,80, WHItems.resonantCrystal, 80, WHItems.molybdenumAlloy, 80));
+                requirements(Category.turret, with(WHItems.titaniumSteel, 200, WHItems.ceramite, 300, WHItems.resonantCrystal, 120, WHItems.molybdenumAlloy, 150));
                 buildCostMultiplier = 5f;
                 outlineColor = WHPal.Outline;
                 outlineRadius = 3;
-                armor = 4;health = 4000;
+                armor = 4;
+                health = 4000;
                 size = 4;
                 unitSort = UnitSorts.strongest;
                 inaccuracy = 0;
@@ -2703,13 +2767,861 @@ public final class WHBlocks{
                 range = 400;
                 coolantMultiplier = 1.8f;
                 shootSound = Sounds.laser;
+                chargeSound = Sounds.lasercharge;
                 heatColor = WHPal.Heat;
                 cooldownTime = 110;
                 shootY = 12;
                 velocityRnd = 0.1f;
+                shoot.firstShotDelay = 60f;
+
+                consumeLiquid(Liquids.slag, 60 / 60f);
+                consumePower(2000 / 60f);
 
                 drawer = new DrawMulti(new DrawTurret(WarHammerMod.name("turret-")));
-                shootType=WHBullets.air5Missile;
+                shootType = WHBullets.PyrosBullet;
+                enhancedBullet = WHBullets.PyrosBulletEnhance;
+            }
+        };
+
+        RoaringFlame = new ContinuousLiquidTurret("Roaring-flame"){{
+
+            requirements(Category.turret, with(WHItems.titaniumSteel, 200, WHItems.ceramite, 200, WHItems.molybdenumAlloy, 180, WHItems.sealedPromethium, 50));
+
+            buildCostMultiplier = 5f;
+            outlineColor = WHPal.Outline;
+            outlineRadius = 3;
+            size = 5;
+            health = 7000;
+            float r = range = 240;
+            squareSprite = false;
+            rotateSpeed = 0.9f;
+            shootWarmupSpeed = 0.06f;
+            minWarmup = 0.88f;
+            heatColor = WHPal.Heat;
+            cooldownTime = 120f;
+            ammoPerShot = 4;
+
+            liquidCapacity = 50f;
+            liquidConsumed = 25 / 60f;
+            targetInterval = 10f;
+            newTargetInterval = 30f;
+            targetUnderBlocks = false;
+            shootY = 68 / 4f;
+
+            loopSound = Sounds.torch;
+            shootSound = Sounds.none;
+            loopSoundVolume = 1f;
+
+            scaledHealth = 300;
+
+            shoot = new ShootAlternate(){{
+                firstShotDelay = 20f;
+                barrels = 2;
+                spread = 13.5f;
+                shots = 2;
+            }};
+
+            drawer = new DrawMulti(new DrawTurret(WarHammerMod.name("turret-")){{
+                parts.addAll(
+                new RegionPart("-barrel"){{
+                    mirror = true;
+                    under = true;
+                    moveY = -2f;
+                    heatColor = Pal.turretHeat;
+                    heatProgress = PartProgress.recoil;
+                }},
+                new RegionPart("-side"){{
+                    mirror = true;
+                    under = true;
+                    moveX = 1.6f;
+                    moveY = -2f;
+                    moveRot = -15f;
+                    heatColor = Pal.turretHeat;
+                    heatProgress = PartProgress.warmup;
+                }}
+                );
+            }});
+
+            ammo(
+            Liquids.hydrogen, new ContinuousFlameBulletType(){{
+                damage = 50;
+                rangeChange = -24f;
+                length = r + rangeChange;
+                pierceCap = 2;
+                pierceArmor = true;
+                buildingDamageMultiplier = 0.1f;
+                timescaleDamage = true;
+
+                colors = new Color[]{Color.valueOf("7A8EFFFF").a(0.55f), Color.valueOf("5E81FFFF").a(0.7f),
+                Color.valueOf("3F83E0FF").a(0.8f), Color.valueOf("2EA1FFFF"), Color.white};
+
+                flareColor = Color.valueOf("2EA1FFFF");
+
+                lightColor = hitColor = flareColor;
+            }},
+            WHLiquids.orePromethium, new ContinuousFlameBulletType(){{
+                damage = 70;
+                length = r;
+                knockback = 1f;
+                pierceCap = 2;
+                pierceArmor = true;
+                buildingDamageMultiplier = 0.3f;
+                timescaleDamage = true;
+
+                colors = new Color[]{Color.valueOf("FFB398FF").a(0.55f), Color.valueOf("E5976EFF").a(0.7f),
+                Color.valueOf("D48A4DFF").a(0.8f), Color.valueOf("EB955EFF"), Color.white};
+
+                flareColor = Color.valueOf("EB955EFF");
+
+                lightColor = hitColor = flareColor;
+            }},
+            WHLiquids.refinePromethium, new ContinuousFlameBulletType(){{
+                damage = 150f;
+                rangeChange = 40f;
+                length = r + rangeChange;
+                knockback = 2f;
+                pierceCap = 5;
+                pierceArmor = true;
+                buildingDamageMultiplier = 0.6f;
+                timescaleDamage = true;
+
+                colors = new Color[]{Color.valueOf("FF6947FF").a(0.55f),
+                Color.valueOf("FF8B37FF").a(0.7f), Color.valueOf("FEB938FF").a(0.8f),
+                Color.valueOf("F6FF66FF"), Color.white};
+                flareColor = Color.valueOf("F6FF66FF");
+
+                lightColor = hitColor = flareColor;
+            }});
+
+            researchCostMultiplier = 0.5f;
+        }};
+
+        Collapse = new ShootMatchTurret("Collapse"){{
+
+            requirements(Category.turret, with(WHItems.titaniumSteel, 200, WHItems.ceramite, 200, WHItems.molybdenumAlloy, 180, WHItems.sealedPromethium, 50));
+
+            buildCostMultiplier = 5f;
+            outlineColor = WHPal.Outline;
+            outlineRadius = 3;
+
+            size = 5;
+            health = 4500;
+            canOverdrive = false;
+            shootSound = Sounds.laserblast;
+            unitSort = UnitSorts.farthest;
+            heatColor = WHPal.Heat;
+
+            cooldownTime = 180f;
+            shootY = 14f;
+            shake = 1f;
+            recoil = 4.5f;
+            recoilTime = 180f;
+            ammoPerShot = 4;
+            range = 450;
+            reload = 420;
+            coolantMultiplier = 1.5f;
+
+            rotateSpeed = 1.2f;
+
+            shootWarmupSpeed = 0.08f;
+            minWarmup = 0.85f;
+            warmupMaintainTime = 480;
+            moveWhileCharging = false;
+            shootCone = 20f;
+            trackingRange = range * 1.3f;
+
+            consumePower(1200 / 60f);
+            coolant = consumeCoolant(30 / 60f);
+
+            shoot = new ShootPattern(){{
+                firstShotDelay = 60f;
+            }};
+            drawer = new DrawTurret(WarHammerMod.name("turret-")){{
+                parts.add(
+                new RegionPart("-barrel"){{
+                    under = true;
+                    progress = PartProgress.recoil;
+                    moveY = -8f;
+                }},
+                new CollapsePart(){{
+                    x = 0;
+                    y = 14;
+                    radius = 5;
+                    layer = Layer.effect;
+                    particleLen = 16f;
+                    progress = PartProgress.warmup;
+                }});
+            }};
+
+            ammo(
+            WHItems.resonantCrystal, WHBullets.CollapseResonantCrystal,
+            WHItems.sealedPromethium, WHBullets.CollapseSealedPromethium
+            );
+        }};
+
+        CycloneMissleLauncher = new ShootMatchTurret("Cyclone-missile-launcher"){{
+
+            requirements(Category.turret, with(WHItems.titaniumSteel, 800, WHItems.resonantCrystal, 150, WHItems.ceramite, 400, WHItems.molybdenumAlloy, 300, WHItems.sealedPromethium, 150, WHItems.adamantium, 90));
+
+            buildCostMultiplier = 5f;
+            outlineColor = WHPal.Outline;
+            outlineRadius = 3;
+            health = 6000;
+
+            predictTarget = false;
+
+            recoil = 3f;
+
+            fogRadiusMultiplier = 0.4f;
+            shootSound = Sounds.missileLaunch;
+
+            minWarmup = 0.94f;
+            newTargetInterval = 40f;
+            unitSort = UnitSorts.strongest;
+            shootWarmupSpeed = 0.03f;
+            targetAir = false;
+            targetUnderBlocks = false;
+
+            shake = 6f;
+            ammoPerShot = 20;
+            maxAmmo = ammoPerShot * 3;
+            size = 5;
+            envEnabled |= Env.space;
+            reload = 750f;
+            range = 1100;
+            shootCone = 1f;
+            scaledHealth = 220;
+            rotateSpeed = 0.9f;
+
+            coolant = consumeCoolant(120 / 60f);
+            consumeLiquid(WHLiquids.refinePromethium, 15 / 60f);
+            consumePower(3600 / 60f);
+            coolantMultiplier = 1f;
+            moveWhileCharging = false;
+            limitRange();
+
+            shootY = 72 / 4f;
+
+            shoot = new ShootBarrel(){{
+                shots = 2;
+                shotDelay = 18f;
+                barrels = new float[]
+                {-44 / 4f, 72 / 4f, 0f,
+                44 / 4f, 72 / 4f, 0f};
+            }};
+            drawer = new DrawTurret(WarHammerMod.name("turret-")){{
+                parts.add(
+                new RegionPart("-move"){{
+                    under = true;
+                    progress = PartProgress.warmup;
+                    moveY = -56 / 4f;
+                }},
+                new RegionPart("-missile-part"){{
+                    x = -43 / 4f;
+                    y = 29 / 4f - 15f;
+                    progress = PartProgress.reload.curve(Interp.pow2In);
+
+                    colorTo = new Color(1f, 1f, 1f, 0f);
+                    color = Color.white;
+                    mixColorTo = Pal.accent;
+                    mixColor = new Color(1f, 1f, 1f, 0f);
+                    outline = false;
+
+                    layerOffset = -0.01f;
+
+                    moves.add(new PartMove(PartProgress.warmup, 0f, 15f, 0f));
+                }},
+                new RegionPart("-missile-part"){{
+                    x = 43 / 4f;
+                    y = 29 / 4f - 15f;
+
+                    progress = PartProgress.reload.curve(Interp.pow2In);
+
+                    colorTo = new Color(1f, 1f, 1f, 0f);
+                    color = Color.white;
+                    mixColorTo = Pal.accent;
+                    mixColor = new Color(1f, 1f, 1f, 0f);
+                    outline = false;
+
+                    layerOffset = -0.01f;
+
+                    moves.add(new PartMove(PartProgress.warmup, 0f, 15f, 0f));
+                }});
+            }};
+
+            ammo(
+            Items.carbide, WHBullets.CycloneMissleLauncherMissile1,
+            WHItems.sealedPromethium, WHBullets.CycloneMissleLauncherMissile2,
+            WHItems.refineCeramite, WHBullets.CycloneMissleLauncherMissile3
+            );
+
+            shooter(Items.carbide, new ShootBarrel(){{
+                shots = 4;
+                shotDelay = 18f;
+                barrels = new float[]
+                {-44 / 4f, 72 / 4f, 0f,
+                44 / 4f, 72 / 4f, 0f};
+            }},
+            WHItems.sealedPromethium, new ShootBarrel(){{
+                shots = 1;
+                barrels = new float[]
+                {-44 / 4f, 72 / 4f, 0f,
+                44 / 4f, 72 / 4f, 0f};
+            }});
+
+            researchCostMultiplier = 0.5f;
+        }};
+
+        Crumble = new ShootMatchTurret("Crumble"){{
+            requirements(Category.turret, with(Items.carbide, 250, WHItems.molybdenumAlloy, 150, WHItems.ceramite, 200, WHItems.refineCeramite, 100));
+
+            buildCostMultiplier = 5f;
+            outlineColor = WHPal.Outline;
+            outlineRadius = 3;
+            health = 6500;
+
+            size = 5;
+            range = 460;
+            squareSprite = false;
+            shootSound = Sounds.plasmadrop;
+            unitSort = UnitSorts.farthest;
+
+            reload = 450;
+            rotateSpeed = 0.9f;
+
+            shootWarmupSpeed = 0.03f;
+            minWarmup = 0.88f;
+            shootY = 15;
+            heatColor = WHPal.Heat;
+            cooldownTime = 180;
+            inaccuracy = 3;
+            xRand = 1;
+            recoil = 6;
+            recoilTime = 160;
+            velocityRnd = 0.12f;
+            maxAmmo = 40;
+            ammoPerShot = 8;
+
+            fogRadiusMultiplier = 0.4f;
+            liquidCapacity = 60;
+            coolantMultiplier = 0.8f;
+            consumePower(2400 / 60f);
+            coolant = consumeCoolant(90 / 60f);
+
+            shoot = new ShootMulti(
+            new ShootAlternate(){{
+                spread = 26 / 4f;
+            }},
+            new ShootAlternate(){{
+                spread = 10 / 4f;
+                shotDelay = 10;
+                shots = 4;
+            }}
+            /*  new ShootHelix(12,0.2f, 4)*/
+            );
+
+            drawer = new DrawTurret(WarHammerMod.name("turret-")){{
+                parts.addAll(
+                new CrumblePart(){{
+                    progress = PartProgress.warmup;
+                    layer = Layer.effect;
+                    y = -17;
+                }}
+                );
+            }};
+
+            ammo(
+            WHItems.ceramite, WHBullets.CrumbleCeramiteBullet);
+
+            researchCostMultiplier = 0.4f;
+        }};
+
+        Colossus = new ShootMatchTurret("Colossus"){{
+
+            requirements(Category.turret, with(WHItems.titaniumSteel, 200, Items.carbide, 200, WHItems.ceramite, 250, WHItems.molybdenumAlloy, 100, WHItems.resonantCrystal, 80, WHItems.sealedPromethium, 50));
+            buildCostMultiplier = 5f;
+            outlineColor = WHPal.Outline;
+            outlineRadius = 3;
+
+            health = 7500;
+            size = 5;
+            reload = 360;
+            range = 560;
+            shake = 2;
+            recoil = 5;
+            recoilTime = 120;
+            rotateSpeed = 0.8f;
+            targetAir = false;
+            heatColor = Pal.turretHeat;
+            cooldownTime = 200;
+
+            ammoPerShot = 6;
+            maxAmmo = ammoPerShot * 4;
+
+            inaccuracy = 3;
+            shootY = 11;
+            shootSound = Sounds.shootSmite;
+
+            shoot = new ShootMulti(
+            new ShootPattern(){{
+                firstShotDelay = 30;
+            }},
+            new ShootSpread(4, 3){{
+                shotDelay = 12;
+            }}
+            );
+            shootWarmupSpeed = 0.019f;
+            minWarmup = 0.88f;
+            warmupMaintainTime = 300;
+
+            velocityRnd = 0.1f;
+            coolantMultiplier = 0.7f;
+            liquidCapacity = 60;
+            consumePower(900 / 60f);
+            coolant = consumeCoolant(45 / 60f);
+
+            ammoEjectBack = 14;
+            ammoUseEffect = new MultiEffect(
+            new Effect(120, e -> {
+                color(Pal.lightOrange, Pal.lightishGray, Pal.lightishGray, e.fin());
+                alpha(e.fout(0.5f));
+                float rot = Math.abs(e.rotation) - 90;
+
+                float len = (4f + e.finpow() * 20);
+                float lr = rot - 90 + Mathf.randomSeed(e.id + 1145, -15f * e.fin(), 15f * e.fin());
+
+                Draw.rect(Core.atlas.find("casing"),
+                e.x + trnsx(lr, len) + Mathf.randomSeedRange(e.id + 7, 3f * e.fin()),
+                e.y + trnsy(lr, len) + Mathf.randomSeedRange(e.id + 8, 3f * e.fin()),
+                5, 15, rot);
+
+
+                e.scaled(30, a -> {
+                    color(Pal.lighterOrange, Color.gray, a.fin());
+                    randLenVectors(a.id, 4, 30, a.rotation - 180, 30f * a.fin(), (x, y) -> {
+                        Fill.circle(a.x + x, a.y + y, a.fout() * 5f);
+                    });
+                });
+            }));
+
+            drawer = new DrawTurret(WarHammerMod.name("turret-")){{
+                parts.add(
+                new RegionPart("-b"){{
+                    mirror = false;
+                    under = true;
+                    moveY = 3;
+                    moves.add(new PartMove(PartProgress.recoil, 0, -6, 0));
+                    progress = PartProgress.warmup;
+                    heatProgress = PartProgress.recoil;
+                    heatColor = WHPal.Heat;
+                }},
+                new RegionPart("-side-l"){{
+                    mirror = false;
+                    x = 0;
+                    y = 0;
+                    moveX = -2.4f;
+                    moveY = -3;
+                    moves.add(new PartMove(PartProgress.recoil, 0, 0, 0));
+                    progress = PartProgress.warmup;
+                    heatProgress = PartProgress.recoil;
+                    heatColor = WHPal.Heat;
+                }},
+                new RegionPart("-side-r"){{
+                    mirror = false;
+                    x = 0;
+                    y = 0;
+                    moveX = 2.4f;
+                    moveY = -3;
+                    moves.add(new PartMove(PartProgress.recoil, 0, 0, 0));
+                    progress = PartProgress.warmup;
+                    heatProgress = PartProgress.recoil;
+                    heatColor = WHPal.Heat;
+                }});
+            }};
+
+            ammo(WHItems.ceramite, WHBullets.ColossusCeramite,
+            WHItems.molybdenumAlloy, WHBullets.ColossusMolybdenumAlloy,
+            WHItems.refineCeramite, WHBullets.ColossusRefineCeramite);
+
+            shooter(
+            WHItems.molybdenumAlloy, new ShootPattern(){{
+                shots = 2;
+                shotDelay = 30;
+                firstShotDelay = 30f;
+            }},
+            WHItems.refineCeramite, new ShootPattern(){{
+                firstShotDelay = 30f;
+            }});
+
+        }};
+
+        Melta = new LaserBeamTurret("Melta"){{
+            requirements(Category.turret, with(Items.surgeAlloy, 600, WHItems.titaniumSteel, 1000, WHItems.protocolChip, 300,
+            WHItems.molybdenumAlloy, 500, WHItems.vibranium, 500, WHItems.refineCeramite, 250, WHItems.adamantium, 100));
+
+            buildCostMultiplier = 5f;
+            outlineColor = WHPal.Outline;
+            outlineRadius = 3;
+
+            health = 16000;
+            armor = 20;
+            size = 6;
+            reload = 380;
+            float r = range = 48 * tilesize;
+            /*shootSound = Sounds.railgun;*/
+            shootSound = Sounds.laserbig;
+            loopSound = Sounds.beam;
+            unitSort = UnitSorts.strongest;
+            shake = 5;
+            recoil = 5;
+            recoilTime = 30;
+            rotateSpeed = 0.8f;
+
+
+            newTargetInterval = 40f;
+            shootWarmupSpeed = 0.07f;
+            warmupMaintainTime = 120f;
+            minWarmup = 0.88f;
+
+            squareSprite = false;
+
+            shoot.firstShotDelay = 35;
+            heatColor = WHPal.Heat.cpy().lerp(Pal.meltdownHit, 0.5f);
+
+            cooldownTime = 300;
+            scaledHealth = 400;
+            liquidCapacity = 60;
+            shootY = 24;
+            coolantMultiplier = 2f;
+            consumePower(2400f / 60f);
+
+            coolant = consume(new ConsumeLiquid(Liquids.cryofluid, 90 / 60f));
+
+            consumeLiquid(WHLiquids.refinePromethium, 30 / 60f);
+
+            float d = shootDuration = 180;
+
+            shootType = new LaserBeamBulletType(){
+                {
+                    lifetime = d;
+                    damage = 250;
+                    damageInterval = 6;
+                    damageMult = 8;
+                    length = r / 1.3f;
+                    width = 25;
+                    colors = new Color[]{Color.valueOf("ec745855"), Color.valueOf("ec7458aa"), Color.valueOf("ff9c5a"), Color.white};
+                    hitEffect = Fx.hitMeltdown;
+                    hitColor = Pal.meltdownHit;
+                    status = StatusEffects.melting;
+                    statusDuration = 60;
+                    timescaleDamage = true;
+                    pierceCap = 3;
+                    incendAmount = 1;
+                    incendSpread = 5;
+                    incendChance = 0.4f;
+                    buildingDamageMultiplier = 0.1f;
+                    ammoMultiplier = 1;
+                }
+
+                public final BulletType create = new ArtilleryBulletType(0, 100){
+                    {
+                        splashDamage = damage;
+                        splashDamageRadius = 56;
+                        instantDisappear = true;
+                        despawnEffect = hitEffect =
+                        new MultiEffect(
+                        WHFx.generalExplosion(30, Pal.meltdownHit, splashDamageRadius, 15),
+                        WHFx.square(Pal.meltdownHit, 60, 10, splashDamageRadius, 5));
+                        status = WHStatusEffects.melta;
+                        statusDuration = 60;
+                    }
+                };
+
+                @Override
+                public void update(Bullet b){
+                    super.update(b);
+                    if(b.timer(2, damageInterval)){
+                        WHFx.hitSpark(Pal.meltdownHit, 30, 8, 30, 1.4f, 8)
+                        .at(b.x, b.y);
+                    }
+                }
+
+                @Override
+                public void hitEntity(Bullet b, Hitboxc entity, float health){
+                    super.hitEntity(b, entity, health);
+                    if(b.timer(2, damageInterval * 1.5f) && entity instanceof Healthc){
+                        create.create(b.owner, b.team, entity.getX(), entity.getY(), 0, -1, 0, 1, null);
+                    }
+                }
+            };
+            drawer = new DrawTurret(WarHammerMod.name("turret-")){{
+                parts.addAll(
+                new MeltaPart(),
+                new HaloPart(){{
+                    sides = 4;
+                    hollow = true;
+                    y = -26;
+                    shapes = 1;
+                    stroke = 0;
+                    strokeTo = 2f;
+                    radius = radiusTo = 9;
+                    rotateSpeed = 2;
+                    shapeRotation = 45;
+                    color = colorTo = Pal.meltdownHit;
+                    layer = Layer.effect;
+                }}
+                );
+            }};
+
+            researchCostMultiplier = 0.4f;
+        }};
+
+        Hydra = new ShootMatchTurret("Hydra"){{
+            requirements(Category.turret, with(Items.surgeAlloy, 500,  WHItems.protocolChip,200, WHItems.titaniumSteel, 600,
+            WHItems.resonantCrystal, 200, WHItems.ceramite, 600, WHItems.vibranium, 300, WHItems.refineCeramite, 100));
+
+            buildCostMultiplier = 5f;
+            outlineColor = WHPal.Outline;
+            outlineRadius = 3;
+
+            health = 12000;
+            size = 6;
+            armor = 20;
+
+            targetGround = false;
+            shootSound = Sounds.shootSmite;
+            loopSoundVolume = 0.05f;
+            range = 58 * tilesize;
+
+            shootCone = 20f;
+
+            shake = 0.5f;
+            inaccuracy = 3;
+            velocityRnd = 0.21f;
+            squareSprite = false;
+            rotateSpeed = 2f;
+            heatColor = WHPal.Heat.cpy().lerp(Color.sky, 0.7f);
+            cooldownTime = 70;
+            reload = 80;
+            ammoPerShot = 6;
+            maxAmmo = ammoPerShot * 12;
+
+            liquidCapacity = 60;
+
+            coolantMultiplier = 3;
+            consumePower(2400 / 60f);
+            coolant = consumeCoolant(60 / 60f);
+
+            shootY = 0;
+            recoil = 0;
+            recoilTime = 24;
+
+            shoot = new ShootBarrel(){{
+                shots = 4;
+                shotDelay = 13;
+                barrels = new float[]{
+                -56 / 4f, 80 / 4f, 0,
+                -17 / 4f, 92 / 4f, 0,
+                17 / 4f, 92 / 4f, 0,
+                56 / 4f, 80 / 4f, 0
+                };
+            }};
+
+            recoils = 4;
+            drawer = new DrawTurret(WarHammerMod.name("turret-")){{
+                for(int i = 0; i < recoils; i++){
+                    int f = i;
+                    int a = i + 1;
+                    parts.addAll(
+                    new RegionPart("-barrel-" + a){{
+                        under = true;
+                        moveY = -7;
+                        heatProgress = progress = PartProgress.recoil.curve(Interp.smooth);
+                        heatColor = WHPal.Heat.cpy().lerp(Pal.turretHeat.cpy(), 0.5f);
+                        recoilIndex = f;
+                    }});
+                }
+            }};
+
+            ammo(
+            Items.tungsten, WHBullets.HydraTungsten,
+            WHItems.ceramite, WHBullets.HydraCeramite,
+            WHItems.molybdenumAlloy, WHBullets.HydraMolybdenumAlloy,
+            WHItems.refineCeramite, WHBullets.HydraRefineCeramite
+            );
+            ShootPattern ceShoot = shoot.copy();
+            ceShoot.shots = 5;
+            ShootPattern moShoot = shoot.copy();
+            moShoot.shots = 2;
+            ShootPattern reCShoot = shoot.copy();
+            reCShoot.shots = 2;
+
+            shooter(
+            WHItems.ceramite, ceShoot,
+            WHItems.molybdenumAlloy, moShoot,
+            WHItems.refineCeramite, reCShoot
+            );
+
+            researchCostMultiplier = 0.4f;
+
+        }};
+
+        Annihilate = new PowerTurret("Annihilate"){
+            {
+                requirements(Category.turret, with(WHItems.titaniumSteel, 800, Items.surgeAlloy, 800, WHItems.vibranium, 150,
+                WHItems.molybdenumAlloy, 500, WHItems.resonantCrystal, 200, WHItems.sealedPromethium, 400, WHItems.refineCeramite, 200));
+
+                buildCostMultiplier = 5f;
+                outlineColor = WHPal.Outline;
+                outlineRadius = 3;
+
+                health = 16000;
+                size = 6;
+                armor = 20;
+                range = 66 * tilesize;
+                reload = 540;
+                shootY = 90 / 4f;
+                rotateSpeed = 0.9f;
+                recoil = 4;
+                shake = 3;
+
+                moveWhileCharging = true;
+
+                minWarmup = 0.88f;
+                shootWarmupSpeed = 0.02f;
+                warmupMaintainTime = 300;
+                cooldownTime = recoilTime = 180;
+
+                liquidCapacity = 60;
+
+                coolantMultiplier = 0.8f;
+                consumePower(7000 / 60f);
+                consumeLiquid(Liquids.hydrogen, 30 / 60f);
+                coolant = consumeCoolant(90 / 60f);
+
+                shoot.firstShotDelay = 60;
+                shootSound = Sounds.laserblast;
+                soundPitchMin = 0.8f;
+                soundPitchMax = 0.9f;
+
+                drawer = new DrawTurret(WarHammerMod.name("turret-")){{
+                    parts.addAll(
+                    new DrawArrowSequence("-arrow"){{
+                        x = y = 0;
+                        layer = Layer.effect;
+                        spacing = 16 / 4f;
+                        arrows = 3;
+                        progress = colorProgress = PartProgress.warmup.curve(Interp.smooth);
+                        color = WHPal.SkyBlue.cpy().lerp(Color.white, 0.5f);
+                        colorTo = WHPal.SkyBlueF.cpy().lerp(Color.white, 0.5f);
+                    }});
+                }};
+
+                shootType = WHBullets.AnnihilateBullet;
+
+                researchCostMultiplier = 0.4f;
+
+            }
+
+            @Override
+            public void setStats(){
+                super.setStats();
+                stats.remove(Stat.ammo);
+                stats.add(Stat.ammo, UIUtils.ammo(ObjectMap.of(this, shootType)));
+            }
+        };
+
+        Erase = new ShootMatchTurret("Erase"){
+            {
+                requirements(Category.turret, with(WHItems.titaniumSteel, 800, Items.surgeAlloy, 800, WHItems.protocolChip, 300, WHItems.ceramite, 800,
+                WHItems.molybdenumAlloy, 500, WHItems.resonantCrystal, 800, WHItems.adamantium, 200, WHItems.sealedPromethium, 300));
+                buildCostMultiplier = 5f;
+                outlineColor = WHPal.Outline;
+                outlineRadius = 3;
+
+                health = 17500;
+                size = 6;
+                reload = 630;
+                range = 80 * tilesize;
+                shake = 2;
+                recoil = 5;
+                rotateSpeed = 0.8f;
+                targetAir = false;
+                heatColor = Pal.turretHeat;
+                recoilTime = cooldownTime = 200;
+
+                ammoPerShot = 12;
+                maxAmmo = ammoPerShot * 4;
+
+                shootSound = Sounds.mediumCannon;
+                soundPitchMin = 0.8f;
+                soundPitchMax = 1f;
+
+                inaccuracy = 0.5f;
+                shootY = 84 / 4f;
+                shoot.firstShotDelay = 60;
+
+                minWarmup = 0.95f;
+                newTargetInterval = 40f;
+                shootWarmupSpeed = 0.02f;
+                warmupMaintainTime = 120f;
+
+                velocityRnd = 0.1f;
+                coolantMultiplier = 0.4f;
+                liquidCapacity = 60;
+                consumePower(4000 / 60f);
+                coolant = consumeCoolant(120 / 60f);
+
+                ammoEjectBack = 19;
+                ammoUseEffect = new MultiEffect(
+                new Effect(120, e -> {
+                    color(Pal.lightOrange, Pal.lightishGray, Pal.lightishGray, e.fin());
+                    alpha(e.fout(0.5f));
+                    float rot = Math.abs(e.rotation) - 90;
+
+                    float len = (4f + e.finpow() * 20);
+                    float lr = rot - 90 + Mathf.randomSeed(e.id + 1145, -15f * e.fin(), 15f * e.fin());
+
+                    Draw.rect(Core.atlas.find("casing"),
+                    e.x + trnsx(lr, len) + Mathf.randomSeedRange(e.id + 7, 3f * e.fin()),
+                    e.y + trnsy(lr, len) + Mathf.randomSeedRange(e.id + 8, 3f * e.fin()),
+                    5, 20, rot);
+                }));
+
+                drawer = new DrawTurret(WarHammerMod.name("turret-")){{
+                    parts.addAll(
+                    new RegionPart("-barrel"){{
+                        mirror = false;
+                        layerOffset = -0.0002f;
+                        moveY = -8;
+                        progress = heatProgress = PartProgress.recoil.curve(Interp.smooth);
+                        heatColor = Pal.turretHeat.cpy().lerp(Pal.lighterOrange, 0.2f);
+                    }},
+                    new RegionPart("-side-barrel"){{
+                        mirror = true;
+                        under = true;
+                        x = 0;
+                        y = 0;
+                        moveY = -5;
+                        progress = heatProgress = PartProgress.recoil.curve(Interp.pow5In);
+                        heatColor = WHPal.Heat.cpy().lerp(Pal.lighterOrange, 0.3f);
+                    }},
+                    new RegionPart("-side"){{
+                        mirror = true;
+                        under = true;
+                        x = 0;
+                        y = 0;
+                        moveX = 2;
+                        moves.add(new PartMove(PartProgress.recoil, -moveX, -4, 0));
+                        progress = PartProgress.recoil;
+                        heatProgress = PartProgress.warmup;
+                        heatColor = WHPal.Heat;
+                    }});
+                }};
+
+                ammo(WHItems.molybdenumAlloy, WHBullets.EraseMolybdenumAlloy);
+
+                researchCostMultiplier = 0.4f;
             }
         };
 
@@ -2738,32 +3650,6 @@ public final class WHBlocks{
                 ));
             }
         };
-
-        UnitCallBlock2 airDrop2 = new UnitCallBlock2("air-drop-unit2"){
-            {
-                requirements(Category.units, with(Items.lead, 100, Items.titanium, 75, Items.silicon, 125));
-                plans = Seq.with(
-                new UnitPlan(UnitTypes.poly, 10 * 60, false,
-                with(Items.lead, 30, Items.copper, 60, Items.graphite, 45, Items.silicon, 30)
-                ),
-                new UnitPlan(UnitTypes.flare, 10 * 60, false,
-                with(Items.lead, 30, Items.copper, 60, Items.graphite, 45, Items.silicon, 30)
-                ),
-                new UnitPlan(UnitTypes.anthicus, 10 * 60, false,
-                with(Items.lead, 30, Items.copper, 60, Items.graphite, 45, Items.silicon, 30)
-                ),
-                new UnitPlan(UnitTypes.sei, 10 * 60, false,
-                with(Items.lead, 30, Items.copper, 60, Items.graphite, 45, Items.silicon, 30)
-                ),
-                new UnitPlan(UnitTypes.omura, 10 * 60, false,
-                with(Items.lead, 30, Items.copper, 60, Items.graphite, 45, Items.silicon, 30)
-                )
-                );
-
-                consumePower(100f);
-            }
-        };
-
 
 
         AirRaiderCallBlock test = new AirRaiderCallBlock("tactical-command-center"){{
@@ -2846,8 +3732,7 @@ public final class WHBlocks{
             shootType = new LaserBulletType(140){{
                 colors = new Color[]{Pal.lancerLaser.cpy().a(0.4f), Pal.lancerLaser, Color.white};
                 //TODO merge
-                chargeEffect = new MultiEffect(WHFx.TrailCharge(Pal.accent, 20f, 2.5f, 30, 3, 120));
-
+                chargeEffect= TrailCharge(Pal.lancerLaser, 20, 2, 90, 3, 60).layer(Layer.effect);
                 buildingDamageMultiplier = 0.25f;
                 hitEffect = Fx.hitLancer;
                 hitSize = 4;
@@ -2917,117 +3802,6 @@ public final class WHBlocks{
 
             }
         };
-
-        Collapse = new
-
-        ItemTurret("Collapse"){
-            {
-                ammo(WHItems.sealedPromethium, WHBullets.collapseSp, Items.phaseFabric, WHBullets.collaspsePf);
-            }
-        }
-        ;
-
-
-        sb3 = new
-
-        PowerTurret("激光"){
-            {
-                requirements(Category.turret, with(Items.copper, 1200, Items.lead, 350, Items.graphite, 300, Items.surgeAlloy, 325, Items.silicon, 325));
-                shootEffect = Fx.shootBigSmoke2;
-                shootCone = 40f;
-                recoil = 4f;
-                size = 4;
-                shake = 2f;
-                range = 500f;
-                reload = 500f;
-                shootSound = Sounds.laserbig;
-                loopSound = Sounds.beam;
-                loopSoundVolume = 2f;
-                envEnabled |= Env.space;
-
-                shootType = new DoomLaserBulletType(){{
-                    splashDamage = damage = 1000f;
-                    splashDamageRadius = width;
-                    lifetime = 60f * 6f;
-                    sideLength = 100f;
-                    trailLength = 120;
-                    width = 13f;
-                    oscScl = 12f;
-                    oscMag = 0.4f;
-                }};
-
-                scaledHealth = 200;
-                coolant = consumeCoolant(0.5f);
-                consumePower(17f);
-            }
-        }
-
-        ;
-        sb4 = new
-
-        LaserBeamTurret("laserBeam"){
-            {
-                requirements(Category.turret, with(Items.copper, 1200, Items.lead, 350, Items.graphite, 300, Items.surgeAlloy, 325, Items.silicon, 325));
-                shootEffect = Fx.shootBigSmoke2;
-                shootCone = 40f;
-                recoil = 4f;
-                size = 4;
-                shake = 2f;
-                range = 300f;
-                reload = 500f;
-                coolantMultiplier=5f;
-                shootSound = Sounds.laserbig;
-                loopSound = Sounds.beam;
-                loopSoundVolume = 2f;
-                envEnabled |= Env.space;
-
-                shootType = new LaserBeamBulletType(100){{
-                    colors = new Color[]{Pal.slagOrange.cpy().a(0.4f), Pal.slagOrange, Color.white};
-                    lightColor = lightningColor = Pal.slagOrange;
-                    width = 15f;
-                    shootDuration=lifetime = 300f;
-                    length = 300f;
-                    hitColor = Pal.slagOrange;
-                    drawPositionLighting = false;
-                }};
-                scaledHealth = 200;
-                coolant = consumeCoolant(0.5f);
-                consumePower(17f);
-            }
-
-        };
-
-        sb5 = new
-
-        LaserTurret("AccelLaser"){
-            {
-                requirements(Category.turret, with(Items.copper, 1200, Items.lead, 350, Items.graphite, 300, Items.surgeAlloy, 325, Items.silicon, 325));
-                shootEffect = Fx.shootBigSmoke2;
-                shootCone = 40f;
-                recoil = 4f;
-                size = 4;
-                shake = 2f;
-                range = 300f;
-                reload = 500f;
-                coolantMultiplier=2f;
-                shootSound = Sounds.laserbig;
-                loopSound = Sounds.beam;
-                loopSoundVolume = 2f;
-                envEnabled |= Env.space;
-
-                shootType = new AcceleratingLaserBulletType(100){{
-                    colors = new Color[]{Pal.heal.cpy().a(0.4f), Pal.heal, Color.white};
-                    lightColor = lightningColor = Pal.heal;
-                    width = 15f;
-                    maxLength = 500f;
-                    hitColor = Pal.heal;
-                }};
-                scaledHealth = 200;
-                coolant = consumeCoolant(0.5f);
-                consumePower(17f);
-            }
-        };
-
 
         sb6 = new
 
@@ -3122,6 +3896,82 @@ public final class WHBlocks{
                 };
             }
         };
+
+        sb7 = new ItemTurret("duo7"){{
+            requirements(Category.turret, with(Items.copper, 35));
+            ammo(
+            Items.copper,  new BasicBulletType(2.5f, 9){{
+                width = 7f;
+                height = 9f;
+                lifetime = 60f;
+                ammoMultiplier = 2;
+                hitColor = backColor = trailColor = Pal.copperAmmoBack;
+                hitEffect = despawnEffect =
+                new MultiEffect(WHFx.trailHitSpark(hitColor,30,8,30,1,6)
+                ,Fx.hitBulletColor);
+
+                frontColor = Pal.copperAmmoFront;
+            }},
+            Items.graphite, new BasicBulletType(3.5f, 18){{
+                width = 9f;
+                height = 12f;
+                ammoMultiplier = 4;
+                lifetime = 60f;
+                rangeChange = 16f;
+
+                hitEffect = despawnEffect = Fx.hitBulletColor;
+                hitColor = backColor = trailColor = Pal.graphiteAmmoBack;
+                new MultiEffect(WHFx.trailHitSpark(hitColor,30,8,30,1,6)
+                ,Fx.hitBulletColor);
+                frontColor = Pal.graphiteAmmoFront;
+            }},
+            Items.silicon, new BasicBulletType(3f, 12){{
+                width = 7f;
+                height = 9f;
+                homingPower = 0.2f;
+                reloadMultiplier = 1.5f;
+                ammoMultiplier = 5;
+                lifetime = 60f;
+                trailLength = 5;
+                trailWidth = 1.5f;
+
+                hitEffect = despawnEffect = Fx.hitBulletColor;
+                hitColor = backColor = trailColor = Pal.siliconAmmoBack;
+                new MultiEffect(WHFx.trailHitSpark(hitColor,30,8,30,1,6)
+                ,Fx.hitBulletColor);
+                frontColor = Pal.siliconAmmoFront;
+            }}
+            );
+
+            shoot = new ShootAlternate(3.5f);
+
+            recoils = 2;
+            drawer = new DrawTurret(){{
+                for(int i = 0; i < 2; i ++){
+                    int f = i;
+                    parts.add(new RegionPart("-barrel-" + (i == 0 ? "l" : "r")){{
+                        progress = PartProgress.recoil;
+                        recoilIndex = f;
+                        under = true;
+                        moveY = -1.5f;
+                    }});
+                }
+            }};
+
+            recoil = 0.5f;
+            shootY = 3f;
+            reload = 20f;
+            range = 160;
+            shootCone = 15f;
+            ammoUseEffect = Fx.casing1;
+            health = 250;
+            inaccuracy = 2f;
+            rotateSpeed = 10f;
+            coolant = consumeCoolant(0.1f);
+            researchCostMultiplier = 0.05f;
+
+            limitRange(5f);
+        }};
 
     }
 }

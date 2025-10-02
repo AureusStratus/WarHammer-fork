@@ -22,6 +22,7 @@ public class LaserBeamTurret extends PowerTurret{
     public LaserBeamTurret(String name){
         super(name);
         coolantMultiplier=2;
+        canOverdrive=false;
     }
     @Override
     public void setStats(){
@@ -38,7 +39,7 @@ public class LaserBeamTurret extends PowerTurret{
         super.init();
 
         if(coolant == null){
-            coolant = findConsumer(c -> c instanceof ConsumeLiquidBase);
+            coolant = findConsumer(c -> c instanceof ConsumeCoolant );
         }
     }
 
@@ -73,13 +74,14 @@ public class LaserBeamTurret extends PowerTurret{
             entry.bullet.set(bulletX, bulletY);
             entry.bullet.rotation(angle);
             entry.bullet.owner = this;
+            entry.bullet.time += Time.delta*timeScale;
             if(entry.bullet.type instanceof ContinuousBulletType){
                 entry.bullet.lifetime = shootDuration;
             }else {
-                entry.bullet.time = entry.bullet.type.lifetime * entry.bullet.type.optimalLifeFract;
+                entry.bullet.lifetime = (entry.bullet.type.lifetime * entry.bullet.type.optimalLifeFract);
             }
             /* entry.bullet.keepAlive = true;*///臭猫害得我绘制不出子弹
-            entry.life -= delta()/ Mathf.clamp(Math.max(efficiency, 0.00001f),0,1);
+            entry.life -= Time.delta * timeScale / Math.max(efficiency, 0.00001f);
         }
 
         @Override

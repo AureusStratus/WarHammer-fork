@@ -16,7 +16,7 @@ import mindustry.ui.dialogs.ResearchDialog;
 import wh.content.*;
 import wh.gen.EntityRegister;
 import wh.content.WHSounds;
-import wh.gen.WorldRegister;
+import wh.entities.world.entities.WorldRegister;
 import wh.graphics.MainRenderer;
 import wh.graphics.WHShaders;
 import wh.ui.dialogs.WHResearchDialog;
@@ -56,15 +56,15 @@ public class WarHammerMod extends Mod {
         super.loadContent();
         WorldRegister.load();
         EntityRegister.load();
-
         WHContent.loadPriority();
 
-        WHStatusEffects.load();
         WHItems.load();
         WHLiquids.load();
+        WHStatusEffects.load();
         WHBulletsOther.load();
         WHBullets.load();
         WHUnitTypes.load();
+        WHBlocksEnvironment.load();
         WHBlocks.load();
         WHOverride.load();
         WHPlanets.load();

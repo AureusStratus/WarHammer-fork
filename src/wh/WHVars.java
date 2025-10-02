@@ -1,7 +1,6 @@
 package wh;
 
 import wh.core.*;
-import wh.files.*;
 
 @SuppressWarnings("unused")
 public final class WHVars {

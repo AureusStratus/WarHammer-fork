@@ -7,6 +7,7 @@ import arc.util.*;
 import mindustry.core.*;
 import mindustry.type.*;
 import mindustry.ui.*;
+import mindustry.world.meta.*;
 
 public class ItemImage extends Stack {
     public ItemImage(TextureRegion region, int amount) {
@@ -32,4 +33,5 @@ public class ItemImage extends Stack {
     public ItemImage(PayloadStack stack) {
         this(stack.item.uiIcon, stack.amount);
     }
+
 }

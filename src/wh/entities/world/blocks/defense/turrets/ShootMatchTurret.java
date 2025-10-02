@@ -15,6 +15,7 @@ import mindustry.type.*;
 import mindustry.ui.*;
 import mindustry.world.blocks.defense.turrets.ItemTurret;
 import mindustry.world.meta.*;
+import wh.graphics.*;
 import wh.ui.*;
 
 public class ShootMatchTurret extends ItemTurret {
@@ -24,6 +25,16 @@ public class ShootMatchTurret extends ItemTurret {
 
     public ShootMatchTurret(String name) {
         super(name);
+        fogRadiusMultiplier = 0.4f;
+
+        outlineColor = WHPal.Outline;
+        outlineRadius = 3;
+    }
+
+    @Override
+    public void init(){
+        super.init();
+        armor = 3*size;
     }
 
     @Override
@@ -57,7 +68,7 @@ public class ShootMatchTurret extends ItemTurret {
 
             ShootPattern shoot = getShooter(type);
 
-            if(shoot.firstShotDelay > 0&& moreBarrelCharge){
+            if(shoot.firstShotDelay > 0&&moreBarrelCharge){
                 chargeSound.at(bulletX, bulletY, Mathf.random(soundPitchMin, soundPitchMax));
                 shoot.shoot(barrelCounter, (xOffset, yOffset, angle, delay, mover) -> {
                     type.chargeEffect.at(
@@ -75,9 +86,17 @@ public class ShootMatchTurret extends ItemTurret {
 
             shoot.shoot(barrelCounter, (xOffset, yOffset, angle, delay, mover) -> {
                 queuedBullets++;
-                if (delay > 0f) {
-                    Time.run(delay, () -> bullet(type, xOffset, yOffset, angle, mover));
-                } else {
+                int barrel = barrelCounter;
+
+                if(delay > 0f){
+                    Time.run(delay, () -> {
+                        //hack: make sure the barrel is the same as what it was when the bullet was queued to fire
+                        int prev = barrelCounter;
+                        barrelCounter = barrel;
+                        bullet(type, xOffset, yOffset, angle, mover);
+                        barrelCounter = prev;
+                    });
+                }else{
                     bullet(type, xOffset, yOffset, angle, mover);
                 }
             }, () -> barrelCounter++);

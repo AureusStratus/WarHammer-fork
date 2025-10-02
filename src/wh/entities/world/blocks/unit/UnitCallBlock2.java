@@ -26,7 +26,6 @@ import mindustry.world.meta.*;
 import mindustry.world.modules.*;
 import wh.graphics.*;
 import wh.ui.*;
-import wh.ui.display.*;
 import wh.util.*;
 
 import static arc.Core.bundle;

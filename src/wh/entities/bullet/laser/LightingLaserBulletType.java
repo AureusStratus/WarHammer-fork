@@ -10,6 +10,12 @@ import wh.graphics.PositionLightning;
 public class LightingLaserBulletType extends LaserBulletType {
     public Color lightningColor= Pal.lancerLaser;
 
+    public LightingLaserBulletType(float damage){
+        super(damage);
+    }
+
+    public LightingLaserBulletType(){}
+
     @Override
     public void init(Bullet b){
         super.init(b);

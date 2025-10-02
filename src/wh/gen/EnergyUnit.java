@@ -12,7 +12,7 @@ import mindustry.graphics.*;
 import mindustry.type.*;
 import wh.content.*;
 import wh.graphics.*;
-import wh.entities.world.unit.*;
+import wh.entities.world.entities.*;
 
 import static mindustry.Vars.*;
 

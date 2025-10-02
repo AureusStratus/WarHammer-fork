@@ -17,7 +17,7 @@ import static wh.core.WarHammerMod.name;
 public class WHContent extends Content{
     public static TextureRegion arrowRegion,
      pointerRegion,
-    strafeRegion, missileRegion, bombRegion;
+    strafeRegion, missileRegion, bombRegion,annihilateArrow;
 
     public static final float HEXAGONAL_SHIELD = Layer.shields + 12f;
     public static final float VOID_SHIELD = Layer.shields + 9f;
@@ -38,5 +38,6 @@ public class WHContent extends Content{
         strafeRegion = Core.atlas.find(name("strafe-mode"));
         missileRegion = Core.atlas.find(name("missile-mode"));
         bombRegion = Core.atlas.find(name("bomb-mode"));
+        annihilateArrow= Core.atlas.find(WarHammerMod.name("Annihilate-arrow"));
     }
 }

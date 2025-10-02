@@ -114,7 +114,7 @@ public class CompositePoweNode extends PowerNode{
         public void draw(){
             super.draw();
             DrawBeamNode();
-            if(player == null || team != player.team()) return;
+         /*   if(player == null || team != player.team()) return;
 
             if(isPayload()) return;
 
@@ -124,7 +124,7 @@ public class CompositePoweNode extends PowerNode{
 
             Draw.z(WHContent.POWER_DYNAMIC);
             Draw.color(team.color);
-            Fill.square(x, y, (laserRange * 0.8f + laserRange * 0.2f * Interp.exp5Out.apply(Time.time / 240f % 1f))*tilesize);
+            Fill.square(x, y, (laserRange * 0.8f + laserRange * 0.2f * Interp.exp5Out.apply(Time.time / 240f % 1f))*tilesize);*/
 
         }
 

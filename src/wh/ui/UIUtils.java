@@ -12,12 +12,10 @@ import arc.scene.actions.*;
 import arc.scene.event.*;
 import arc.scene.style.*;
 import arc.scene.ui.*;
-import arc.scene.ui.Label.*;
 import arc.scene.ui.TextButton.*;
 import arc.scene.ui.layout.*;
 import arc.struct.*;
 import arc.util.*;
-import arc.util.pooling.*;
 import mindustry.content.StatusEffects;
 import mindustry.core.*;
 import mindustry.ctype.*;
@@ -26,12 +24,10 @@ import mindustry.gen.*;
 import mindustry.graphics.*;
 import mindustry.type.*;
 import mindustry.ui.*;
-import mindustry.world.*;
 import mindustry.world.blocks.defense.turrets.*;
 import mindustry.world.meta.*;
 import wh.entities.bullet.*;
 import wh.entities.bullet.laser.*;
-import wh.ui.display.ItemImageDynamic;
 
 import java.text.*;
 
@@ -457,7 +453,7 @@ public final class UIUtils{
 
                     if(type instanceof CritBulletType stype){
                         sep(bt, bundle.format("bullet.wh-crit-chance", (int)(stype.critChance * 100f)));
-                        sep(bt, bundle.format("bullet.wh-crit-multiplier", (int)stype.critMultiplier));
+                        sep(bt, bundle.format("bullet.wh-crit-multiplier",  Strings.fixed(stype.critMultiplier,1)));
                     }
 
                     if(type instanceof DOTBulletType stype){
@@ -474,6 +470,7 @@ public final class UIUtils{
 
                     if(type instanceof LaserBeamBulletType stype){
                         sep(bt, bundle.format("bullet.wh-extension-length",  Strings.fixed((stype.extensionProportion*stype.length)/tilesize,1)));
+                        sep(bt, bundle.format("bullet.wh-max-damgae",  Strings.fixed((stype.damageMult*stype.damage)/60,1)));
                     }
 
                     if(type instanceof ChainLightingBulletType stype){

@@ -51,7 +51,7 @@ public final class WHPal {
         rim3 = Color.valueOf("dbeffe");
 
         WHYellow = Color.valueOf("FFFBBDE1");
-        WHYellow2 = Color.valueOf("FFFFFF");
+        WHYellow2 = Pal.accent.cpy().lerp(Color.white, 0.6F);
         OR = Color.valueOf("FFC397FF");
         ORL =Color.valueOf("FFA05C");
         Heat=Color.valueOf("FF4040");

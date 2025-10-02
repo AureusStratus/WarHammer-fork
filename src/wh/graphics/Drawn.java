@@ -110,10 +110,44 @@ public final class Drawn{
         Fill.quad(x + r1 * cos, y + r1 * sin, x + r1 * cos2 + v1.x, y + r1 * sin2 + v1.y, x + r2 * cos2 + v1.x, y + r2 * sin2 + v1.y, x + r2 * cos, y + r2 * sin);
     }
 
+    public static void shockWave(float x, float y, float rad, float width, float percent, Color color){
+        shockWave(x, y, rad, width, percent, 0, color.cpy().a(0.01f), color.cpy().a(0.8f));
+    }
+
+    public static void shockWave(float x, float y, float rad, float width, float percent, float angle, Color colorFrom, Color colorTo){
+        float p = Mathf.clamp(percent);
+        float currentRad = rad * p;
+        float currentInnerRad = currentRad - width;
+
+        int sides = Lines.circleVertices(currentRad);
+        float space = 360.0F / sides;
+
+        for(int i = 0; i < sides; i++){
+            float a = space * i + angle;
+            float cos = Mathf.cosDeg(a);
+            float sin = Mathf.sinDeg(a);
+            float cos2 = Mathf.cosDeg(a + space);
+            float sin2 = Mathf.sinDeg(a + space);
+
+            Color color1 = colorFrom.cpy();
+            Color color2 = colorTo.cpy();
+
+            float c1 = color1.toFloatBits(), c2 = color2.toFloatBits();
+
+            Fill.quad(
+            x + currentInnerRad  * cos, y + currentInnerRad  * sin, c1,
+            x + currentRad * cos, y + currentRad * sin, c2,
+            x + currentRad * cos2, y + currentRad * sin2, c2,
+            x + currentInnerRad  * cos2, y + currentInnerRad  * sin2, c1
+            );
+        }
+    }
+
     public static void circlePercentFlip(float x, float y, float rad, float in, float scl){
         float f = Mathf.cos(in % (scl * 3.0F), scl, 1.1F);
         circlePercent(x, y, rad, f > 0.0F ? f : -f, in + (float)(-90 * Mathf.sign(f)));
     }
+
     //相比于臭猫的arc,可以绘制多段弧线进度
     public static void arcProcess(float x, float y, float radius, float fraction, float rotation, int sides, float progress){
         int max = Mathf.ceil(sides * fraction);
@@ -131,6 +165,11 @@ public final class Drawn{
         }
 
         polyline(points, false);
+    }
+
+    public static void arcProcessFlip(float x, float y, float rad, float in, float scl){
+        float f = Mathf.cos(in % (scl * 3.0F), scl, 1.1F);
+        arcProcess(x, y, rad, 1, in + (float)(-90 * Mathf.sign(f)), 100, f > 0.0F ? f : -f);
     }
 
     public static void posSquareLink(Color color, float stroke, float size, boolean drawBottom, float x, float y, float x2, float y2){
@@ -210,17 +249,16 @@ public final class Drawn{
 
     public static void surround(long id, float x, float y, float rad, int num, float innerSize, float outerSize, float interp){
         Rand rand = WHUtils.rand;
+
         rand.setSeed(id);
-
-        for(int i = 0; i < num; ++i){
-            float len = rad * rand.random(0.75F, 1.5F);
-            v6.trns(rand.random(360.0F) + rand.range(2.0F) * (1.5F - Mathf.curve(len, rad * 0.75F, rad * 1.5F)) * Time.time, len);
-            float angle = v6.angle();
-            v6.add(x, y);
-            tri(v6.x, v6.y, (interp + 1.0F) * outerSize + rand.random(0.0F, outerSize / 8.0F), outerSize * (Interp.exp5In.apply(interp) + 0.25F) / 2.0F, angle);
-            tri(v6.x, v6.y, (interp + 1.0F) / 2.0F * innerSize + rand.random(0.0F, innerSize / 8.0F), innerSize * (Interp.exp5In.apply(interp) + 0.5F), angle - 180.0F);
+        for(int i = 0; i < num; i++){
+            float len = rad * rand.random(0.75f, 1.5f);
+            v1.trns(rand.random(360f) + rand.range(2f) * (1.5f - Mathf.curve(len, rad * 0.75f, rad * 1.5f)) * Time.time, len);
+            float angle = v1.angle();
+            v1.add(x, y);
+            tri(v1.x, v1.y, ((interp + 1) * outerSize + rand.random(0, outerSize / 8)) * interp, (outerSize + 0.25f) * (Interp.exp5In.apply(interp)) / 2f, angle);
+            tri(v1.x, v1.y, ((interp + 1) / 2 * innerSize + rand.random(0, innerSize / 8)) * interp, (innerSize + 0.5f) * (Interp.exp5In.apply(interp)), angle - 180);
         }
-
     }
 
     public static void drawConnected(float x, float y, float size, Color color){
@@ -278,13 +316,16 @@ public final class Drawn{
         float cx = Angles.trnsx(angle, length) + x;
         float cy = Angles.trnsy(angle, length) + y;
         Fill.tri(x + ox, y + oy, x - wx, y - wy, cx, cy);
-        Fill.tri(x + wx, y + wy, x + ox, y + oy, cx, cy);
+        Fill.tri(x + ox, y + oy, x + wx, y + wy, cx, cy);
     }
 
     public static void tri(float x, float y, float width, float length, float angle){
         float wx = Angles.trnsx(angle + 90.0F, width);
         float wy = Angles.trnsy(angle + 90.0F, width);
-        Fill.tri(x + wx, y + wy, x - wx, y - wy, Angles.trnsx(angle, length) + x, Angles.trnsy(angle, length) + y);
+        Fill.tri(
+        x + wx, y + wy,
+        x - wx, y - wy,
+        Angles.trnsx(angle, length) + x, Angles.trnsy(angle, length) + y);
     }
 
     public static void fillOctagon(float x, float y, float range, float f, Color color){
@@ -322,18 +363,17 @@ public final class Drawn{
     }
 
     public static void drawCornerPoly(float x, float y, float rad, float cornerLen, float sides, float rotate, boolean line){
-        float step = 360/sides;
+        float step = 360 / sides;
 
         if(line) Lines.beginLine();
         for(int i = 0; i < sides; i++){
-            v1.set(rad, 0).setAngle(step*i + rotate);
+            v1.set(rad, 0).setAngle(step * i + rotate);
             v2.set(v1).rotate90(1).setLength(cornerLen);
 
             if(line){
                 Lines.linePoint(x + v1.x - v2.x, y + v1.y - v2.y);
                 Lines.linePoint(x + v1.x + v2.x, y + v1.y + v2.y);
-            }
-            else{
+            }else{
                 Fill.tri(x, y,
                 x + v1.x - v2.x, y + v1.y - v2.y,
                 x + v1.x + v2.x, y + v1.y + v2.y
@@ -417,7 +457,6 @@ public final class Drawn{
         }
         polyline(points, false);
     }
-
 
 
     private static void point(float x, float y, float baseX, float baseY, float rotation){

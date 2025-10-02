@@ -17,14 +17,15 @@ import arc.util.io.*;
 import mindustry.Vars;
 import mindustry.entities.TargetPriority;
 import mindustry.entities.units.BuildPlan;
-import mindustry.gen.Building;
+import mindustry.gen.*;
 import mindustry.graphics.Layer;
 import mindustry.graphics.Pal;
+import mindustry.type.*;
 import mindustry.ui.Bar;
-import mindustry.world.Block;
-import mindustry.world.Tile;
+import mindustry.world.*;
 import mindustry.world.blocks.Autotiler;
 import mindustry.world.blocks.distribution.ChainedBuilding;
+import mindustry.world.blocks.distribution.StackConveyor.*;
 import mindustry.world.blocks.heat.*;
 import mindustry.world.blocks.heat.HeatConductor.*;
 import mindustry.world.draw.DrawBlock;
@@ -32,7 +33,8 @@ import mindustry.world.draw.DrawDefault;
 import mindustry.world.meta.BlockGroup;
 import mindustry.world.meta.Env;
 import wh.content.WHBlocks;
-import wh.entities.world.blocks.production.FlammabilityHeatProducer;
+import wh.entities.world.blocks.distribution.TubeConveyor.*;
+import wh.entities.world.blocks.production.*;
 
 import java.util.*;
 
@@ -40,16 +42,15 @@ import static mindustry.Vars.*;
 import static mindustry.input.Placement.isSidePlace;
 
 public class HeatBelt extends Block implements Autotiler{
-    public TextureRegion[] topRegions;
-    public TextureRegion[] botRegions;
-    public TextureRegion[] heatRegions;
+    public TextureRegion[] topRegions = new TextureRegion[5];
+    public TextureRegion[] botRegions = new TextureRegion[5];
+    public TextureRegion[] heatRegions = new TextureRegion[5];
     public TextureRegion capRegion;
     public Color heatColor1 = new Color(1f, 0.3f, 0.3f);
     public Color heatColor2 = Pal.turretHeat;
     public float heatPulse = 0.5f, heatPulseScl = 10f;
 
     public float visualMaxHeat = 60f;
-    public DrawBlock drawer = new DrawDefault();
     public boolean splitHeat = false;
     public float warmupRate = 0.8f;
 
@@ -61,7 +62,7 @@ public class HeatBelt extends Block implements Autotiler{
         group = BlockGroup.heat;
         update = true;
         solid = false;
-        hasItems = true;
+        hasItems = false;
         conveyorPlacement = true;
         noUpdateDisabled = true;
         underBullets = true;
@@ -75,12 +76,9 @@ public class HeatBelt extends Block implements Autotiler{
     @Override
     public void load(){
         super.load();
-        topRegions = new TextureRegion[5];
-        botRegions = new TextureRegion[5];
-        heatRegions = new TextureRegion[5];
         for(int i = 0; i < 5; i++){
-            topRegions[i] = Core.atlas.find(name + "-top-" + i);
             botRegions[i] = Core.atlas.find(name + "-bottom-" + i);
+            topRegions[i] = Core.atlas.find(name + "-top-" + i);
             heatRegions[i] = Core.atlas.find(name + "-heat-" + i);
         }
         capRegion = Core.atlas.find(name + "-cap");
@@ -99,6 +97,10 @@ public class HeatBelt extends Block implements Autotiler{
         super.init();
         bridgeReplacement = WHBlocks.heatBridge;
     }
+    @Override
+    protected void initBuilding(){
+        if(buildType == null) buildType = HeatBeltBuilding::new;
+    }
 
     @Override
     public void drawPlanRegion(BuildPlan plan, Eachable<BuildPlan> list){
@@ -116,16 +118,14 @@ public class HeatBelt extends Block implements Autotiler{
 
     @Override
     public boolean blends(Tile tile, int rotation, int otherx, int othery, int otherrot, Block otherblock){
-        boolean heatRelated = otherblock instanceof HeatProducer
+
+        return
+        (otherblock instanceof HeatBlock || (lookingAt(tile, rotation, otherx, othery, otherblock))
         || otherblock instanceof HeatBelt
         || otherblock instanceof FlammabilityHeatProducer
-        || otherblock instanceof HeatDirectionBridge;
-
-        boolean directionMatch = lookingAtEither(tile, rotation, otherx, othery, otherrot, otherblock);
-        boolean canTransfer = (otherblock.outputsItems() || otherblock.hasLiquids)
-        || (lookingAt(tile, rotation, otherx, othery, otherblock) && (otherblock.hasItems || otherblock.hasLiquids));
-
-        return heatRelated && directionMatch && canTransfer;
+        || otherblock instanceof OverheatGenericCrafter
+        || (otherblock instanceof HeatProducer b && b.heatOutput > 0)
+        || otherblock instanceof HeatDirectionBridge) && lookingAtEither(tile, rotation, otherx, othery, otherrot, otherblock);
     }
 
     @Override
@@ -166,13 +166,20 @@ public class HeatBelt extends Block implements Autotiler{
         }
 
         public void updateHeat(){
-            if(lastHeatUpdate == Vars.state.updateId) return;
+            if(sideHeat != null){
+                if(lastHeatUpdate == Vars.state.updateId) return;
 
-            lastHeatUpdate = Vars.state.updateId;
-            float cHeat = calculateHeat(sideHeat,cameFrom);
-            heat = Mathf.approach(heat, cHeat,
-            Interp.smooth.apply(Mathf.approach(0,warmupRate,warmupRate))*2 * delta());
+                lastHeatUpdate = Vars.state.updateId;
+                float cHeat = calculateHeat(sideHeat, cameFrom);
+                heat = Mathf.approach(heat, cHeat,
+                Interp.smooth.apply(Mathf.approach(0, warmupRate, warmupRate)) * 2 * delta());
+                noSleep();
+            }
+            else{
+                sleep();
+            }
         }
+
 
         @Override
         public float heat(){
@@ -191,42 +198,61 @@ public class HeatBelt extends Block implements Autotiler{
 
         @Override
         public void draw(){
-
             float rotation = rotdeg();
             int r = this.rotation;
 
+            Draw.z(Layer.blockUnder);
             //draw extra ducts facing this one for tiling purposes
             for(int i = 0; i < 4; i++){
                 if((blending & (1 << i)) != 0){
                     int dir = r - i;
-                    float rot = i == 0 ? rotation : (dir) * 90;
-                    drawAt(x + Geometry.d4x(dir) * tilesize * 0.75f, y + Geometry.d4y(dir) * tilesize * 0.75f, 0, rot, i != 0 ? SliceMode.bottom : SliceMode.top);
+                    float rot = i == 0 ? rotation : (dir)*90;
+                    drawAt(x + Geometry.d4x(dir) * tilesize*0.75f, y + Geometry.d4y(dir) * tilesize*0.75f, 0, rot, i != 0 ? SliceMode.bottom : SliceMode.top);
                 }
             }
 
             Draw.scl(xscl, yscl);
             drawAt(x, y, blendbits, rotation, SliceMode.none);
-            Draw.reset();
-            Draw.z(Layer.blockUnder - 0.01f);
-            if(capped && capRegion.found()) Draw.rect(capRegion, x, y, rotdeg());
-            if(backCapped && capRegion.found()) Draw.rect(capRegion, x, y, rotdeg() + 180);
-
-            super.draw();
+            Draw.scl();
+            if(capped && capRegion.found()) Draw.rect(capRegion, x, y, rotation);
+            if(backCapped && capRegion.found()) Draw.rect(capRegion, x, y, rotation + 180);
         }
 
-        protected void drawAt(float x, float y, int bits, float rotation, Autotiler.SliceMode slice){
-            Draw.z(Layer.blockUnder + 0.2f);
-            Draw.color();
-            Draw.rect(sliced(topRegions[bits], slice), x, y, rotation);
-            Draw.z(Layer.blockUnder);
+
+        public void drawAt(float x, float y, int bits, float rotation, SliceMode slice){
+
+            Draw.z(Layer.block - 0.2f);
             Draw.rect(sliced(botRegions[bits], slice), x, y, rotation);
 
-            Draw.blend(Blending.additive);
-            Draw.tint(heatColor1, heatColor2, Mathf.clamp(heatFrac() / 2) * Mathf.absin(Time.time, heatPulse));
-            Draw.alpha(Mathf.curve(heat/visualMaxHeat, 0, 1f) * (1f - Mathf.absin(Time.time,  (3*heat/visualMaxHeat+3*heatPulseScl*3)/heatPulseScl , heatPulse)));
-            Draw.rect(sliced(heatRegions[bits], slice), x, y, rotation);
-            Draw.blend();
+            Draw.z(Layer.block);
+            Draw.rect(sliced(topRegions[bits], slice), x, y, rotation);
+
+            if(heat > 0.001f && !headless){
+                Draw.tint(heatColor1, heatColor2, Mathf.clamp(heatFrac() / 2) * Mathf.absin(Time.time, heatPulse));
+                Draw.alpha(Mathf.curve(heat / visualMaxHeat, 0, 1f) * (1f - Mathf.absin(Time.time, (3 * heat / visualMaxHeat + 6 * heatPulseScl * 3) / heatPulseScl, heatPulse)));
+                Draw.blend(Blending.additive);
+                Draw.rect(sliced(heatRegions[bits], slice), x, y, rotation);
+                Draw.blend();
+            }
             Draw.reset();
+        }
+        @Override
+        public boolean acceptItem(Building source, Item item){
+           return false;
+        }
+
+
+        @Override
+        public void handleStack(Item item, int amount, Teamc source){
+        }
+
+        @Override
+        public void handleItem(Building source, Item item){
+        }
+
+        @Override
+        public byte version(){
+            return 1;
         }
 
         @Override

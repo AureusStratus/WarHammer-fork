@@ -33,6 +33,7 @@ public class LightningLinkerBulletType extends BasicBulletType{
     public float linkRange = 240f;
     public float boltWidth = PositionLightning.WIDTH;
 
+    public float linkLightingDamage = 50f;
     public float randomGenerateRange = -1f;
     public float randomGenerateChance = 0.03f;
     public float randomLightningChance = 0.1f;
@@ -55,7 +56,7 @@ public class LightningLinkerBulletType extends BasicBulletType{
 
     public boolean drawCircle = true;
 
-    public Effect slopeEffect, liHitEffect, spreadEffect;
+    public Effect slopeEffect, liHitEffect,liHitEffect2, spreadEffect;
 
     public static final Vec2 randVec = new Vec2();
 
@@ -74,7 +75,7 @@ public class LightningLinkerBulletType extends BasicBulletType{
 
         trailWidth = -1;
 
-        liHitEffect = WHFx.lightningHitSmall;
+        liHitEffect2=liHitEffect = WHFx.lightningHitSmall;
     }
 
     public LightningLinkerBulletType(){
@@ -124,12 +125,12 @@ public class LightningLinkerBulletType extends BasicBulletType{
 
         Effect.shake(hitShake, hitShake, b);
         if (b.timer(4, hitSpacing)) {
-            for(int i : Mathf.signs)slopeEffect.at(b.x + Mathf.range(size / 4f), b.y + Mathf.range(size / 4f), b.rotation(), i);
-            spreadEffect.at(b);
+           /* for(int i : Mathf.signs)slopeEffect.at(b.x + Mathf.range(size / 4f), b.y + Mathf.range(size / 4f), b.rotation(), i);
+            spreadEffect.at(b);*/
             PositionLightning.setHitChance(trueHitChance);
             PositionLightning.createRange(b, collidesAir, collidesGround, b, b.team, linkRange,
             maxHit, backColor, Mathf.chanceDelta(randomLightningChance),
-            lightningDamage, lightningLength, PositionLightning.WIDTH, boltNum, p -> {
+            linkLightingDamage, lightningLength, PositionLightning.WIDTH, boltNum, p -> {
                 liHitEffect.at(p.getX(), p.getY(), hitColor);
             });
             PositionLightning.setHitChanceDef();
@@ -141,7 +142,7 @@ public class LightningLinkerBulletType extends BasicBulletType{
             0, 0, boltWidth, boltNum, randomLightningNum, hitPos -> {
             randomGenerateSound.at(hitPos, Mathf.random(0.9f, 1.1f));
             Damage.damage(b.team, hitPos.getX(), hitPos.getY(), splashDamageRadius / 8, splashDamage * b.damageMultiplier() / 8, collidesAir, collidesGround);
-            WHFx.lightningHitLarge.at(hitPos.getX(), hitPos.getY(), lightningColor);
+            liHitEffect2.at(hitPos.getX(), hitPos.getY(),10, lightningColor);
 
             hitModifier.get(hitPos);
         });
@@ -150,7 +151,7 @@ public class LightningLinkerBulletType extends BasicBulletType{
             for(int i = 0; i < effectLingtning; i++){
                 Vec2 v = randVec.rnd(effectLightningLength + Mathf.random(effectLightningLengthRand)).add(b).add(Tmp.v1.set(b.vel).scl(Fx.chainLightning.lifetime / 2));
                 Fx.chainLightning.at(b.x, b.y, 12f, backColor, v.cpy());
-                WHFx.lightningHitSmall.at(v.x, v.y, 20f, backColor);
+                WHFx.lightningHitSmall.at(v.x, v.y, 10, backColor);
             }
         }
     }

@@ -2,9 +2,8 @@ package wh.gen;
 
 import arc.func.*;
 import arc.struct.*;
-import arc.util.*;
 import mindustry.gen.*;
-import wh.entities.world.unit.*;
+import wh.entities.world.entities.*;
 
 public final class EntityRegister {
     private static final ObjectIntMap<Class<? extends Entityc>> ids = new ObjectIntMap<>();
@@ -30,12 +29,10 @@ public final class EntityRegister {
     }
     public static void load() {
         register("PlaFire", PlasmaFire.class, PlasmaFire::new);
-        register("CopterUnit", CopterUnit.class, CopterUnit::new);
         register("EnergyUnit", EnergyUnit.class, EnergyUnit::new);
         register("PesterUnit", PesterUnit.class, PesterUnit::new);
         register("NucleoidUnit", NucleoidUnit.class, NucleoidUnit::new);
         register("AirRaiderUnit", AirRaiderUnitType.class, AirRaiderUnitType::new);
-        register("wh-scepter", StarrySkyEntity.class, StarrySkyEntity::new);
-        register("wh-Starry-sky", StarrySkyEntity.class, StarrySkyEntity::new);
+        register("StarrySkyUnit", StarrySkyEntity.class, StarrySkyEntity::new);
     }
 }

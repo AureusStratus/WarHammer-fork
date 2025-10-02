@@ -37,6 +37,4 @@ public class WorldDef {
         });
         return result;
     }
-
-
 }

@@ -3,19 +3,27 @@ package wh.entities.bullet;
 import arc.math.*;
 import arc.math.geom.*;
 import arc.util.*;
+import arc.util.pooling.*;
 import mindustry.content.*;
 import mindustry.entities.*;
 import mindustry.entities.bullet.*;
+import mindustry.game.*;
 import mindustry.gen.*;
 import mindustry.graphics.*;
+import wh.entities.world.entities.*;
+import wh.util.*;
+
 import static mindustry.Vars.*;
 
 public class CritBulletType extends BasicBulletType{
     protected static Rand critRand = new Rand();
 
     public float critChance = 0.15f, critMultiplier = 5f;
-    public Effect critEffect =Fx.none;
+    public Effect critEffect = Fx.none;
     public boolean bouncing, despawnHitEffects = true;
+    public boolean makePlaFire;
+    public float plaFireChance = -1;
+
 
     public CritBulletType(float speed, float damage, String sprite){
         super(speed, damage, sprite);
@@ -50,7 +58,7 @@ public class CritBulletType extends BasicBulletType{
     public void init(){
         super.init();
 
-        if(trailWidth < 0f) trailWidth = width * (10f / 52f); //Should match up with normal bullet sprite
+        if(trailWidth < 0f) trailWidth = width * (10f / 52f);
     }
 
     @Override
@@ -58,10 +66,19 @@ public class CritBulletType extends BasicBulletType{
         if(b.data == null){
             b.data = critChance(b, critChance) ? "crit" : null;
         }
+        if(b instanceof CritBullet c){
+            if(isCrit(b)){
+                c.splash = splashDamage * critMultiplier;
+            }else{
+                c.splash = splashDamage;
+            }
+        }
         if(isCrit(b)) b.damage *= critMultiplier;
 
         super.init(b);
     }
+
+    @Override
     public void updateTrail(Bullet b){
         if(!headless && trailLength > 0){
             if(b.trail == null){
@@ -71,43 +88,25 @@ public class CritBulletType extends BasicBulletType{
             b.trail.update(b.x, b.y, trailInterp.apply(b.fin()) * (1f + (trailSinMag > 0 ? Mathf.absin(Time.time, trailSinScl, trailSinMag) : 0f)));
         }
     }
+
     @Override
     public void update(Bullet b){
-        updateTrail(b);
+        super.update(b);
 
         if(Mathf.chanceDelta(1) && isCrit(b)){
             critEffect.at(b.x, b.y, b.rotation(), b.team.color);
-        }
-
-        if(homingPower > 0.0001f && b.time >= homingDelay){
-            Teamc target = Units.closestTarget(b.team, b.x, b.y, homingRange, e -> e.checkTarget(collidesAir, collidesGround) && !b.collided.contains(e.id), t -> collidesGround && !b.collided.contains(t.id));
-            if(target != null){
-                b.vel.setAngle(Angles.moveToward(b.rotation(), b.angleTo(target), homingPower * Time.delta * 50f));
-            }
-        }
-
-        if(weaveMag > 0){
-            b.vel.rotate(Mathf.sin(b.time + Mathf.PI * weaveScale/2f, weaveScale, weaveMag * (Mathf.randomSeed(b.id, 0, 1) == 1 ? -1 : 1)) * Time.delta);
-        }
-
-        if(trailChance > 0){
-            if(Mathf.chanceDelta(trailChance)){
-                trailEffect.at(b.x, b.y, trailParam, trailColor);
-            }
         }
     }
 
     @Override
     public void hitEntity(Bullet b, Hitboxc other, float initialHealth){
         super.hitEntity(b, other, initialHealth);
-
         bounce(b);
     }
 
     @Override
     public void hitTile(Bullet b, Building build, float x, float y, float initialHealth, boolean direct){
         super.hitTile(b, build, x, y, initialHealth, direct);
-
         if(direct){
             bounce(b);
         }
@@ -121,7 +120,6 @@ public class CritBulletType extends BasicBulletType{
 
     @Override
     public void hit(Bullet b, float x, float y){
-        b.hit = true;
         if(b.fdata != 1f || despawnHitEffects){
             hitEffect.at(x, y, b.rotation(), hitColor);
             hitSound.at(x, y, hitSoundPitch, hitSoundVolume);
@@ -143,16 +141,37 @@ public class CritBulletType extends BasicBulletType{
         createSplashDamage(b, x, y);
 
         for(int i = 0; i < lightning; i++){
-            Lightning.create(b, lightningColor, lightningDamage < 0 ? damage : lightningDamage, b.x, b.y, b.rotation() + Mathf.range(lightningCone/2) + lightningAngle, lightningLength + Mathf.random(lightningLengthRand));
+            Lightning.create(b, lightningColor, lightningDamage < 0 ? damage : lightningDamage, b.x, b.y, b.rotation() + Mathf.range(lightningCone / 2) + lightningAngle, lightningLength + Mathf.random(lightningLengthRand));
         }
     }
 
-    @Override
-    public float damageMultiplier(Bullet b){
-        float critMul = 1f;
-        if(b.isAdded() && isCrit(b)) critMul = critMultiplier;
+    public void createSplashDamage(Bullet b, float x, float y){
+        if(splashDamageRadius > 0 && !b.absorbed){
 
-        return super.damageMultiplier(b) * critMul;
+            if(!(b instanceof CritBullet c)) return;
+
+            Damage.damage(b.team, x, y, splashDamageRadius,
+            c.splash * b.damageMultiplier(), splashDamagePierce, collidesAir, collidesGround, scaledSplashDamage, b);
+
+            if(status != StatusEffects.none){
+                Damage.status(b.team, x, y, splashDamageRadius, status, statusDuration, collidesAir, collidesGround);
+            }
+
+            if(heals()){
+                indexer.eachBlock(b.team, x, y, splashDamageRadius, Building::damaged, other -> {
+                    healEffect.at(other.x, other.y, 0f, healColor, other.block);
+                    other.heal(healPercent / 100f * other.maxHealth() + healAmount);
+                });
+            }
+
+            if(makePlaFire && plaFireChance > 0){
+                PlasmaFire.createChance(x, y, splashDamageRadius, plaFireChance, b.team);
+            }
+
+            if(makePlaFire){
+                indexer.eachBlock(null, x, y, splashDamageRadius, other -> other.team != b.team, other -> PlasmaFire.create(other.tile));
+            }
+        }
     }
 
     @Override
@@ -160,18 +179,20 @@ public class CritBulletType extends BasicBulletType{
         if(fragBullet != null){
             for(int i = 0; i < fragBullets; i++){
                 float len = Mathf.random(1f, 7f);
-                float a = b.rotation() + Mathf.range(fragRandomSpread / 2) + fragAngle + fragSpread * i - (fragBullets - 1) * fragSpread / 2f;;
+                float a = b.rotation() + Mathf.range(fragRandomSpread / 2) + fragAngle + fragSpread * i - (fragBullets - 1) * fragSpread / 2f;
+                ;
                 Bullet f = fragBullet.create(b, x + Angles.trnsx(a, len), y + Angles.trnsy(a, len), a, Mathf.random(fragVelocityMin, fragVelocityMax), Mathf.random(fragLifeMin, fragLifeMax));
                 if(f.type instanceof CritBulletType) f.data = b.data;
             }
+            b.frags++;
         }
     }
 
     public void bounce(Bullet b){
         if(bouncing){
             Teamc target = Units.closestTarget(b.team, b.x, b.y, range * b.fout(),
-                e -> e.isValid() && e.checkTarget(collidesAir, collidesGround) && !b.collided.contains(e.id),
-                t -> t.isValid() && collidesGround && !b.collided.contains(t.id)
+            e -> e.isValid() && e.checkTarget(collidesAir, collidesGround) && !b.collided.contains(e.id),
+            t -> t.isValid() && collidesGround && !b.collided.contains(t.id)
             );
             if(target != null){
                 b.vel.setAngle(b.angleTo(target));
@@ -181,5 +202,29 @@ public class CritBulletType extends BasicBulletType{
 
     public boolean isCrit(Bullet b){
         return b.data instanceof String;
+    }
+
+    @Override
+    public @Nullable Bullet create(
+    @Nullable Entityc owner, @Nullable Entityc shooter, Team team, float x, float y, float angle, float damage, float velocityScl,
+    float lifetimeScl, Object data, @Nullable Mover mover, float aimX, float aimY, @Nullable Teamc target
+    ){
+        CritBullet bullet = CritBullet.create();
+
+        return WHUtils.anyOtherCreate(bullet, this, shooter, owner, team, x, y, angle, damage, velocityScl, lifetimeScl, data, mover, aimX, aimY, target);
+    }
+
+    public static class CritBullet extends Bullet{
+        public float splash;
+
+        public static CritBullet create(){
+            return Pools.obtain(CritBullet.class, CritBullet::new);
+        }
+
+        @Override
+        public void reset(){
+            super.reset();
+            splash = 0;
+        }
     }
 }

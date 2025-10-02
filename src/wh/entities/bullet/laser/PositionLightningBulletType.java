@@ -53,7 +53,7 @@ public class PositionLightningBulletType extends BulletType {
     public void init() {
         super.init();
         drawSize = Math.max(drawSize, maxRange * 2);
-        if (hitEffect == WHFx.boolSelector) hitEffect = WHFx.lightningHitLarge(lightningColor);
+        if (hitEffect == WHFx.boolSelector) hitEffect = WHFx.lightningHitLarge(lightningColor,40,6,5);
         if (smokeEffect == WHFx.boolSelector) smokeEffect = Fx.shootBigSmoke;
         if (shootEffect == WHFx.boolSelector) shootEffect = WHFx.shootLineSmall(lightningColor);
     }
