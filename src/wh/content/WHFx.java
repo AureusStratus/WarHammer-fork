@@ -1810,9 +1810,8 @@ public final class WHFx{
 
             z(Layer.weather - 1);
             color();
-
+            Draw.alpha(Mathf.curve(e.fin(), 0, 0.1f));
             Draw.rect(type.fullIcon, e.x, e.y, rw, rh, rotation);
-
 
             Tmp.v1.trns(225f, fout * 300f);
             z(Layer.flyingUnit + 1);

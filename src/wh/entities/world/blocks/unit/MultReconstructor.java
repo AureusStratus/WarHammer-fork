@@ -129,19 +129,18 @@ public class MultReconstructor extends UnitBlock{
                         t.table(info -> {
                             info.add(upgrade[1].localizedName).right();
                             info.row();
-                        }).pad(10).right();
+                        }).pad(10).left();
                     }).fill().padTop(5).padBottom(5);
 
                     table.table(Styles.grayPanel, t -> {
                         t.table(req -> {
-                            req.right();
+                            req.left();
                             for(int i = 0; i < upgradeCosts.get(upgrade).length; i++){
                                 if(i % 6 == 0){
                                     req.row();
                                 }
-
                                 ItemStack stack = upgradeCosts.get(upgrade)[i];
-                                req.add(StatValues.displayItem(stack.item, stack.amount, constructTime, true)).pad(5);
+                                req.add(StatValues.displayItem(stack.item, stack.amount, constructTime, true)).left().pad(5);
                             }
                         }).right().grow().pad(10f);
                     });

@@ -66,7 +66,7 @@ public final class WHBlocks{
     t2MultiPress, T2CarbideCrucible, T2Cultivator, T2CryofluidMixer, T2PhaseSynthesizer, largeSurgeSmelter,
 
     titaniumSteelFurnace, T2TiSteelFurnace,
-    ceramiteSteelFoundry, crystalEngraver, laserEngraver,
+    ceramiteSteelFoundry, T2ceramiteSteelFoundry, crystalEngraver, laserEngraver,
     moSurgeSmelter, ceramiteRefinery, ADMill,
     promethiumRefinery, sealedPromethiumMill, LiquidNitrogenPlant, slagfurnace,
 
@@ -76,7 +76,7 @@ public final class WHBlocks{
     combustionHeater, decayHeater, slagHeatMaker, promethiumHeater, smallHeatRouter, heatBelt, heatBridge, T2heatBridge;
     //drill
     public static Block electronicPneumaticDrill, MechanicalQuarry, heavyCuttingDrill, highEnergyDrill, SpecialCuttingDrill,
-    strengthenOilExtractor, slagExtractor, promethiumExtractor, heavyExtractor;
+    strengthenOilExtractor, integratedCompressor, slagExtractor, promethiumExtractor, heavyExtractor;
     //liquid
     public static Block gravityPump, tiSteelPump, T2LiquidTank, armorLiquidTank, armorFluidJunction,
     armorFluidRouter, mixedFluidJunction, steelConduit, lightConduit,
@@ -154,11 +154,9 @@ public final class WHBlocks{
             }
         };
 
-        siliconMixFurnace = new OverheatGenericCrafter("silicon-mix-furnace"){
+        siliconMixFurnace = new GenericCrafter("silicon-mix-furnace"){
             {
                 requirements(Category.crafting, with(Items.silicon, 80, Items.graphite, 100, Items.silicon, 50, WHItems.titaniumSteel, 50));
-
-                wasteHeatOutput = 1f;
 
                 size = 3;
                 health = 900;
@@ -174,7 +172,7 @@ public final class WHBlocks{
                     flameRadiusScl = 2.5f;
                     flameRadiusMag = 0.2f;
                 }}, new DrawDefault(),
-                new DrawOverheatOutput());
+                new DrawHeatOutput());
                 ambientSound = loopSmelter;
                 ambientSoundVolume = 0.11f;
                 researchCostMultiplier = 0.5f;
@@ -235,7 +233,7 @@ public final class WHBlocks{
             researchCostMultiplier = 0.45f;
         }};
 
-        largeKiln = new OverheatGenericCrafter("large-kiln"){
+        largeKiln = new HeatProducer("large-kiln"){
             {
                 requirements(Category.crafting, with(Items.lead, 60, Items.graphite, 60, WHItems.titaniumSteel, 50));
 
@@ -245,14 +243,14 @@ public final class WHBlocks{
                 hasPower = hasItems = true;
                 craftTime = 90;
 
-                wasteHeatOutput = 1f;
+                heatOutput = 1f;
 
                 consumePower(180f / 60f);
                 consumeItems(with(Items.sand, 5, Items.lead, 5));
                 outputItem = new ItemStack(Items.metaglass, 8);
                 drawer = new DrawMulti(new DrawDefault(), new DrawFlame(), new DrawGlowRegion(){{
                     color = Color.valueOf("ffc999");
-                }}, new DrawOverheatOutput(), new LargekilnDrawer(Color.valueOf("ffc999")));
+                }}, new DrawHeatOutput(), new LargekilnDrawer(Color.valueOf("ffc999")));
 
                 ambientSound = loopSmelter;
                 ambientSoundVolume = 0.11f;
@@ -366,10 +364,8 @@ public final class WHBlocks{
             }
         };
 
-        T2TiSteelFurnace = new OverheatGenericCrafter("t2-ti-steel-furnace"){
+        T2TiSteelFurnace = new GenericCrafter("t2-ti-steel-furnace"){
             {
-                wasteHeatOutput = 1f;
-
                 Color color = WHPal.TiSteelColor;
                 requirements(Category.crafting, with(Items.silicon, 100, Items.carbide, 70, WHItems.ceramite, 50, WHItems.titaniumSteel, 70));
                 health = 700;
@@ -381,7 +377,7 @@ public final class WHBlocks{
                 consumeItems(with(Items.titanium, 6, Items.metaglass, 9));
                 consumeLiquid(Liquids.water, 15 / 60f);
                 outputItem = new ItemStack(WHItems.titaniumSteel, 6);
-                drawer = new DrawMulti(new DrawDefault(), new DrawOverheatOutput(), new DrawFlame(color));
+                drawer = new DrawMulti(new DrawDefault(), new DrawHeatOutput(), new DrawFlame(color));
                 craftEffect = WHFx.square(TiSteelColor, 35f, 6, 26f, 5f);
                 researchCostMultiplier = 0.45f;
             }
@@ -412,10 +408,8 @@ public final class WHBlocks{
             }
         };
 
-        sandSeparator = new OverheatGenericCrafter("sand-separator"){
+        sandSeparator = new HeatProducer("sand-separator"){
             {
-                wasteHeatOutput = 1f;
-
                 requirements(Category.crafting, with(Items.copper, 80, Items.lead, 60, Items.graphite, 40, WHItems.titaniumSteel, 20));
                 health = 300;
                 hasItems = hasPower = hasLiquids = true;
@@ -426,6 +420,7 @@ public final class WHBlocks{
                 dumpExtraLiquid = true;
                 ignoreLiquidFullness = true;
                 consumePower(6);
+                heatOutput = 2;
                 consumeItems(with(WHItems.oreSand, 20, Items.graphite, 1));
                 outputItem = new ItemStack(Items.sand, 15);
                 outputLiquid = new LiquidStack(Liquids.slag, 30 / 60f);
@@ -451,7 +446,7 @@ public final class WHBlocks{
                     y = -13 / 4f;
                     spinSprite = true;
                 }},
-                new DrawDefault(), new DrawOverheatOutput());
+                new DrawDefault(), new DrawHeatOutput());
                 craftEffect = Fx.smokeCloud;
                 updateEffect = new Effect(20, e -> {
                     color(Pal.gray, Color.lightGray, e.fin());
@@ -462,10 +457,8 @@ public final class WHBlocks{
             }
         };
 
-        moSurgeSmelter = new OverheatGenericCrafter("mo-surge-smelter"){
+        moSurgeSmelter = new HeatProducer("mo-surge-smelter"){
             {
-                wasteHeatOutput = 1.5f;
-
                 requirements(Category.crafting, with(Items.tungsten, 60, Items.plastanium, 50, Items.surgeAlloy, 30, WHItems.titaniumSteel, 70));
                 health = 900;
                 hasItems = hasPower = hasLiquids = true;
@@ -476,23 +469,22 @@ public final class WHBlocks{
                 consumePower(3);
                 consumeItems(with(WHItems.molybdenum, 2, Items.carbide, 1, Items.surgeAlloy, 2));
                 consumeLiquid(Liquids.slag, 12 / 60f);
+                heatOutput = 2;
                 outputItem = new ItemStack(WHItems.molybdenumAlloy, 2);
                 drawer = new DrawMulti(new DrawRegion("-bottom"), new DrawLiquidTile(Liquids.slag), new DrawCircles(){{
                     color = Pal.lighterOrange.cpy().a(0.4f);
                     strokeMax = 2.5f;
                     radius = 10f;
                     amount = 3;
-                }}, new DrawDefault(), new DrawOverheatOutput());
+                }}, new DrawDefault(), new DrawHeatOutput());
                 craftEffect = new RadialEffect(Fx.surgeCruciSmoke, 4, 90f, 7f);
                 researchCostMultiplier = 0.45f;
             }
         };
 
-        crystalEngraver = new OverheatGenericCrafter("crystal-engraver"){
+        crystalEngraver = new GenericCrafter("crystal-engraver"){
             {
                 requirements(Category.crafting, with(Items.metaglass, 50, Items.silicon, 40, WHItems.titaniumSteel, 40, WHItems.ceramite, 70));
-
-                wasteHeatOutput = 1.5f;
 
                 health = 1600;
                 hasItems = hasPower = true;
@@ -512,17 +504,15 @@ public final class WHBlocks{
                     width = 5.3f;
                     time = 120;
                     lengthMag = 0.6f;
-                }}, new DrawOverheatOutput());
+                }}, new DrawHeatOutput());
                 craftEffect = WHFx.square(WHItems.resonantCrystal.color, 35f, 4, 16f, 3f);
                 researchCostMultiplier = 0.45f;
             }
         };
 
-        laserEngraver = new OverheatGenericCrafter("laser-engraver"){
+        laserEngraver = new GenericCrafter("laser-engraver"){
             {
                 requirements(Category.crafting, with(Items.phaseFabric, 50, Items.carbide, 80, WHItems.resonantCrystal, 70, WHItems.titaniumSteel, 80));
-
-                wasteHeatOutput = 4f;
 
                 health = 2500;
                 hasItems = hasPower = hasLiquids = true;
@@ -548,7 +538,7 @@ public final class WHBlocks{
                     flameRad = 3.2f;
                     particleRad = 15f;
                     particleLen = 3.5f;
-                }}, new DrawDefault(), new DrawOverheatOutput());
+                }}, new DrawDefault(), new DrawHeatOutput());
                 consumeLiquid(WHLiquids.refinePromethium, 10 / 60f);
                 craftEffect = new MultiEffect(WHFx.square(Liquids.slag.color, 35f, 8, 32, 4f),
                 WHFx.diffuse(size, Liquids.slag.color, 60f));
@@ -789,12 +779,10 @@ public final class WHBlocks{
             researchCostMultiplier = 0.45f;
         }};
         //钷素
-        promethiumRefinery = new OverheatGenericCrafter("promethium-refinery"){
+        promethiumRefinery = new GenericCrafter("promethium-refinery"){
             {
 
                 requirements(Category.crafting, with(Items.phaseFabric, 20, Items.tungsten, 50, WHItems.ceramite, 20, WHItems.titaniumSteel, 50));
-
-                wasteHeatOutput = 2f;
 
                 health = 1200;
                 hasItems = hasPower = hasLiquids = true;
@@ -818,7 +806,7 @@ public final class WHBlocks{
                     alpha = 0.6f;
                 }},
                 new DrawDefault(),
-                new DrawOverheatOutput());
+                new DrawHeatOutput());
                 craftEffect = WHFx.square(WHLiquids.refinePromethium.color, 35f, 4, 16f, 5f);
                 researchCostMultiplier = 0.6f;
             }
@@ -1160,7 +1148,7 @@ public final class WHBlocks{
         };
 
         //陶钢
-        ceramiteSteelFoundry = new OverheatGenericCrafter("ceramite-steel-foundry"){
+        ceramiteSteelFoundry = new GenericCrafter("ceramite-steel-foundry"){
             {
                 Color color = CeramiteColor;
                 requirements(Category.crafting, with(Items.lead, 100, Items.silicon, 50, Items.tungsten, 25, Items.plastanium, 25));
@@ -1172,12 +1160,41 @@ public final class WHBlocks{
                 consumePower(4);
                 consumeItems(with(Items.tungsten, 3, Items.plastanium, 3));
                 outputItem = new ItemStack(WHItems.ceramite, 2);
-                drawer = new DrawMulti(new DrawDefault(), new DrawOverheatOutput(), new DrawFlame(color));
+                drawer = new DrawMulti(new DrawDefault(), new DrawHeatOutput(), new DrawFlame(color));
                 craftEffect = WHFx.square(CeramiteColor, 35f, 4, 16f, 4f);
             }
         };
 
-        ceramiteRefinery = new OverheatGenericCrafter("ceramite-refinery"){
+        T2ceramiteSteelFoundry = new HeatProducer("t2-ceramite-steel-foundry"){
+            {
+                requirements(Category.crafting, with(Items.silicon, 150, Items.tungsten, 150, WHItems.ceramite, 50, WHItems.resonantCrystal, 50));
+                health = 300;
+                hasItems = hasPower = true;
+                craftTime = 60;
+                itemCapacity = 20;
+                size = 4;
+                consumePower(5);
+                consumeItems(with(Items.carbide, 4, Items.plastanium, 6));
+                consumeLiquid(Liquids.slag, 30 / 60f);
+                outputItem = new ItemStack(WHItems.ceramite, 5);
+                drawer = new DrawMulti(new DrawRegion("-bottom"),
+                new DrawLiquidTile(Liquids.slag){{
+                    alpha = 0.4f;
+                }},
+                new DrawRegion("-rotator", -2){{
+                    spinSprite = true;
+                }},
+                new DrawRegion("-rotator", 2){{
+                    spinSprite = true;
+                }},
+                new DrawRegion("-mid"), new DrawCrucibleFlame(),
+                new DrawDefault(), new DrawHeatInput());
+                updateEffect = WHFx.square(CeramiteColor, 35f, 4, 16f, 4f);
+                craftEffect = new RadialEffect(Fx.surgeCruciSmoke, 4, 90f, 7f);
+            }
+        };
+
+        ceramiteRefinery = new HeatProducer("ceramite-refinery"){
             {
                 Color color = WHPal.RefineCeramiteColor;
                 requirements(Category.crafting, with(WHItems.molybdenumAlloy, 50, Items.carbide, 60, Items.phaseFabric, 50));
@@ -1187,12 +1204,13 @@ public final class WHBlocks{
                 itemCapacity = 30;
                 size = 3;
 
-                wasteHeatOutput = 9f;
+                heatOutput = 3f;
+                //wasteHeatOutput = 9f;
                 consumePower(6);
                 consumeItems(with(WHItems.molybdenumAlloy, 2, WHItems.ceramite, 3, Items.carbide, 2));
                 consumeLiquid(WHLiquids.refinePromethium, 10 / 60f);
                 outputItem = new ItemStack(WHItems.refineCeramite, 3);
-                drawer = new DrawMulti(new DrawDefault(), new DrawOverheatOutput(), new DrawFlame(color), new DrawGlowRegion(){{
+                drawer = new DrawMulti(new DrawDefault(), new DrawHeatOutput(), new DrawFlame(color), new DrawGlowRegion(){{
                     color = Liquids.slag.color;
                     glowScale = 12f;
                 }});
@@ -1203,7 +1221,7 @@ public final class WHBlocks{
             }
         };
 
-        ADMill = new OverheatGenericCrafter("admantium-mill"){
+        ADMill = new HeatProducer("admantium-mill"){
             {
                 requirements(Category.crafting, with(Items.silicon, 200, WHItems.titaniumSteel, 50, WHItems.ceramite, 50, WHItems.refineCeramite, 30));
 
@@ -1216,12 +1234,12 @@ public final class WHBlocks{
                 itemCapacity = 20;
                 craftTime = 180;
 
-                wasteHeatOutput = 3f;
+                heatOutput = 3f;
                 consumePower(6f);
                 consumeItems(with(WHItems.vibranium, 6, WHItems.refineCeramite, 3));
                 consumeLiquid(WHLiquids.liquidNitrogen, 0.3f);
                 outputItem = new ItemStack(WHItems.adamantium, 2);
-                drawer = new DrawMulti(new DrawDefault(), new DrawOverheatOutput(), new DrawFlame(Color.valueOf("FFEA96FF")), new AdmantiumMillDrawer(Items.surgeAlloy.color.cpy(), 7.5f));
+                drawer = new DrawMulti(new DrawDefault(), new DrawHeatOutput(), new DrawFlame(Color.valueOf("FFEA96FF")), new AdmantiumMillDrawer(Items.surgeAlloy.color.cpy(), 7.5f));
                 craftEffect = WHFx.hexagonSmoke(Items.surgeAlloy.color.cpy(), 45, 1f, 7.5f, 20f);
                 researchCostMultiplier = 0.6f;
             }
@@ -1753,7 +1771,7 @@ public final class WHBlocks{
 
         T2strongholdCore = new CoreBlock("l-core"){
             {
-                requirements(Category.effect, with(WHItems.molybdenum, 3000, Items.silicon, 8000, WHItems.ceramite, 1500, WHItems.molybdenumAlloy, 500, WHItems.titaniumSteel, 5000));
+                requirements(Category.effect, with(WHItems.molybdenum, 3000, Items.silicon, 8000, WHItems.molybdenumAlloy, 1000, WHItems.refineCeramite, 1000, WHItems.titaniumSteel, 5000));
                 unitType = UnitTypes.evoke;
                 armor = 35;
                 health = 30000;
@@ -4572,7 +4590,7 @@ public final class WHBlocks{
             outputItem = new ItemStack(Items.graphite, 1);
             craftTime = 90f;
             size = 2;
-            proximityRange = 2;
+            /*   proximityRange = 2;*/
             hasItems = true;
             placeEffect = Fx.rotateBlock;
 

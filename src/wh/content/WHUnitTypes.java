@@ -106,7 +106,6 @@ public final class WHUnitTypes{
 
     public static void load(){
 
-
         cMoon = new NucleoidUnitType("c-moon"){
             {
                 outlineRadius = 3;

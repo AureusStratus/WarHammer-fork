@@ -410,11 +410,11 @@ public class UnitCallBlock2 extends Block{
                         b.image(plan.unit.uiIcon).size(LEN).scaling(Scaling.fit).left();
                         b.table(info -> {
                             info.add("[accent]" + plan.unit.localizedName + "[]").left().row();
-                            info.add("[gray]" + plan.unit.description).left().wrap().width(200);
+                            /* info.add("[gray]" + plan.unit.description).left().wrap().width(200);*/
                             info.add(new Label(() ->
                             "@[lightgray]buildtime: " +
                             Strings.fixed(plan.time / 60f, 0) + "*second"
-                            )).left().padBottom(OFFSET);
+                            )).left().padBottom(OFFSET / 2);
                         }).growX().left();
 
                         b.table(consumption -> {
@@ -423,7 +423,7 @@ public class UnitCallBlock2 extends Block{
                             for(ItemStack stack : plan.requirements){
                                 consumption.add(new ItemImageDynamic(stack.item, () -> stack.amount, realItems())).left();
                             }
-                        }).growX().padBottom(OFFSET);
+                        }).growX().padBottom(OFFSET / 2);
                     }, Styles.flatTogglet, () -> {
                         configure(plans.indexOf(plan));
                         CanSpawn();

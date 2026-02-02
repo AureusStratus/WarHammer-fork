@@ -200,7 +200,7 @@ public class Spawner extends WHBaseEntity implements Syncc, Timedc, Rotc{
             toSpawn.flag(flagToApply);
         }
         if(!Vars.net.client()) toSpawn.add();
-        toSpawn.apply(StatusEffects.unmoving, Fx.unitSpawn.lifetime);
+        toSpawn.apply(StatusEffects.unmoving, 120);
         toSpawn.apply(statusEntry.effect, statusEntry.time);
         if(commandPos != null && !commandPos.isNaN()){
             if(toSpawn.isCommandable()){
@@ -221,7 +221,7 @@ public class Spawner extends WHBaseEntity implements Syncc, Timedc, Rotc{
 
     @Override
     public void draw(){
-        if(type.health > 8000 && team != Vars.player.team()) ;
+        /* if(type.health > 8000 && team != Vars.player.team()) ;*/
         TextureRegion pointerRegion = WHContent.pointerRegion, arrowRegion = WHContent.arrowRegion;
 
         Drawf.light(x, y, clipSize() * fout(), team.color, 0.7f);
