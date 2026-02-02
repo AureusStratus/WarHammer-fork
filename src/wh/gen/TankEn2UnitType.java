@@ -55,6 +55,7 @@ public class TankEn2UnitType extends UnitType{
         new BarrelPart("-barrel"){{
             x = x2 + basex;
             y = y1 + basey;
+            intervalWidth = 9 / 4f;
             recoilProgress = reloadProgress = heatProgress = progress = PartProgress.reload;
             heatColor = WHPal.thurmixRed;
         }}

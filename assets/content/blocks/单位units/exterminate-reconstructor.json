@@ -1,4 +1,4 @@
-{
+/*
 	"type": "Reconstructor",
 	"name": "扫荡级单位重构工厂",
 	"size": 11,
@@ -12,7 +12,6 @@
 			"ceramite/800",
 			"refine-ceramite/500",
 			"sealed-promethium/350",
-			"adamantium/200"
 		],
 		"liquid": "liquid-nitrogen/4"
 	},
@@ -50,4 +49,4 @@
 		"parent": "imperium"
 	},
 	"researchCostMultiplier": 0.4
-}
+}*/

@@ -97,7 +97,6 @@ public final class WHBlocks{
     //units
     public static Block airFactory, groundFactory, mechaFactory, tankFactory,
     t2Module, t3Module, t4Module, t5Module, t6Module, jumpBeacon, energyWarpGate, serpuloT6Assembler;
-
     //turrets
     public static Block
     //22
