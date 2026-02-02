@@ -4402,63 +4402,6 @@ public final class WHBlocks{
 
         //Test
 
-        UnitCallBlock airDrop = new UnitCallBlock("air-drop-unit"){
-            {
-                addSets(
-                new UnitSet(UnitTypes.dagger, new byte[]{WHUnitTypes.AIR_LINE_2, 1}, 5 * 60f, true,
-                with(Items.copper, 1)
-                ),
-                new UnitSet(UnitTypes.mace, new byte[]{WHUnitTypes.AIR_LINE_1, 2}, 5 * 60f, true,
-                with(Items.copper, 1)
-                ),
-                new UnitSet(UnitTypes.fortress, new byte[]{WHUnitTypes.AIR_LINE_1, 2}, 5 * 60f, true,
-                with(Items.copper, 1)
-                ),
-                new UnitSet(UnitTypes.reign, new byte[]{WHUnitTypes.AIR_LINE_1, 2}, 5 * 60f, true,
-                with(Items.copper, 1)
-                ),
-                new UnitSet(UnitTypes.eclipse, new byte[]{WHUnitTypes.GROUND_LINE_1, 2}, 5 * 60f, false,
-                with(Items.copper, 1)
-                ),
-                new UnitSet(UnitTypes.obviate, new byte[]{WHUnitTypes.GROUND_LINE_1, 2}, 5 * 60f, false,
-                with(Items.copper, 1)
-                ),
-                new UnitSet(UnitTypes.disrupt, new byte[]{WHUnitTypes.GROUND_LINE_1, 2}, 5 * 60f, false,
-                with(Items.copper, 1)
-                ),
-                new UnitSet(UnitTypes.oct, new byte[]{WHUnitTypes.GROUND_LINE_1, 2}, 5 * 60f, false,
-                with(Items.copper, 1)
-                ),
-                new UnitSet(UnitTypes.obviate, new byte[]{WHUnitTypes.GROUND_LINE_1, 2}, 5 * 60f, false,
-                with(Items.copper, 1)
-                ),
-                new UnitSet(UnitTypes.antumbra, new byte[]{WHUnitTypes.GROUND_LINE_1, 2}, 5 * 60f, false,
-                with(Items.copper, 1)
-                ),
-                new UnitSet(UnitTypes.flare, new byte[]{WHUnitTypes.OTHERS, 2}, 4 * 60f, false,
-                with(Items.copper, 1)
-                ),
-                new UnitSet(UnitTypes.poly, new byte[]{WHUnitTypes.OTHERS, 2}, 4 * 60f, false,
-                with(Items.copper, 1)
-                ),
-                new UnitSet(WHUnitTypes.tank1, new byte[]{WHUnitTypes.AIR_LINE_2, 1}, 5 * 60f, true,
-                with(Items.copper, 1)
-                ),
-                new UnitSet(WHUnitTypes.tank1s, new byte[]{WHUnitTypes.AIR_LINE_1, 1}, 5 * 60f, true,
-                with(Items.copper, 1)
-                ),
-                new UnitSet(WHUnitTypes.air4, new byte[]{WHUnitTypes.AIR_LINE_1, 2}, 3 * 60f, false,
-                with(Items.copper, 1)
-                ),
-                new UnitSet(WHUnitTypes.air5, new byte[]{WHUnitTypes.GROUND_LINE_1, 1}, 2 * 60f, false,
-                with(Items.copper, 1)
-                ),
-                new UnitSet(WHUnitTypes.air6, new byte[]{WHUnitTypes.GROUND_LINE_1, 1}, 2 * 60f, false,
-                with(Items.copper, 1)
-                ));
-            }
-        };
-
 
         AirRaiderCallBlock test = new AirRaiderCallBlock("tactical-command-center"){{
             requirements(Category.turret, with(WHItems.titaniumSteel, 500, Items.carbide, 200, WHItems.ceramite, 200, WHItems.refineCeramite, 100, WHItems.sealedPromethium, 50));

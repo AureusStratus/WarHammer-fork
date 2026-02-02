@@ -59,12 +59,6 @@ import static wh.core.WarHammerMod.name;
 import static wh.graphics.Drawn.arcProcessFlip;
 
 public final class WHUnitTypes{
-
-    public static final byte
-    ANCIENT_GROUND = 10, ANCIENT_AIR = 11,
-    OTHERS = Byte.MIN_VALUE,
-    GROUND_LINE_1 = 0, AIR_LINE_1 = 1, AIR_LINE_2 = 2, ENERGY_LINE_1 = 3, NAVY_LINE_1 = 6;
-
     public static UnitType
     //空军
     air8Enemy, air7Enemy,
@@ -99,15 +93,11 @@ public final class WHUnitTypes{
     private WHUnitTypes(){
     }
 
-    static{
-        EntityMapping.nameMap.put("wh-c-moon", NucleoidUnit::new);
-        EntityMapping.nameMap.put("wh-Starry-sky", StarrySkyEntity::new);
-    }
-
     public static void load(){
 
-        cMoon = new NucleoidUnitType("c-moon"){
+        cMoon = new SuperHeavyUnitType("c-moon"){
             {
+                constructor = UnitEntity::create;
                 outlineRadius = 3;
                 outlineColor = Color.valueOf("36363CFF");
                 speed = 0.5F;
