@@ -205,7 +205,10 @@ public class HoverPayloadUnit extends ElevationMoveUnit implements Payloadc, Wat
     @Override
     public void draw(){
         super.draw();
+        drawTrail();
+    }
 
+    public void drawTrail(){
         float z = Draw.z();
         Draw.z(Layer.debris);
         Floor floor = tileOn() == null ? Blocks.air.asFloor() : tileOn().floor();
@@ -214,7 +217,6 @@ public class HoverPayloadUnit extends ElevationMoveUnit implements Payloadc, Wat
         tleft.draw(trailColor, type.trailScl);
         tright.draw(trailColor, type.trailScl);
         Draw.z(z);
-
     }
 
     @Override

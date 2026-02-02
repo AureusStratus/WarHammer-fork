@@ -40,7 +40,7 @@ public class LaserBeamBulletType extends ContinuousBulletType{
     public Interp moveInterp = Interp.pow2In;
     public float moveSpeed = 0.03f;
     public float absorbMoveSpeed = 3f;
-    public int collideNum = 1;
+    public float fadeTime = 10f;
 
     public LaserBeamBulletType(float damage){
         this.damage = damage;
@@ -123,7 +123,6 @@ public class LaserBeamBulletType extends ContinuousBulletType{
 
         for(Color color : colors){
             Tmp.v1.trns(rot, realLength);
-            float fadeTime = 0.1f * b.lifetime;
             float
             fadeOut = Mathf.clamp(b.time > b.lifetime - fadeTime ? 1f - (b.time - (lifetime - fadeTime)) / fadeTime : 1f),
             fadeIn = Mathf.clamp(b.time < fadeTime ? b.time / fadeTime : 1f);
@@ -171,7 +170,7 @@ public class LaserBeamBulletType extends ContinuousBulletType{
     @Override
     public void applyDamage(Bullet b){
         if(!(b instanceof LaserDataBullet data)) return;
-        float resultLength = data.currentLength + 8, rot = b.rotation() + data.rotation;
+        float resultLength = data.currentLength < 0.001f ? b.fdata : data.currentLength + 8, rot = b.rotation() + data.rotation;
 
         float damage = b.damage;
         if(timescaleDamage && b.owner instanceof Building build){
@@ -215,7 +214,6 @@ public class LaserBeamBulletType extends ContinuousBulletType{
     public void update(Bullet b){
         b.fdata = findAbsorber(b);
         super.update(b);
-        b.fdata = findAbsorber(b);
 
         if(!(b instanceof LaserDataBullet data)) return;
 
@@ -229,11 +227,8 @@ public class LaserBeamBulletType extends ContinuousBulletType{
         float baseLength = data.startLength, maxLen = baseLength + b.fin(moveInterp) * length * extensionProportion;
         float len = Math.min(data.currentLength + Time.delta * absorbMoveSpeed, maxLen);
 
-        /* Log.info("stop  "+stop+"  "+"maxPierceCap  "+maxPierceCap);*/
-
         if(stop/*||maxPierceCap*/){
             data.deltaLength = b.fdata = WHUtils.findLaserPierceLength(b, pierceCap, laserAbsorb, len, rot);
-            /*  if(Math.abs(data.currentLength-b.fdata)>50)data.currentLength = b.fdata;*/
             data.currentLength = Mathf.lerpDelta(data.currentLength, b.fdata, 0.3f);
         }else{
             if(data.currentLength < b.fdata && data.deltaLength != 0){

@@ -6,6 +6,7 @@ import arc.math.*;
 import arc.util.*;
 import mindustry.content.*;
 import mindustry.entities.*;
+import mindustry.entities.units.*;
 import mindustry.game.*;
 import mindustry.gen.*;
 import mindustry.graphics.*;
@@ -45,7 +46,6 @@ public final class WHStatusEffects{
             color = Color.lightGray.cpy();
             speedMultiplier = 0.5f;
         }};
-
 
 
         assault = new StatusEffect("assault"){{
@@ -172,14 +172,25 @@ public final class WHStatusEffects{
             });
         }};
 
-        tear = new StatusEffect("tear"){{
-            color = WHItems.molybdenumAlloy.color.cpy();
-            damage = 300 / 60f;
-            speedMultiplier = 0.9f;
-            dragMultiplier = 1.1f;
-            effect =
-            WHFx.shuttle(color, color.cpy().lerp(Color.gray, 0.1f), 40, true, Mathf.random(20, 40), Mathf.chance(0.5f) ? 45f : 135f);
-        }};
+        tear = new StatusEffect("tear"){
+            {
+                color = WHItems.molybdenumAlloy.color.cpy();
+                damage = 300 / 60f;
+                speedMultiplier = 0.9f;
+                dragMultiplier = 1.1f;
+            }
+
+            @Override
+            public void update(Unit unit, StatusEntry entry){
+                super.update(unit, entry);
+                if(unit.shield > 0) unit.shield -= Mathf.clamp(unit.shield / unit.maxHealth, 1, 10) * 0.5f / 60f * Time.delta;
+                if(Mathf.chanceDelta(0.05f) && unit.shield > 0){
+                    Tmp.v1.rnd(Mathf.range(unit.type.hitSize / 2f));
+                    WHFx.shuttle(color, color.cpy().lerp(Color.gray, 0.1f), 40, true, 0, 0).
+                    at(unit.x + Tmp.v1.x, unit.y + Tmp.v1.y, Mathf.chanceDelta(0.5f) ? 45 : 135f, color, Mathf.range(unit.type.hitSize / 4f, unit.type.hitSize / 2f));
+                }
+            }
+        };
 
         plasmaFireBurn = new StatusEffect("plasma-fire"){{
             color = WHPal.SkyBlue;

@@ -9,7 +9,6 @@ import arc.util.io.*;
 import mindustry.content.*;
 import mindustry.entities.*;
 import mindustry.entities.bullet.*;
-import mindustry.entities.effect.*;
 import mindustry.gen.*;
 import mindustry.graphics.*;
 import mindustry.world.blocks.defense.turrets.*;
@@ -55,11 +54,11 @@ public class BulletDefenseTurret extends Turret {
                     if (bullet.damage > b.damage) {
                        // b.remove();
                         bullet.damage((bullet.damage() - realDamage)*0.9f);
-                        new WrapEffect(Fx.hitLancer, Pal.missileYellowBack).at(bullet.x, bullet.y);
+                        Fx.hitLancer.at(bullet.x, bullet.y);
                     } else {
                         b.remove();
                         bullet.remove();
-                        new WrapEffect(Fx.hitLancer, Pal.missileYellowBack).at(bullet.x, bullet.y);
+                        Fx.hitLancer.at(bullet.x, bullet.y);
                     }
                 }
             });

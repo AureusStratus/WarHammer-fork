@@ -799,7 +799,6 @@ public final class WHFx{
         }
     }
 
-
     public static Effect hexagonWave(Color color, float lifetime, float stroke, Interp fin, float size){
 
         return new Effect(lifetime, e -> {
@@ -819,7 +818,6 @@ public final class WHFx{
             poly(e.x, e.y, sides, size * e.fin(Interp.pow3Out), angle);
         });
     }
-
 
     public static Effect lineCircleOut(Color color, float lifetime, float size, float stroke){
         return new Effect(lifetime, (e) -> {

@@ -4,13 +4,13 @@ import arc.graphics.g2d.*;
 import arc.struct.*;
 import mindustry.content.*;
 import mindustry.entities.effect.*;
-import mindustry.entities.part.*;
 import mindustry.entities.pattern.*;
 import mindustry.gen.*;
 import mindustry.graphics.*;
 import mindustry.type.*;
 import wh.content.*;
 import wh.entities.bullet.*;
+import wh.entities.world.drawer.part.*;
 import wh.graphics.*;
 
 import static wh.core.WarHammerMod.name;
@@ -21,7 +21,7 @@ public class TankEn2UnitType extends UnitType{
     }
 
     public Weapon coaxialWeapon = new Weapon(name("tankEn2-weapon2")){{
-        layerOffset = 0.02f;
+        layerOffset = 1.1f;//shit
         y = -12 / 4f;
         x = 0;
         reload = 6;
@@ -30,7 +30,7 @@ public class TankEn2UnitType extends UnitType{
         inaccuracy = 4f;
         velocityRnd = 0.15f;
         xRand = 0.3f;
-        recoils = 3;
+        recoils = 2;
         recoil = 0;
         heatColor = WHPal.thurmixRed;
 
@@ -52,7 +52,14 @@ public class TankEn2UnitType extends UnitType{
         move = 12 / 4f, y1 = 64 / 4f;
 
         parts.addAll(
-        new RegionPart("-barrel"){{
+        new BarrelPart("-barrel"){{
+            x = x2 + basex;
+            y = y1 + basey;
+            recoilProgress = reloadProgress = heatProgress = progress = PartProgress.reload;
+            heatColor = WHPal.thurmixRed;
+        }}
+
+        /*new RegionPart("-barrel"){{
             layerOffset = -0.001f;
             x = x1 + basex;
             y = y1 + basey;
@@ -78,15 +85,16 @@ public class TankEn2UnitType extends UnitType{
             heatColor = WHPal.thurmixRed;
             moveX = -2 * move;
             recoilIndex = 2;
-        }}
+        }}*/
+
         );
 
-        bullet = new CritBulletType(16f, 60, name("pierce")){{
+        bullet = new CritBulletType(16f, 90, name("pierce")){{
             pierceArmor = true;
             lifetime = 300 / speed;
             keepVelocity = false;
             splashDamage = damage / 2;
-            pierceCap = 2;
+            pierceCap = 3;
             width = 5;
             height = width * 2;
             trailWidth = width / 3;
@@ -100,7 +108,8 @@ public class TankEn2UnitType extends UnitType{
             Fx.shootBig);
             hitEffect = despawnEffect = new MultiEffect(
             WHFx.square(hitColor, 35, 10, splashDamageRadius, 6),
-            WHFx.generalExplosion(7, hitColor, 20, 8, false)
+            WHFx.generalExplosion(7, hitColor, 20, 3, false),
+            WHFx.instHit(hitColor, true, 2, splashDamageRadius)
             );
             hitSound = Sounds.none;
         }};
@@ -108,8 +117,8 @@ public class TankEn2UnitType extends UnitType{
 
     @Override
     public void getRegionsToOutline(Seq<TextureRegion> out){
-        super.getRegionsToOutline(out);
         coaxialWeapon.parts.forEach(part -> part.getOutlines(out));
+        super.getRegionsToOutline(out);
     }
 
     @Override

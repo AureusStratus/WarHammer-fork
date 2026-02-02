@@ -5,20 +5,16 @@
 
 package wh.entities.bullet;
 
-import arc.graphics.g2d.Draw;
-import arc.graphics.g2d.Fill;
-import arc.graphics.g2d.Lines;
-import arc.math.Mathf;
-import arc.math.Rand;
-import arc.math.geom.Vec2;
-import arc.util.Tmp;
-import mindustry.Vars;
+import arc.graphics.g2d.*;
+import arc.math.*;
+import arc.math.geom.*;
+import arc.util.*;
+import mindustry.*;
 import mindustry.entities.bullet.*;
-import mindustry.gen.Bullet;
-import mindustry.gen.Hitboxc;
-import wh.content.WHFx;
-import wh.graphics.PositionLightning;
-import wh.struct.Vec2Seq;
+import mindustry.gen.*;
+import wh.content.*;
+import wh.graphics.*;
+import wh.struct.*;
 
 public class TrailFadeBulletType extends BasicBulletType{
     protected static final Vec2 v1 = new Vec2();
@@ -32,6 +28,7 @@ public class TrailFadeBulletType extends BasicBulletType{
     public float tracerSpacing;
     public float tracerRandX;
     public float tracerUpdateSpacing;
+
     public boolean addBeginPoint;
     public boolean hitBlinkTrail;
     public boolean despawnBlinkTrail;

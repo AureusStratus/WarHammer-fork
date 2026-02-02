@@ -187,7 +187,7 @@ public final class Drawn{
         circlePercent(x, y, rad, f > 0.0F ? f : -f, in + (float)(-90 * Mathf.sign(f)));
     }
 
-    //相比于臭猫的arc,可以绘制多段弧线进度
+    //arc加个progress
     public static void arcProcess(float x, float y, float radius, float fraction, float rotation, int sides, float progress){
         int max = Mathf.ceil(sides * fraction);
         points.clear();

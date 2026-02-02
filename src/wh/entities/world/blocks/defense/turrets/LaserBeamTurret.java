@@ -1,19 +1,15 @@
 package wh.entities.world.blocks.defense.turrets;
 
-import arc.*;
 import arc.math.*;
 import arc.struct.*;
 import arc.util.*;
 import mindustry.entities.bullet.*;
 import mindustry.gen.*;
-import mindustry.graphics.*;
 import mindustry.type.*;
-import mindustry.ui.*;
 import mindustry.world.blocks.defense.turrets.*;
 import mindustry.world.consumers.*;
 import mindustry.world.meta.*;
 import wh.content.*;
-import wh.entities.bullet.laser.*;
 
 import static mindustry.Vars.tilesize;
 
@@ -95,7 +91,7 @@ public class LaserBeamTurret extends PowerTurret{
             }else {
                 entry.bullet.lifetime = (entry.bullet.type.lifetime * entry.bullet.type.optimalLifeFract);
             }
-            /* entry.bullet.keepAlive = true;*///臭猫害得我绘制不出子弹
+            /* entry.bullet.keepAlive = true;*///bad
             entry.life -= Time.delta * timeScale / Math.max(efficiency, 0.00001f);
         }
 

@@ -50,8 +50,6 @@ public class WHBulletsOther{
     public static BulletType RevengeBullet4;
 
 
-
-
     public static void load(){
         IonizeInterval = new BulletType(){
             {

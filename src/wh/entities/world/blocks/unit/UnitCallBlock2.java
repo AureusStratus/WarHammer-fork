@@ -22,6 +22,7 @@ import mindustry.logic.*;
 import mindustry.type.*;
 import mindustry.ui.*;
 import mindustry.world.*;
+import mindustry.world.draw.*;
 import mindustry.world.meta.*;
 import mindustry.world.modules.*;
 import wh.graphics.*;
@@ -46,6 +47,10 @@ public class UnitCallBlock2 extends Block{
 
     public int[] capacities = {};
 
+    public drawer drawBlock = b -> {
+    };
+
+    public DrawBlock drawer = new DrawMulti(new DrawRegion("-bottom"));
 
     public UnitCallBlock2(String name){
         super(name);
@@ -65,6 +70,8 @@ public class UnitCallBlock2 extends Block{
         logicConfigurable = true;
         separateItemCapacity = true;
         group = BlockGroup.units;
+
+        itemCapacity = 0;
 
         config(Vec2.class, (UnitCallBlockBuild build, Vec2 pos) -> {
             build.spawnPos = pos.clamp(0f, 0f, world.unitWidth(), world.unitHeight());
@@ -151,6 +158,14 @@ public class UnitCallBlock2 extends Block{
     }
 
     @Override
+    public void load(){
+        super.load();
+
+        drawer.load(this);
+    }
+
+
+    @Override
     public boolean outputsItems(){
         return false;
     }
@@ -170,6 +185,10 @@ public class UnitCallBlock2 extends Block{
 
         UnitPlan(){
         }
+    }
+
+    public interface drawer{
+        void draw(UnitCallBlockBuild build);
     }
 
     public class UnitCallBlockBuild extends Building{
@@ -211,8 +230,20 @@ public class UnitCallBlock2 extends Block{
         }
 
         @Override
-        public void updateTile(){
+        public void draw(){
+            super.draw();
+            drawBlock.draw(this);
+        }
 
+
+        @Override
+        public float warmup(){
+            return warmup;
+        }
+
+        @Override
+        public void updateTile(){
+            super.updateTile();
             if(efficiency > 0 && power.status > 0.5f){
                 if(Mathf.equal(warmup, 1, 0.0015F)) warmup = 1f;
                 else warmup = Mathf.lerpDelta(warmup, 1, 0.01f);
@@ -379,7 +410,7 @@ public class UnitCallBlock2 extends Block{
                         b.image(plan.unit.uiIcon).size(LEN).scaling(Scaling.fit).left();
                         b.table(info -> {
                             info.add("[accent]" + plan.unit.localizedName + "[]").left().row();
-                            info.add("[gray]" + plan.unit.description).left().wrap().width(350f);
+                            info.add("[gray]" + plan.unit.description).left().wrap().width(200);
                             info.add(new Label(() ->
                             "@[lightgray]buildtime: " +
                             Strings.fixed(plan.time / 60f, 0) + "*second"
@@ -405,7 +436,6 @@ public class UnitCallBlock2 extends Block{
 
         public boolean CanSpawn(){
             if(!spawnPos.equals(this)){
-             /*   Log.info("Spawning at " + spawnPos+" Units "+unit()+" CanSpawn "+canSpawn);*/
                 canSpawn = WHUtils.hasAnyValidSpawnPosition(unit(),spawnPos.x, spawnPos.y, spawnRange);
             }else{
                 canSpawn = false;

@@ -1,35 +1,31 @@
 package wh.entities.world.blocks.production;
 
 import arc.*;
-import arc.graphics.Color;
+import arc.graphics.*;
 import arc.math.*;
-import arc.math.geom.*;
 import arc.util.*;
 import arc.util.io.*;
 import mindustry.content.*;
 import mindustry.entities.*;
-import mindustry.gen.*;
 import mindustry.graphics.*;
 import mindustry.ui.*;
 import mindustry.world.blocks.heat.*;
 import mindustry.world.blocks.production.*;
 import mindustry.world.meta.*;
 import wh.content.*;
-import wh.entities.world.drawer.*;
 
 import static mindustry.Vars.*;
 
 public class OverheatGenericCrafter extends GenericCrafter{
 
-    public float heatCapacity = 1000f;
-    public float baseHeatProduction = 0.8f;
-    public float overloadHeatProduction = 0.6f;
-    public float nearbyHeatProduction = 0.3f;
-    public float baseHeatLoss = 2.5f;
+    public float heatCapacity = 100;
+    public float baseHeatProduction = 0.08f;
+    public float overloadHeatProduction = 0.05f;
+    public float nearbyHeatProduction = 0.03f;
+    public float baseHeatLoss = 0.25f;
 
     public float overloadThreshold = 0.5f;
-    public float overloadEfficiency = 0.4f;
-
+    public float overloadEfficiency = 0.5f;
     public int proximityRange = size;
 
     public float smokeEffectChance = 0.05f;
@@ -92,7 +88,7 @@ public class OverheatGenericCrafter extends GenericCrafter{
         public float overHeatReduce;
         public boolean overloaded = false;
         public boolean cooling = false;
-        private int nearbySameType;
+        public int nearbySameType;
         private int lastChange = -2;
         public float boostDuration;
         public float overloadThresholdReduce;
@@ -154,15 +150,6 @@ public class OverheatGenericCrafter extends GenericCrafter{
                 applyBoost(1 + overloadEfficiency, 60f);
                 overHeat += overloadHeatProduction * edelta();
             }
-
-           /* charge += Time.delta;
-            if(charge >= 20f){
-                charge = 0f;
-                Log.info("boostDuration  " + boostDuration);
-                Log.info("overloadThresholdReduce  " + overloadThresholdReduce);
-                Log.info("isOverloaded  "+isOverloaded);
-                Log.info("cooling " + cooling);
-            }*/
 
             if(isOverloaded || cooling){
                 heat = Mathf.approachDelta(heat, wasteHeatOutput * efficiency, warmupRate * edelta());

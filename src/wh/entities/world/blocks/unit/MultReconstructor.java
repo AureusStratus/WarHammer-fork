@@ -3,6 +3,7 @@ package wh.entities.world.blocks.unit;
 import arc.*;
 import arc.Graphics.*;
 import arc.Graphics.Cursor.*;
+import arc.audio.*;
 import arc.graphics.g2d.*;
 import arc.math.*;
 import arc.math.geom.*;
@@ -31,13 +32,16 @@ import wh.graphics.*;
 
 import static mindustry.Vars.*;
 
-public class MultipleConsumerReconstructor extends UnitBlock{
+public class MultReconstructor extends UnitBlock{
     public ObjectMap<UnitType[], ItemStack[]> upgradeCosts = new ObjectMap<>();
     public float constructTime = 60 * 2;
-    public Seq<UnitType[]> upgrades = new Seq<>();
+    /*  public Seq<UnitType[]> upgrades = new Seq<>();*/
     public int[] capacities = {};
 
-    public MultipleConsumerReconstructor(String name){
+    public Sound createSound = Sounds.unitCreate;
+    public float createSoundVolume = 1f;
+
+    public MultReconstructor(String name){
         super(name);
         regionRotated1 = 1;
         regionRotated2 = 2;
@@ -50,7 +54,6 @@ public class MultipleConsumerReconstructor extends UnitBlock{
     }
 
     public void addUpgrade(UnitType from, UnitType to, ItemStack... costs){
-        upgrades.add(new UnitType[]{from, to});
         upgradeCosts.put(new UnitType[]{from, to}, costs);
 
         consume(new ConsumeItemDynamic((MultipleConsumerReconstructorBuild e) -> {
@@ -311,7 +314,7 @@ public class MultipleConsumerReconstructor extends UnitBlock{
                 for(float mx : new float[]{move, -move}){
                     for(float my : new float[]{move, -move}){
                         Draw.z(Layer.buildBeam);
-                        Draw.alpha((Mathf.sin(Time.time, 6, 0.1f)+0.8f) * alpha);
+                        Draw.alpha((Mathf.sin(Time.time, 6, 0.1f) + 0.8f) * alpha);
                         float bx = x + mx, by = y + my;
                         Drawf.buildBeam(bx, by, x, y, block.size * 0.3f / 2 * tilesize);
                     }
@@ -355,7 +358,7 @@ public class MultipleConsumerReconstructor extends UnitBlock{
                             valid = true;
                             progress += edelta() * state.rules.unitBuildSpeed(team);
                             alpha = Mathf.lerpDelta(alpha, 1f, 0.08f);
-                        }else {
+                        }else{
                             alpha = Mathf.lerpDelta(alpha, 0f, 0.1f);
                         }
 
@@ -373,6 +376,7 @@ public class MultipleConsumerReconstructor extends UnitBlock{
 
                             progress %= 1f;
 
+                            createSound.at(this, 1f + Mathf.range(0.06f), createSoundVolume);
                             Effect.shake(2f, 3f, this);
                             Fx.producesmoke.at(this);
                             consume();
@@ -436,8 +440,14 @@ public class MultipleConsumerReconstructor extends UnitBlock{
         }
 
         public UnitType upgrade(UnitType type){
-            UnitType[] r = upgrades.find(u -> u[0] == type);
-            return r == null ? null : r[1];
+          /*  UnitType[] r = upgrades.find(u -> u[0] == type);
+            return r == null ? null : r[1];*/
+            for(UnitType[] upgrade : upgradeCosts.keys()){
+                if(upgrade[0] == type){
+                    return upgrade[1];
+                }
+            }
+            return null;
         }
 
         @Override
