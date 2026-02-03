@@ -14,9 +14,8 @@ import mindustry.world.*;
 import mindustry.world.blocks.liquid.*;
 import wh.util.*;
 
-import static mindustry.Vars.*;
+import static mindustry.Vars.renderer;
 import static mindustry.type.Liquid.animationFrames;
-import static wh.util.WHUtils.*;
 
 public class TubeConduit extends Conduit{
     static final float rotatePad = 6, hpad = rotatePad / 2f / 4f;
@@ -49,7 +48,7 @@ public class TubeConduit extends Conduit{
     public TextureRegion[] capRegion;
     public TextureRegion editorRegion;
     public TextureRegion coverRegion;
-    public TextureRegion[] arrowRegion=new TextureRegion[5];
+    public TextureRegion[] arrowRegion = new TextureRegion[5];
     public float coverLength = 10f;
     public boolean drawCover = false;
     public boolean drawArrow = false;
@@ -176,33 +175,29 @@ public class TubeConduit extends Conduit{
 
         public boolean shouldDrawCover;
 
-
         @Override
         public void created(){
             super.created();
             if(!drawCover) return;
             boolean hasCover = false;
             for(int r = 1; r <= coverLength; r++){
-                for(int i = 0; i < 4; i++){
-                    Tile other = tile.nearby(Geometry.d4[i].x * r, Geometry.d4[i].y * r);
-                    if(other != null && other.build != this && other.build instanceof TubeConduitBuild b &&b.rotation==rotation&& b.block.name.equals(name) && b.shouldDrawCover && !b.backCapped && !b.capped){
-                        float dist = Math.max(Math.abs(b.tileX() - tile.x), Math.abs(b.tileY() - tile.y));
-                        if(dist >= coverLength - 0.1f){
-                            shouldDrawCover = true;
-                            return;
-                        }
+                Tile other = tile.nearby(Geometry.d4(rotation + 2).x * r, Geometry.d4(rotation + 2).y * r);
+                if(other != null && other.build != this && other.build instanceof TubeConduitBuild b && b.rotation == rotation
+                && b.block.name.equals(block.name) && b.shouldDrawCover && !b.backCapped && !b.capped){
+                    float dist = Math.max(Math.abs(b.tileX() - tile.x), Math.abs(b.tileY() - tile.y));
+                    if(dist >= coverLength - 0.1f){
+                        shouldDrawCover = true;
+                        return;
                     }
                 }
             }
             for(int r = 1; r <= coverLength; r++){
-                for(int i = 0; i < 4; i++){
-                    Tile backCap = tile.nearby(Geometry.d4[i].x * r, Geometry.d4[i].y * r);
-                    if(!hasCover && (backCap != null && backCap.build != this && backCap.build instanceof TubeConduitBuild a
-                    && a.block.name.equals(name) &&a.rotation==rotation&& (a.capped || a.backCapped || a.blendbits == 1 || a.blendbits == 3))){
-                        float dist = Math.max(Math.abs(a.tileX() - tile.x), Math.abs(a.tileY() - tile.y));
-                        if(dist >= coverLength - 0.1f){
-                            hasCover = true;
-                        }
+                Tile backCap = tile.nearby(Geometry.d4(rotation + 2).x * r, Geometry.d4(rotation + 2).y * r);
+                if(!hasCover && (backCap != null && backCap.build != this && backCap.build instanceof TubeConduitBuild a
+                && a.block.name.equals(block.name) && a.rotation == rotation && (a.capped || a.backCapped || a.blendbits == 1 || a.blendbits == 3))){
+                    float dist = Math.max(Math.abs(a.tileX() - tile.x), Math.abs(a.tileY() - tile.y));
+                    if(dist >= coverLength - 0.1f){
+                        hasCover = true;
                     }
                 }
             }
@@ -249,7 +244,7 @@ public class TubeConduit extends Conduit{
 
             if(drawCover && shouldDrawCover && blendbits != 3 && blendbits != 1){
                 for(byte i : placementId){
-                        Draw.rect(coverRegion, x, y, i == 0 || i == 2 ? 0 : -90);
+                    Draw.rect(coverRegion, x, y, i == 0 || i == 2 ? 0 : -90);
                 }
             }
             Draw.scl();

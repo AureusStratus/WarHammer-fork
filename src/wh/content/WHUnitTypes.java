@@ -778,6 +778,7 @@ public final class WHUnitTypes{
                 ammoCapacity = 30000;
                 flyingLayer = Layer.bullet - 0.1f;
                 flying = true;
+                faceTarget = false;
 
                 targetFlags = new BlockFlag[]{BlockFlag.turret, null};
 

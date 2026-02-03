@@ -11,7 +11,6 @@ import mindustry.gen.*;
 import mindustry.graphics.*;
 import mindustry.world.*;
 import mindustry.world.blocks.distribution.*;
-import wh.entities.world.blocks.distribution.HeatBelt.*;
 import wh.util.*;
 
 import static mindustry.Vars.*;
@@ -32,7 +31,7 @@ public class TubeStackConveyor extends StackConveyor{
     public TextureRegion editorRegion;
     public TextureRegion coverRegion;
     public TextureRegion[][] CoRegions;
-    public float coverLength = 8f;
+    public float coverLength = 12f;
     public boolean drawCover = false;
 
     public TubeStackConveyor(String name){
@@ -44,7 +43,7 @@ public class TubeStackConveyor extends StackConveyor{
         super.init();
         CoRegions = new TextureRegion[5][8];
 
-        topRegion = WHUtils.splitLayers2(name + "-top", 32, 512,64);
+        topRegion = WHUtils.splitLayers2(name + "-top", 32, 512, 64);
         capRegion = new TextureRegion[]{topRegion[1][0], topRegion[1][1]};
         editorRegion = Core.atlas.find(name + "-full");
         for(int i = 0; i < 5; i++){
@@ -108,8 +107,8 @@ public class TubeStackConveyor extends StackConveyor{
 
 
     @Override
-    protected void initBuilding() {
-        if (buildType == null) buildType = TubeStackConveyorBuild::new;
+    protected void initBuilding(){
+        if(buildType == null) buildType = TubeStackConveyorBuild::new;
     }
 
     public class TubeStackConveyorBuild extends StackConveyorBuild{
@@ -122,35 +121,37 @@ public class TubeStackConveyor extends StackConveyor{
 
         public float heat;
 
+        public boolean checkBuild(TubeStackConveyorBuild b){
+            if(b.link == -1) return false;
+            return b.block.name.equals(this.block.name) && b.rotation == rotation
+            && b.shouldDrawCover && !b.backCapped && !b.capped && b.blendbits == this.blendbits;
+        }
+
         @Override
         public void created(){
             super.created();
             if(!drawCover) return;
             boolean hasCover = false;
             for(int r = 1; r <= coverLength; r++){
-                for(int i = 0; i < 4; i++){
-                    Tile other = tile.nearby(Geometry.d4[i].x * r, Geometry.d4[i].y * r);
-                    if(other != null && other.build != this
-                    && other.build instanceof TubeStackConveyorBuild b && b.block.name.equals(name) &&b.rotation==rotation
-                    && b.shouldDrawCover && !b.backCapped && !b.capped){
-                        float dist = Math.max(Math.abs(b.tileX() - tile.x), Math.abs(b.tileY() - tile.y));
-                        if(dist >= coverLength - 0.1f){
-                            shouldDrawCover = true;
-                            return;
-                        }
+                Tile other = tile.nearby(Geometry.d4(rotation + 2).x * r, Geometry.d4(rotation + 2).y * r);
+                if(other != null && other.build != this
+                && other.build instanceof TubeStackConveyorBuild b && checkBuild(b)){
+                    float dist = Math.max(Math.abs(b.tileX() - tile.x), Math.abs(b.tileY() - tile.y));
+                    if(dist >= coverLength){
+                        shouldDrawCover = true;
+                        return;
                     }
                 }
             }
             for(int r = 1; r <= coverLength; r++){
-                for(int i = 0; i < 4; i++){
-                    Tile backCap = tile.nearby(Geometry.d4[i].x * r, Geometry.d4[i].y * r);
-                    if(!hasCover && (backCap != null && backCap.build != this
-                    && backCap.build instanceof TubeStackConveyorBuild a
-                    && a.block.name.equals(name) &&a.rotation==rotation&& (a.capped||a.backCapped || a.blendbits == 1 || a.blendbits == 3))){
-                        float dist = Math.max(Math.abs(a.tileX() - tile.x), Math.abs(a.tileY() - tile.y));
-                        if(dist >= coverLength - 0.1f){
-                            hasCover = true;
-                        }
+                Tile backCap = tile.nearby(Geometry.d4(rotation + 2).x * r, Geometry.d4(rotation + 2).y * r);
+                if(!hasCover && (backCap != null && backCap.build != this
+                && backCap.build instanceof TubeStackConveyorBuild a
+                && a.block.name.equals(this.block.name) && rotation == a.rotation &&
+                ((a.blendbits == 1 || a.blendbits == 3 && a.link != -1) || a.capped || a.backCapped))){
+                    float dist = Math.max(Math.abs(a.tileX() - tile.x), Math.abs(a.tileY() - tile.y));
+                    if(dist >= coverLength){
+                        hasCover = true;
                     }
                 }
             }
@@ -159,7 +160,6 @@ public class TubeStackConveyor extends StackConveyor{
 
         @Override
         public void draw(){
-
             Draw.z(Layer.block + 0.001f);
             Draw.scl(1.017f, 1.017f);
             Draw.rect(topRegion[0][tiling], x, y, 0);
@@ -201,7 +201,6 @@ public class TubeStackConveyor extends StackConveyor{
             float b = (rotation % 4) * 90;
             if((fromRot % 4) == 3 && (rotation % 4) == 0) a = -1 * 90;
             if((fromRot % 4) == 0 && (rotation % 4) == 3) a = 4 * 90;
-
 
             if(glowRegion.found()){
                 Draw.z(Layer.blockAdditive + 0.01f);
@@ -269,6 +268,7 @@ public class TubeStackConveyor extends StackConveyor{
             super.read(read, revision);
             shouldDrawCover = read.bool();
         }
+
         @Override
         public void write(Writes write){
             super.write(write);
